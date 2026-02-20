@@ -91,8 +91,8 @@ function initFilterSystem(opts) {
         lengthMenu: [10, 25, 50, 100, 500],
         scrollX: true,
         deferRender: true,
-        searching: false,
-        dom: '<"dt-top-bar"ilp>rt'
+        searching: true,
+        dom: '<"dt-top-bar"lf>rt<"dt-bottom-bar"ip>'
     };
 
     // Merge caller overrides (e.g. language)

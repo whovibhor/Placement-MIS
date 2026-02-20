@@ -651,25 +651,16 @@ table.dataTable thead .sorting_desc::after {
     opacity: 1;
 }
 
-/* ── Dashboard top bar (info + pagination) ──────────── */
+/* ── Dashboard top bar (length left, search right) ──── */
 .dt-top-bar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-}
-
-.dt-top-bar .dataTables_info {
-    font-size: 0.72rem !important;
-    color: var(--text-secondary) !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    white-space: nowrap;
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
 .dt-top-bar .dataTables_length {
-    font-size: 0.72rem !important;
+    font-size: 0.78rem !important;
     color: var(--text-secondary) !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -677,18 +668,51 @@ table.dataTable thead .sorting_desc::after {
 }
 
 .dt-top-bar .dataTables_length select {
-    padding: 2px 6px !important;
-    font-size: 0.72rem !important;
-    border-radius: 4px !important;
+    padding: 3px 8px !important;
+    font-size: 0.78rem !important;
+    border-radius: 5px !important;
 }
 
-.dt-top-bar .dataTables_paginate {
+.dt-top-bar .dataTables_filter {
     margin: 0 !important;
     padding: 0 !important;
 }
 
-.dt-top-bar .dataTables_paginate .paginate_button {
-    padding: 2px 8px !important;
-    font-size: 0.7rem !important;
-    min-width: unset !important;
+.dt-top-bar .dataTables_filter label {
+    font-size: 0.78rem !important;
+    color: var(--text-secondary) !important;
+}
+
+.dt-top-bar .dataTables_filter input {
+    padding: 4px 10px !important;
+    font-size: 0.78rem !important;
+    border-radius: 6px !important;
+    width: 200px !important;
+}
+
+/* ── Dashboard bottom bar (info + pagination) ──────── */
+.dt-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dt-bottom-bar .dataTables_info {
+    font-size: 0.75rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.dt-bottom-bar .dataTables_paginate {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.dt-bottom-bar .dataTables_paginate .paginate_button {
+    padding: 3px 10px !important;
+    font-size: 0.75rem !important;
 }
