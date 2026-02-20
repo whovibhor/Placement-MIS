@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload Versions — Placement MIS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">Placement MIS</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link active" href="{{ url_for('versions') }}">Versions</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h3 class="mb-3">Upload Version History</h3>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% if versions %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Version #</th>
+                        <th>Filename</th>
+                        <th>Uploaded At</th>
+                        <th>Total Records</th>
+                        <th>Inserted</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in versions %}
+                    <tr>
+                        <td>{{ v.version_id }}</td>
+                        <td>{{ v.filename }}</td>
+                        <td>{{ v.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                        <td>{{ v.total_records }}</td>
+                        <td><span class="badge bg-success">{{ v.inserted }}</span></td>
+                        <td><span class="badge bg-warning text-dark">{{ v.updated }}</span></td>
+                        <td>
+                            <a href="{{ url_for('version_detail', version_id=v.version_id) }}"
+                                class="btn btn-sm btn-outline-primary">View Data</a>
+                            <form method="POST" action="{{ url_for('delete_version', version_id=v.version_id) }}"
+                                style="display:inline" onsubmit="return confirm('Delete version #{{ v.version_id }}?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">No upload versions found. Upload an Excel file first.</div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

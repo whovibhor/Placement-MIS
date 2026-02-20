@@ -1,0 +1,694 @@
+/* ═══════════════════════════════════════════════════════════
+   Placement MIS — Dark Minimal Theme (White + Red accents)
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+    --bg-dark: #121212;
+    --bg-card: #1e1e1e;
+    --bg-surface: #2a2a2a;
+    --bg-hover: #333333;
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0a0;
+    --accent-red: #e53935;
+    --accent-red-hover: #ff5252;
+    --accent-white: #ffffff;
+    --border-color: #3a3a3a;
+    --border-light: #444;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+}
+
+/* ── Navbar ─────────────────────────────────────────── */
+.navbar {
+    background: var(--bg-card) !important;
+    border-bottom: 2px solid var(--accent-red);
+    padding: 0.6rem 1.5rem;
+}
+
+.navbar-brand {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent-white) !important;
+}
+
+.navbar-nav .nav-link {
+    color: var(--text-secondary) !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: var(--accent-white) !important;
+    background: var(--accent-red);
+}
+
+/* ── Cards ──────────────────────────────────────────── */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: var(--accent-red) !important;
+    color: white;
+    border-radius: 0 !important;
+    border-bottom: none;
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+}
+
+/* ── Forms ──────────────────────────────────────────── */
+.form-control,
+.form-select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: var(--bg-hover);
+    border-color: var(--accent-red);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.25);
+}
+
+.form-control::file-selector-button {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px 0 0 6px;
+}
+
+.form-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ── Buttons ────────────────────────────────────────── */
+.btn-primary,
+.btn-accent {
+    background: var(--accent-red) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover,
+.btn-accent:hover {
+    background: var(--accent-red-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(229, 57, 53, 0.4);
+}
+
+.btn-outline-danger {
+    color: var(--accent-red) !important;
+    border-color: var(--accent-red) !important;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.btn-outline-danger:hover {
+    background: var(--accent-red) !important;
+    color: white !important;
+}
+
+.btn-outline-secondary {
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+    border-radius: 8px;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
+}
+
+.btn-outline-success {
+    color: #4caf50 !important;
+    border-color: #4caf50 !important;
+    border-radius: 8px;
+}
+
+.btn-outline-success:hover {
+    background: #4caf50 !important;
+    color: white !important;
+}
+
+.btn-outline-primary {
+    color: var(--accent-red) !important;
+    border-color: var(--accent-red) !important;
+    border-radius: 8px;
+}
+
+.btn-outline-primary:hover {
+    background: var(--accent-red) !important;
+    color: white !important;
+}
+
+/* ── Alerts ─────────────────────────────────────────── */
+.alert {
+    border-radius: 8px;
+    font-weight: 500;
+    border: none;
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.15);
+    color: #66bb6a;
+}
+
+.alert-danger {
+    background: rgba(229, 57, 53, 0.15);
+    color: var(--accent-red-hover);
+}
+
+.alert-info {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+}
+
+.alert .btn-close {
+    filter: invert(1) grayscale(1);
+}
+
+/* ── Headings ───────────────────────────────────────── */
+h3,
+h4 {
+    color: var(--accent-white);
+    font-weight: 700;
+}
+
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+hr {
+    border-color: var(--border-color);
+    opacity: 0.5;
+}
+
+/* ── Tables (general) ───────────────────────────────── */
+.table {
+    color: var(--text-primary);
+    --bs-table-bg: var(--bg-card);
+    --bs-table-striped-bg: var(--bg-surface);
+    --bs-table-hover-bg: var(--bg-hover);
+    --bs-table-border-color: var(--border-color);
+    border-color: var(--border-color);
+    margin-bottom: 0;
+}
+
+.table th {
+    background: var(--bg-surface) !important;
+    color: var(--accent-white);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    border-color: var(--border-color);
+}
+
+.table td {
+    font-size: 0.82rem;
+    vertical-align: middle;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.table-primary,
+.table-primary>th,
+.table-primary>td,
+thead.table-primary th {
+    background: var(--bg-surface) !important;
+    color: var(--accent-white) !important;
+    border-color: var(--border-color) !important;
+}
+
+.table-hover tbody tr:hover>* {
+    background: var(--bg-hover) !important;
+    color: var(--accent-white);
+}
+
+/* ── Badges ─────────────────────────────────────────── */
+.badge.bg-success {
+    background: rgba(76, 175, 80, 0.2) !important;
+    color: #66bb6a;
+    font-weight: 600;
+}
+
+.badge.bg-warning {
+    background: rgba(255, 193, 7, 0.2) !important;
+    color: #ffc107;
+    font-weight: 600;
+}
+
+/* ── DataTables override ────────────────────────────── */
+.dataTables_wrapper {
+    color: var(--text-primary);
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: var(--text-secondary) !important;
+    margin: 8px 0;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 6px !important;
+    padding: 4px 10px;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--accent-red) !important;
+    box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.25);
+    outline: none;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    margin: 0 2px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--bg-hover) !important;
+    color: white !important;
+    border-color: var(--accent-red) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--accent-red) !important;
+    color: white !important;
+    border-color: var(--accent-red) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.35;
+}
+
+table.dataTable thead .sorting::after,
+table.dataTable thead .sorting_asc::after,
+table.dataTable thead .sorting_desc::after {
+    opacity: 0.7;
+}
+
+/* ── Column filter (cf-*) ───────────────────────────── */
+.cf-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.cf-btn {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.74rem;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.cf-btn:hover {
+    border-color: var(--accent-red);
+    color: var(--accent-white);
+}
+
+.cf-btn.cf-active {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+    background: rgba(229, 57, 53, 0.1);
+}
+
+/* Panel (dropdown) */
+.cf-panel {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    background: var(--bg-card);
+    border: 1px solid var(--accent-red);
+    border-radius: 8px;
+    width: 230px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    padding: 10px;
+}
+
+.cf-panel.open {
+    display: block;
+}
+
+/* Search input */
+.cf-search {
+    width: 100%;
+    padding: 5px 8px;
+    font-size: 0.78rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    outline: none;
+}
+
+.cf-search:focus {
+    border-color: var(--accent-red);
+}
+
+/* Batch row */
+.cf-batch {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.cf-batch button {
+    flex: 1;
+    padding: 3px 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.cf-batch button:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-red);
+}
+
+/* Value list */
+.cf-list {
+    max-height: 210px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.cf-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.cf-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.cf-list li {
+    padding: 3px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    transition: background 0.1s;
+    user-select: none;
+}
+
+.cf-list li:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.cf-list li label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 400;
+    width: 100%;
+}
+
+.cf-list li input[type="checkbox"] {
+    accent-color: var(--accent-red);
+    cursor: pointer;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* Footer row */
+.cf-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-color);
+}
+
+.cf-count {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.cf-apply {
+    padding: 4px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    background: var(--accent-red);
+    color: white;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cf-apply:hover {
+    background: var(--accent-red-hover);
+}
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ── Misc ───────────────────────────────────────────── */
+.shadow {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.spinner-border {
+    color: white;
+}
+
+.dt-buttons {
+    margin-bottom: 12px;
+}
+
+/* ── Upload Page ────────────────────────────────────── */
+.upload-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 56px);
+    padding: 2rem 1rem;
+}
+
+.upload-alerts {
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 1.5rem;
+}
+
+.upload-card {
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+
+.upload-icon {
+    color: var(--accent-red);
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.upload-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent-white);
+    margin-bottom: 0.3rem;
+}
+
+.upload-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.upload-dropzone {
+    background: var(--bg-card);
+    border: 1.5px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone:focus-within {
+    border-color: var(--accent-red);
+}
+
+.upload-dropzone .form-control {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.upload-dropzone .form-control::file-selector-button {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.upload-dropzone .form-control::file-selector-button:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-red);
+}
+
+.upload-hint {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin: 0.6rem 0 0 0;
+    transition: color 0.2s;
+}
+
+.upload-submit {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.upload-danger-zone {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.upload-danger-zone .btn {
+    font-size: 0.72rem;
+    padding: 4px 14px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.upload-danger-zone .btn:hover {
+    opacity: 1;
+}
+
+/* ── Dashboard top bar (info + pagination) ──────────── */
+.dt-top-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.dt-top-bar .dataTables_info {
+    font-size: 0.72rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap;
+}
+
+.dt-top-bar .dataTables_length {
+    font-size: 0.72rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap;
+}
+
+.dt-top-bar .dataTables_length select {
+    padding: 2px 6px !important;
+    font-size: 0.72rem !important;
+    border-radius: 4px !important;
+}
+
+.dt-top-bar .dataTables_paginate {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.dt-top-bar .dataTables_paginate .paginate_button {
+    padding: 2px 8px !important;
+    font-size: 0.7rem !important;
+    min-width: unset !important;
+}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard — Placement MIS</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables + Bootstrap 5 -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Placement MIS</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                <a class="nav-link active" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4 px-4">
+        <h3 class="mb-3">Student Placement Dashboard</h3>
+
+        <div class="table-responsive">
+            <table id="studentsTable" class="table table-striped table-bordered table-hover" style="width:100%">
+                <thead>
+                    <tr id="headerRow">
+                        <th>Sr No</th>
+                        <th>Reg No</th>
+                        <th>Student Name</th>
+                        <th>Gender</th>
+                        <th>Course</th>
+                        <th>Resume Status</th>
+                        <th>Seeking Placement</th>
+                        <th>Department</th>
+                        <th>Offer Letter Status</th>
+                        <th>Status</th>
+                        <th>Company Name</th>
+                        <th>Designation</th>
+                        <th>CTC</th>
+                        <th>Joining Date</th>
+                        <th>Joining Status</th>
+                        <th>School Name</th>
+                        <th>Mobile Number</th>
+                        <th>Email</th>
+                        <th>Graduation Course</th>
+                        <th>Graduation/OGPA</th>
+                        <th>10%</th>
+                        <th>12%</th>
+                        <th>Backlogs</th>
+                        <th>Hometown</th>
+                        <th>Address</th>
+                        <th>Reason</th>
+                    </tr>
+                    <tr id="filterRow"></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="{{ url_for('static', filename='filterSystem.js') }}"></script>
+
+    <script id="json-data" type="application/json">{{ students_json | tojson }}</script>
+
+    <script>
+        $(document).ready(function () {
+            initFilterSystem({
+                tableSelector: '#studentsTable',
+                data: JSON.parse(document.getElementById('json-data').textContent),
+                keys: [
+                    'sr_no', 'reg_no', 'student_name', 'gender', 'course', 'resume_status',
+                    'seeking_placement', 'department', 'offer_letter_status', 'status',
+                    'company_name', 'designation', 'ctc', 'joining_date', 'joining_status',
+                    'school_name', 'mobile_number', 'email', 'graduation_course',
+                    'graduation_ogpa', 'percent_10', 'percent_12', 'backlogs',
+                    'hometown', 'address', 'reason'
+                ],
+                tableConfig: {
+                    language: {
+                        lengthMenu: "Show _MENU_ records",
+                        info: "Showing _START_ to _END_ of _TOTAL_ students",
+                        emptyTable: "No student records found. Upload an Excel file first."
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
