@@ -1410,3 +1410,32 @@ table.dataTable thead .sorting_desc::after {
     background-color: var(--accent-red);
     border-color: var(--accent-red);
 }
+
+/* ── FixedColumns dark theme integration ─────────────── */
+table.dataTable.dtfc-has-left thead th,
+table.dataTable.dtfc-has-left tbody td {
+    background-clip: padding-box;
+}
+
+.dtfc-fixed-left {
+    background: var(--bg-card) !important;
+}
+
+table.dataTable thead th.dtfc-fixed-left {
+    background: var(--bg-surface) !important;
+}
+
+/* Ensure frozen header cells stay sticky in both axes */
+#studentsTable thead tr#headerRow th.dtfc-fixed-left {
+    z-index: 13 !important;
+}
+
+#studentsTable thead tr#filterRow th.dtfc-fixed-left {
+    z-index: 12 !important;
+}
+
+/* ── Column Preset Buttons ───────────────────────────── */
+#presetBtns .btn {
+    font-size: 0.68rem;
+    padding: 0.12rem 0.4rem;
+}

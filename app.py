@@ -3,10 +3,12 @@ import pandas as pd
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
+from decimal import Decimal
 import statistics
 import os
 import uuid
 import re
+import json
 import config
 
 app = Flask(__name__)
@@ -79,11 +81,60 @@ HEADER_TO_COL = {
 
 DB_COLUMNS = list(HEADER_TO_COL.values())
 
-# Columns displayed on dashboard (school_name removed)
-DISPLAY_COLUMNS = [c for c in DB_COLUMNS if c != "school_name"]
+# Columns displayed in UI (school_name removed, priority ordered)
+DISPLAY_COLUMNS = [
+    'sr_no', 'reg_no', 'student_name', 'gender', 'course',
+    'mobile_number', 'email', 'seeking_placement', 'department',
+    'status', 'company_name', 'designation', 'ctc',
+    'graduation_ogpa', 'percent_10', 'percent_12', 'backlogs',
+    'hometown', 'address', 'reason',
+    'resume_status', 'offer_letter_status', 'joining_date', 'joining_status',
+    'graduation_course',
+]
 
 # Columns that are editable via inline editing
 EDITABLE_COLUMNS = set(DB_COLUMNS) - {"sr_no", "reg_no"}
+
+# Numeric column sets for type conversion
+NUMERIC_FLOAT_COLS = {"ctc", "percent_10", "percent_12", "graduation_ogpa"}
+NUMERIC_INT_COLS = {"backlogs"}
+
+
+def to_float_or_none(v):
+    """Convert a value to float or return None."""
+    if v is None:
+        return None
+    try:
+        return float(v)
+    except (ValueError, TypeError):
+        return None
+
+
+def to_int_or_none(v):
+    """Convert a value to int (via float for '1.0' style) or return None."""
+    if v is None:
+        return None
+    try:
+        return int(float(str(v)))
+    except (ValueError, TypeError):
+        return None
+
+
+def normalize_row(row):
+    """Convert Decimal values to float for JSON serialization."""
+    if row is None:
+        return None
+    for k, v in row.items():
+        if isinstance(v, Decimal):
+            row[k] = float(v)
+    return row
+
+
+def normalize_rows(rows):
+    """Convert Decimal values in all rows to float."""
+    for row in rows:
+        normalize_row(row)
+    return rows
 
 
 # ── Database helpers ─────────────────────────────────────────────────────────
@@ -217,9 +268,119 @@ def init_db():
             INDEX idx_time (changed_at)
         )
     """)
+
+    # Analytics cache table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS analytics_cache (
+            id          INT PRIMARY KEY,
+            data        JSON,
+            updated_at  DATETIME
+        )
+    """)
+    cursor.execute("INSERT IGNORE INTO analytics_cache (id, data, updated_at) VALUES (1, NULL, NOW())")
+    conn.commit()
+
+    # ── Migrate numeric columns (safe, idempotent) ───────────────────
+    try:
+        cursor.execute(
+            "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS "
+            "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'students' AND COLUMN_NAME = 'ctc'",
+            (config.DB_NAME,)
+        )
+        col_info = cursor.fetchone()
+        if col_info and col_info[0].upper() in ('VARCHAR', 'CHAR', 'TEXT'):
+            # Clean non-numeric values before type change
+            for stmt in [
+                "UPDATE students SET ctc = NULL WHERE ctc IS NOT NULL AND TRIM(ctc) NOT REGEXP '^-?[0-9]+(\\\\.[0-9]+)?$'",
+                "UPDATE students SET percent_10 = NULL WHERE percent_10 IS NOT NULL AND TRIM(percent_10) NOT REGEXP '^-?[0-9]+(\\\\.[0-9]+)?$'",
+                "UPDATE students SET percent_12 = NULL WHERE percent_12 IS NOT NULL AND TRIM(percent_12) NOT REGEXP '^-?[0-9]+(\\\\.[0-9]+)?$'",
+                "UPDATE students SET graduation_ogpa = NULL WHERE graduation_ogpa IS NOT NULL AND TRIM(graduation_ogpa) NOT REGEXP '^-?[0-9]+(\\\\.[0-9]+)?$'",
+                "UPDATE students SET backlogs = NULL WHERE backlogs IS NOT NULL AND TRIM(backlogs) NOT REGEXP '^-?[0-9]+(\\\\.[0-9]+)?$'",
+            ]:
+                try:
+                    cursor.execute(stmt)
+                except Error:
+                    pass
+            conn.commit()
+
+            # Alter to proper numeric types
+            for stmt in [
+                "ALTER TABLE students MODIFY ctc DECIMAL(10,2) NULL",
+                "ALTER TABLE students MODIFY percent_10 DECIMAL(5,2) NULL",
+                "ALTER TABLE students MODIFY percent_12 DECIMAL(5,2) NULL",
+                "ALTER TABLE students MODIFY graduation_ogpa DECIMAL(4,2) NULL",
+                "ALTER TABLE students MODIFY backlogs INT NULL",
+            ]:
+                try:
+                    cursor.execute(stmt)
+                except Error:
+                    pass
+            conn.commit()
+    except Error:
+        pass
+
+    # ── Add indexes (idempotent) ─────────────────────────────────────
+    for stmt in [
+        "CREATE INDEX idx_status ON students(status)",
+        "CREATE INDEX idx_seeking ON students(seeking_placement)",
+        "CREATE INDEX idx_course ON students(course)",
+        "CREATE INDEX idx_department ON students(department)",
+    ]:
+        try:
+            cursor.execute(stmt)
+        except Error:
+            pass
+
     conn.commit()
     cursor.close()
     conn.close()
+
+
+# ── Analytics cache helpers ──────────────────────────────────────────────────
+def get_cached_analytics():
+    """Return cached analytics dict, or None if cache is empty/stale."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT data FROM analytics_cache WHERE id = 1")
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if row and row["data"]:
+            d = row["data"]
+            return json.loads(d) if isinstance(d, str) else d
+    except Error:
+        pass
+    return None
+
+
+def save_analytics_cache(analytics):
+    """Save a precomputed analytics dict to cache."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE analytics_cache SET data = %s, updated_at = NOW() WHERE id = 1",
+            (json.dumps(analytics),),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Error:
+        pass
+
+
+def invalidate_analytics_cache():
+    """Mark analytics cache as stale so next request recomputes."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE analytics_cache SET data = NULL, updated_at = NOW() WHERE id = 1")
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Error:
+        pass
 
 
 # ── Analytics helper ─────────────────────────────────────────────────────────
@@ -419,14 +580,6 @@ def upload():
     df.rename(columns=HEADER_TO_COL, inplace=True)
     df = df.where(pd.notnull(df), None)
 
-    def to_int_or_none(v):
-        if v is None:
-            return None
-        try:
-            return int(float(str(v)))
-        except (ValueError, TypeError):
-            return None
-
     df["sr_no"] = df["sr_no"].apply(to_int_or_none)
 
     def to_str_or_none(v):
@@ -463,7 +616,12 @@ def upload():
             return cleaned
         df[col] = df[col].apply(fix_pct)
 
-    # ── Upsert into MySQL ────────────────────────────────────────────────
+    # ── Convert numeric columns to proper types ──────────────────────────
+    for col in ["ctc", "percent_10", "percent_12", "graduation_ogpa"]:
+        df[col] = df[col].apply(to_float_or_none)
+    df["backlogs"] = df["backlogs"].apply(to_int_or_none)
+
+    # ── Upsert into MySQL (batch) ────────────────────────────────────────
     inserted = 0
     updated = 0
 
@@ -481,21 +639,23 @@ def upload():
         conn = get_connection()
         cursor = conn.cursor()
 
+        # Get existing reg_nos in one query for insert/update tracking
+        cursor.execute("SELECT reg_no FROM students")
+        existing_regs = set(row[0] for row in cursor.fetchall())
+
+        values_list = []
         for _, row in df.iterrows():
             values = tuple(row[c] for c in DB_COLUMNS)
-            cursor.execute(
-                "SELECT 1 FROM students WHERE reg_no = %s", (row["reg_no"],)
-            )
-            exists = cursor.fetchone()
-            cursor.execute(upsert_sql, values)
-            if exists:
+            values_list.append(values)
+            if row["reg_no"] in existing_regs:
                 updated += 1
             else:
                 inserted += 1
 
+        cursor.executemany(upsert_sql, values_list)
         conn.commit()
 
-        # ── Save version snapshot ────────────────────────────────────────
+        # ── Save version snapshot (batch) ────────────────────────────────
         total = inserted + updated
         cursor.execute(
             "INSERT INTO upload_versions (filename, uploaded_at, total_records, inserted, updated) "
@@ -510,13 +670,18 @@ def upload():
             f"INSERT INTO version_snapshots (version_id, {snap_cols}) "
             f"VALUES ({snap_placeholders})"
         )
+        snap_values_list = []
         for _, row in df.iterrows():
             values = (version_id,) + tuple(row[c] for c in DB_COLUMNS)
-            cursor.execute(snap_sql, values)
+            snap_values_list.append(values)
+        cursor.executemany(snap_sql, snap_values_list)
 
         conn.commit()
         cursor.close()
         conn.close()
+
+        # Invalidate analytics cache after data change
+        invalidate_analytics_cache()
 
         flash(
             f"Upload successful. {total} records processed, "
@@ -532,15 +697,18 @@ def upload():
 @app.route("/dashboard")
 def dashboard():
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM students ORDER BY sr_no")
-        rows = cursor.fetchall()
-        analytics = compute_analytics(rows)
-        cursor.close()
-        conn.close()
+        analytics = get_cached_analytics()
+        if not analytics:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM students ORDER BY sr_no")
+            rows = cursor.fetchall()
+            normalize_rows(rows)
+            analytics = compute_analytics(rows)
+            cursor.close()
+            conn.close()
+            save_analytics_cache(analytics)
     except Error:
-        rows = []
         analytics = {}
     return render_template("dashboard.html", analytics=analytics)
 
@@ -553,7 +721,11 @@ def data_page():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM students ORDER BY sr_no")
         rows = cursor.fetchall()
-        analytics = compute_analytics(rows)
+        normalize_rows(rows)
+        analytics = get_cached_analytics()
+        if not analytics:
+            analytics = compute_analytics(rows)
+            save_analytics_cache(analytics)
         cursor.close()
         conn.close()
     except Error:
@@ -581,13 +753,18 @@ def update_student(reg_no):
     if value is not None and str(value).strip() == "":
         value = None
 
-    # ── Data Validation ──────────────────────────────────────────────────
+    # ── Data Validation & Type Conversion ──────────────────────────────
     if value is not None:
-        if field == "ctc":
-            try:
-                float(value)
-            except (ValueError, TypeError):
-                return jsonify({"error": "CTC must be a numeric value (e.g. 5.5)"}), 400
+        if field in NUMERIC_FLOAT_COLS:
+            converted = to_float_or_none(value)
+            if converted is None:
+                return jsonify({"error": f"{field.replace('_',' ').title()} must be a numeric value"}), 400
+            value = converted
+        elif field in NUMERIC_INT_COLS:
+            converted = to_int_or_none(value)
+            if converted is None:
+                return jsonify({"error": f"{field.replace('_',' ').title()} must be a whole number"}), 400
+            value = converted
         elif field == "email":
             if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', str(value)):
                 return jsonify({"error": "Invalid email format"}), 400
@@ -611,6 +788,8 @@ def update_student(reg_no):
             return jsonify({"error": "Student not found"}), 404
 
         old_value = row.get(field)
+        if isinstance(old_value, Decimal):
+            old_value = float(old_value)
         student_name = row.get("student_name", "")
 
         # Only update if value actually changed
@@ -636,6 +815,8 @@ def update_student(reg_no):
         cursor.close()
         conn.close()
 
+        invalidate_analytics_cache()
+
         return jsonify({"ok": True, "reg_no": reg_no, "field": field, "value": value})
     except Error as e:
         return jsonify({"error": str(e)}), 500
@@ -654,6 +835,7 @@ def delete_student(reg_no):
         conn.close()
         if affected == 0:
             return jsonify({"error": "Student not found"}), 404
+        invalidate_analytics_cache()
         return jsonify({"ok": True, "deleted": reg_no})
     except Error as e:
         return jsonify({"error": str(e)}), 500
@@ -671,6 +853,7 @@ def student_profile(reg_no):
         if not student:
             flash("Student not found.", "danger")
             return redirect(url_for("dashboard"))
+        normalize_row(student)
 
         # Get uploaded files for this student
         cursor.execute(
@@ -775,12 +958,20 @@ def bulk_update_student(reg_no):
             conn.close()
             return jsonify({"error": "Student not found"}), 404
 
+        normalize_row(current)
         student_name = current.get("student_name", "")
         changes = []
 
         for field, value in fields.items():
             if value is not None and str(value).strip() == "":
                 value = None
+
+            # Convert numeric fields
+            if value is not None:
+                if field in NUMERIC_FLOAT_COLS:
+                    value = to_float_or_none(value)
+                elif field in NUMERIC_INT_COLS:
+                    value = to_int_or_none(value)
 
             old_val = current.get(field)
             if str(old_val or "") == str(value or ""):
@@ -803,6 +994,9 @@ def bulk_update_student(reg_no):
         conn.commit()
         cursor.close()
         conn.close()
+
+        if changes:
+            invalidate_analytics_cache()
 
         return jsonify({"ok": True, "reg_no": reg_no, "changed": changes})
     except Error as e:
@@ -867,6 +1061,7 @@ def api_students():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM students ORDER BY sr_no")
         rows = cursor.fetchall()
+        normalize_rows(rows)
         cursor.close()
         conn.close()
         return jsonify({"data": rows})
@@ -910,6 +1105,7 @@ def drop_all():
         conn.commit()
         cursor.close()
         conn.close()
+        invalidate_analytics_cache()
         flash(f"All student data deleted. {count} records removed.", "success")
     except Error as e:
         flash(f"Database error: {e}", "danger")
