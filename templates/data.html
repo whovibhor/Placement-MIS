@@ -32,62 +32,109 @@
         <h3 class="mb-3">Student Data</h3>
 
         {% if analytics %}
-        <!-- ── Status Quick-View Tiles ─────────────────────────── -->
-        <div class="qv-section-label">Filter by Status</div>
+        <!-- ── Data Toolbar ────────────────────────────────────── -->
+        <div class="data-toolbar mb-3">
+            <div class="data-toolbar-left">
+                <button id="btnExport" class="btn btn-sm btn-outline-light" title="Export current view as Excel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                        viewBox="0 0 16 16" class="me-1">
+                        <path
+                            d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                        <path
+                            d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                    </svg>Export Excel
+                </button>
+                <div class="dropdown d-inline-block ms-2">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="colToggleBtn"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        Columns
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-dark p-2" id="colToggleMenu"
+                        style="min-width:220px;max-height:400px;overflow-y:auto;">
+                        <div class="d-flex gap-2 mb-2">
+                            <button class="btn btn-xs btn-outline-light flex-fill" id="colShowAll">Show All</button>
+                            <button class="btn btn-xs btn-outline-light flex-fill" id="colHideOptional">Minimal</button>
+                        </div>
+                        <div id="colCheckboxes"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="data-toolbar-right">
+                <button id="btnSaveView" class="btn btn-sm btn-outline-light"
+                    title="Save current filters as a named view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                        viewBox="0 0 16 16" class="me-1">
+                        <path
+                            d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4.414A2 2 0 0 0 14.414 3L12 .586A2 2 0 0 0 10.586 0H2zm0 1h8.586L14 5.414V14H2V2z" />
+                        <path d="M6 13V8h4v5H6zm1-4v3h2V9H7z" />
+                    </svg>Save View
+                </button>
+                <div class="dropdown d-inline-block ms-2">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        Saved Views <span class="badge bg-secondary ms-1" id="viewCount">0</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" id="savedViewsMenu">
+                        <li><span class="dropdown-item text-muted small">No saved views</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Unified Filter Tiles ────────────────────────────── -->
         <div class="qv-row">
-            <button class="qv-tile qv-status qv-tile--active" data-view="all">
+            <button class="qv-tile qv-tile--active" data-filter="all">
                 <span class="qv-count">{{ analytics.total }}</span>
                 <span class="qv-label">All Students</span>
             </button>
-            <button class="qv-tile qv-status" data-view="placed">
+        </div>
+
+        <div class="qv-section-label">By Status</div>
+        <div class="qv-row">
+            <button class="qv-tile" data-filter="placed">
                 <span class="qv-count">{{ analytics.placed }}</span>
                 <span class="qv-label">Placed</span>
             </button>
-            <button class="qv-tile qv-status" data-view="unplaced">
+            <button class="qv-tile" data-filter="unplaced">
                 <span class="qv-count">{{ analytics.unplaced }}</span>
                 <span class="qv-label">Unplaced</span>
             </button>
-            <button class="qv-tile qv-status" data-view="eligible">
+            <button class="qv-tile" data-filter="eligible">
                 <span class="qv-count">{{ analytics.eligible }}</span>
                 <span class="qv-label">Eligible</span>
             </button>
-            <button class="qv-tile qv-status" data-view="ineligible">
+            <button class="qv-tile" data-filter="ineligible">
                 <span class="qv-count">{{ analytics.ineligible }}</span>
                 <span class="qv-label">Ineligible</span>
             </button>
-            <button class="qv-tile qv-status" data-view="opted_out">
+            <button class="qv-tile" data-filter="opted_out">
                 <span class="qv-count">{{ analytics.opted_out }}</span>
                 <span class="qv-label">Opted Out</span>
             </button>
         </div>
 
-        <!-- ── Program Quick-View Tiles ────────────────────────── -->
-        <div class="qv-section-label">Filter by Program</div>
+        <div class="qv-section-label">By Program</div>
         <div class="qv-row">
-            <button class="qv-tile qv-prog qv-prog--active" data-program="all">
-                <span class="qv-count">{{ analytics.total }}</span>
-                <span class="qv-label">All Programs</span>
-            </button>
-            <button class="qv-tile qv-prog" data-program="cse">
+            <button class="qv-tile" data-filter="cse">
                 <span class="qv-count" id="cnt-cse">—</span>
                 <span class="qv-label">CSE</span>
             </button>
-            <button class="qv-tile qv-prog" data-program="mba">
+            <button class="qv-tile" data-filter="mba">
                 <span class="qv-count" id="cnt-mba">—</span>
                 <span class="qv-label">MBA</span>
             </button>
-            <button class="qv-tile qv-prog" data-program="bba">
+            <button class="qv-tile" data-filter="bba">
                 <span class="qv-count" id="cnt-bba">—</span>
                 <span class="qv-label">BBA</span>
             </button>
-            <button class="qv-tile qv-prog" data-program="pharmacy">
+            <button class="qv-tile" data-filter="pharmacy">
                 <span class="qv-count" id="cnt-pharmacy">—</span>
                 <span class="qv-label">Pharmacy</span>
             </button>
         </div>
 
-        <!-- ── Program Stats Panel ─────────────────────────────── -->
-        <div id="programStats" class="prog-stats-panel" style="display:none;">
+        <!-- ── View Stats Panel ────────────────────────────────── -->
+        <div id="viewStats" class="prog-stats-panel" style="display:none;">
             <div class="prog-stats-row">
                 <div class="prog-stat">
                     <span class="prog-stat-val" id="ps-total">0</span>
@@ -123,6 +170,53 @@
                 </div>
             </div>
         </div>
+
+        <!-- ── Save View Modal ─────────────────────────────────── -->
+        <div class="modal fade" id="saveViewModal" tabindex="-1">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content"
+                    style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                    <div class="modal-header border-0 pb-0">
+                        <h6 class="modal-title">Save Current View</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id="viewNameInput" class="form-control form-control-sm"
+                            placeholder="Enter view name…" maxlength="50"
+                            style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-danger" id="btnConfirmSave">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Export Modal (column picker) ────────────────────── -->
+        <div class="modal fade" id="exportModal" tabindex="-1">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content"
+                    style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                    <div class="modal-header border-0 pb-0">
+                        <h6 class="modal-title">Export Columns</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex gap-2 mb-2">
+                            <button class="btn btn-xs btn-outline-light flex-fill" id="expSelectAll">Select All</button>
+                            <button class="btn btn-xs btn-outline-light flex-fill" id="expDeselectAll">Deselect
+                                All</button>
+                        </div>
+                        <div id="exportColList" style="max-height:300px;overflow-y:auto;"></div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-danger" id="btnConfirmExport">Export</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endif %}
 
         <!-- ── Data Table ──────────────────────────────────────── -->
@@ -137,19 +231,14 @@
                             <th>Student Name</th>
                             <th>Gender</th>
                             <th>Course</th>
-                            <th>Resume Status</th>
-                            <th>Seeking Placement</th>
                             <th>Department</th>
-                            <th>Offer Letter Status</th>
+                            <th>Mobile Number</th>
+                            <th>Email</th>
+                            <th>Seeking Placement</th>
                             <th>Status</th>
                             <th>Company Name</th>
                             <th>Designation</th>
                             <th>CTC</th>
-                            <th>Joining Date</th>
-                            <th>Joining Status</th>
-                            <th>Mobile Number</th>
-                            <th>Email</th>
-                            <th>Graduation Course</th>
                             <th>Graduation/OGPA</th>
                             <th>10%</th>
                             <th>12%</th>
@@ -157,6 +246,11 @@
                             <th>Hometown</th>
                             <th>Address</th>
                             <th>Reason</th>
+                            <th>Resume Status</th>
+                            <th>Offer Letter Status</th>
+                            <th>Joining Date</th>
+                            <th>Joining Status</th>
+                            <th>Graduation Course</th>
                         </tr>
                         <tr id="filterRow"></tr>
                     </thead>
@@ -172,24 +266,40 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="{{ url_for('static', filename='filterSystem.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
     <script id="json-data" type="application/json">{{ students_json | tojson }}</script>
 
     <script>
         $(document).ready(function () {
 
+            /* ── Column order (reordered) ───────────────────────── */
             var DATA_KEYS = [
-                'sr_no', 'reg_no', 'student_name', 'gender', 'course', 'resume_status',
-                'seeking_placement', 'department', 'offer_letter_status', 'status',
-                'company_name', 'designation', 'ctc', 'joining_date', 'joining_status',
-                'mobile_number', 'email', 'graduation_course',
+                'sr_no', 'reg_no', 'student_name', 'gender', 'course',
+                'department', 'mobile_number', 'email',
+                'seeking_placement', 'status', 'company_name', 'designation', 'ctc',
                 'graduation_ogpa', 'percent_10', 'percent_12', 'backlogs',
-                'hometown', 'address', 'reason'
+                'hometown', 'address', 'reason',
+                'resume_status', 'offer_letter_status', 'joining_date', 'joining_status',
+                'graduation_course'
             ];
+
+            var HEADER_MAP = {
+                sr_no: 'Sr No', reg_no: 'Reg No', student_name: 'Student Name',
+                gender: 'Gender', course: 'Course', department: 'Department',
+                mobile_number: 'Mobile Number', email: 'Email',
+                seeking_placement: 'Seeking Placement', status: 'Status',
+                company_name: 'Company Name', designation: 'Designation', ctc: 'CTC',
+                graduation_ogpa: 'Graduation/OGPA', percent_10: '10%', percent_12: '12%',
+                backlogs: 'Backlogs', hometown: 'Hometown', address: 'Address', reason: 'Reason',
+                resume_status: 'Resume Status', offer_letter_status: 'Offer Letter Status',
+                joining_date: 'Joining Date', joining_status: 'Joining Status',
+                graduation_course: 'Graduation Course'
+            };
 
             var RAW_DATA = JSON.parse(document.getElementById('json-data').textContent);
 
-            initFilterSystem({
+            var filterApi = initFilterSystem({
                 tableSelector: '#studentsTable',
                 data: RAW_DATA,
                 keys: DATA_KEYS,
@@ -202,7 +312,41 @@
                 }
             });
 
-            /* ── Program Filter Definitions ────────────────────── */
+            /* ── Column Visibility Toggle ───────────────────────── */
+            var table = filterApi.getTable();
+            var $colMenu = $('#colCheckboxes');
+            DATA_KEYS.forEach(function (k, idx) {
+                var label = HEADER_MAP[k] || k;
+                $colMenu.append(
+                    '<div class="form-check mb-1">' +
+                    '<input class="form-check-input col-vis-cb" type="checkbox" checked ' +
+                    'data-col="' + idx + '" id="colVis' + idx + '">' +
+                    '<label class="form-check-label small" for="colVis' + idx + '">' + label + '</label>' +
+                    '</div>'
+                );
+            });
+
+            $(document).on('change', '.col-vis-cb', function () {
+                var colIdx = parseInt($(this).data('col'));
+                var visible = $(this).is(':checked');
+                table.column(colIdx).visible(visible);
+            });
+
+            $('#colShowAll').on('click', function () {
+                $('.col-vis-cb').prop('checked', true).trigger('change');
+            });
+
+            var MINIMAL_COLS = ['sr_no', 'reg_no', 'student_name', 'course', 'department',
+                'seeking_placement', 'status', 'company_name', 'ctc'];
+            $('#colHideOptional').on('click', function () {
+                DATA_KEYS.forEach(function (k, idx) {
+                    var show = MINIMAL_COLS.indexOf(k) !== -1;
+                    table.column(idx).visible(show);
+                    $('.col-vis-cb[data-col="' + idx + '"]').prop('checked', show);
+                });
+            });
+
+            /* ── All Filter Definitions (unified) ──────────────── */
             var CSE_COURSES = [
                 'B Tech Artificial Intelligence',
                 'B Tech CSE',
@@ -211,7 +355,21 @@
                 'MTech Computer Science'
             ];
 
-            var PROGRAM_FILTERS = {
+            var FILTER_FUNCTIONS = {
+                'all': null,
+                'placed': function (r) { return r.status === 'Placed'; },
+                'unplaced': function (r) { return r.seeking_placement === 'Opted In' && r.status !== 'Placed'; },
+                'eligible': function (r) {
+                    if (r.seeking_placement !== 'Opted In') return false;
+                    var b = parseFloat(r.backlogs);
+                    return isNaN(b) || b < 3;
+                },
+                'ineligible': function (r) {
+                    if (r.seeking_placement !== 'Opted In') return false;
+                    var b = parseFloat(r.backlogs);
+                    return !isNaN(b) && b >= 3;
+                },
+                'opted_out': function (r) { return r.seeking_placement === 'Opted Out'; },
                 'cse': function (r) {
                     if (!r.course) return false;
                     for (var i = 0; i < CSE_COURSES.length; i++) {
@@ -223,82 +381,33 @@
                 'bba': function (r) { return r.course && r.course.indexOf('BBA') === 0; },
                 'pharmacy': function (r) {
                     if (!r.course) return false;
-                    var c = r.course;
-                    return c.indexOf('B Pharmacy') === 0 || c.indexOf('M Pharmacy') === 0;
+                    return r.course.indexOf('B Pharmacy') === 0 || r.course.indexOf('M Pharmacy') === 0;
                 }
             };
 
+            var activeFilter = 'all';
+
             /* ── Init program tile counts ──────────────────────── */
-            Object.keys(PROGRAM_FILTERS).forEach(function (key) {
-                var count = RAW_DATA.filter(PROGRAM_FILTERS[key]).length;
+            ['cse', 'mba', 'bba', 'pharmacy'].forEach(function (key) {
+                var count = filterApi.getRawData().filter(FILTER_FUNCTIONS[key]).length;
                 var el = document.getElementById('cnt-' + key);
                 if (el) el.textContent = count;
             });
 
-            /* ── Status Filters ────────────────────────────────── */
-            var activeStatus = 'all';
-            var activeProgram = 'all';
-
-            function getStatusFilter(view) {
-                switch (view) {
-                    case 'placed':
-                        return function (r) { return r.status === 'Placed'; };
-                    case 'unplaced':
-                        return function (r) { return r.seeking_placement === 'Opted In' && r.status !== 'Placed'; };
-                    case 'eligible':
-                        return function (r) {
-                            if (r.seeking_placement !== 'Opted In') return false;
-                            var b = parseFloat(r.backlogs);
-                            return isNaN(b) || b < 3;
-                        };
-                    case 'ineligible':
-                        return function (r) {
-                            if (r.seeking_placement !== 'Opted In') return false;
-                            var b = parseFloat(r.backlogs);
-                            return !isNaN(b) && b >= 3;
-                        };
-                    case 'opted_out':
-                        return function (r) { return r.seeking_placement === 'Opted Out'; };
-                    default:
-                        return null;
-                }
-            }
-
-            /* ── Combined Filter ───────────────────────────────── */
-            function getFilteredData() {
-                var data = RAW_DATA;
-                if (activeProgram !== 'all' && PROGRAM_FILTERS[activeProgram]) {
-                    data = data.filter(PROGRAM_FILTERS[activeProgram]);
-                }
-                var statusFn = getStatusFilter(activeStatus);
-                if (statusFn) data = data.filter(statusFn);
-                return data;
-            }
-
-            function refreshTable() {
-                var table = $('#studentsTable').DataTable();
-                var displayData = getFilteredData();
-                table.rows().remove();
-                table.rows.add(displayData);
-                table.draw(false);
-            }
-
-            /* ── Program Stats Computation ─────────────────────── */
-            function computeProgramStats(programData) {
-                var total = programData.length;
-                var optedIn = programData.filter(function (r) { return r.seeking_placement === 'Opted In'; }).length;
-                var eligible = programData.filter(function (r) {
+            /* ── Stats Computation ─────────────────────────────── */
+            function computeViewStats(data) {
+                var total = data.length;
+                var optedIn = data.filter(function (r) { return r.seeking_placement === 'Opted In'; }).length;
+                var eligible = data.filter(function (r) {
                     if (r.seeking_placement !== 'Opted In') return false;
                     var b = parseFloat(r.backlogs);
                     return isNaN(b) || b < 3;
                 }).length;
-                var placed = programData.filter(function (r) { return r.status === 'Placed'; }).length;
-
-                var ctcVals = programData
+                var placed = data.filter(function (r) { return r.status === 'Placed'; }).length;
+                var ctcVals = data
                     .filter(function (r) { return r.status === 'Placed' && r.ctc; })
                     .map(function (r) { return parseFloat(r.ctc); })
                     .filter(function (v) { return !isNaN(v) && v > 0; });
-
                 var meanCTC = '—', medianCTC = '—', highestCTC = '—';
                 if (ctcVals.length > 0) {
                     var sum = ctcVals.reduce(function (a, b) { return a + b; }, 0);
@@ -310,7 +419,6 @@
                         : ctcVals[mid].toFixed(2);
                     highestCTC = ctcVals[ctcVals.length - 1].toFixed(2);
                 }
-
                 return {
                     total: total, optedIn: optedIn, eligible: eligible, placed: placed,
                     meanCTC: meanCTC, medianCTC: medianCTC, highestCTC: highestCTC,
@@ -318,13 +426,14 @@
                 };
             }
 
-            function updateProgramStats() {
-                if (activeProgram === 'all') {
-                    $('#programStats').slideUp(150);
+            function updateStats() {
+                if (activeFilter === 'all') {
+                    $('#viewStats').slideUp(150);
                     return;
                 }
-                var progData = RAW_DATA.filter(PROGRAM_FILTERS[activeProgram]);
-                var s = computeProgramStats(progData);
+                var fn = FILTER_FUNCTIONS[activeFilter];
+                var viewData = fn ? filterApi.getRawData().filter(fn) : filterApi.getRawData();
+                var s = computeViewStats(viewData);
                 $('#ps-total').text(s.total);
                 $('#ps-optedin').text(s.optedIn);
                 $('#ps-eligible').text(s.eligible);
@@ -333,28 +442,213 @@
                 $('#ps-median').text(s.medianCTC !== '—' ? s.medianCTC + ' LPA' : '—');
                 $('#ps-highest').text(s.highestCTC !== '—' ? s.highestCTC + ' LPA' : '—');
                 $('#ps-rate').text(s.placementRate !== '—' ? s.placementRate + '%' : '—');
-                $('#programStats').slideDown(150);
+                $('#viewStats').slideDown(150);
             }
 
-            /* ── Status Tile Click ─────────────────────────────── */
-            $(document).on('click', '.qv-status', function () {
-                activeStatus = $(this).data('view');
-                $('.qv-status').removeClass('qv-tile--active');
+            /* ── Tile Click (mutual exclusion) ─────────────────── */
+            $(document).on('click', '.qv-tile[data-filter]', function () {
+                var filterKey = $(this).data('filter');
+                activeFilter = filterKey;
+                $('.qv-tile').removeClass('qv-tile--active');
                 $(this).addClass('qv-tile--active');
-                refreshTable();
+                filterApi.setPreFilter(FILTER_FUNCTIONS[filterKey]);
+                updateStats();
             });
 
-            /* ── Program Tile Click ────────────────────────────── */
-            $(document).on('click', '.qv-prog', function () {
-                activeProgram = $(this).data('program');
-                $('.qv-prog').removeClass('qv-prog--active');
-                $(this).addClass('qv-prog--active');
-                updateProgramStats();
-                refreshTable();
+            /* ── Export Excel (with column picker modal) ────────── */
+            $('#btnExport').on('click', function () {
+                var data = filterApi.getCurrentData();
+                if (!data || data.length === 0) { alert('No data to export.'); return; }
+                /* Build checkboxes in export modal */
+                var $list = $('#exportColList').empty();
+                DATA_KEYS.forEach(function (k, idx) {
+                    var label = HEADER_MAP[k] || k;
+                    $list.append(
+                        '<div class="form-check mb-1">' +
+                        '<input class="form-check-input exp-col-cb" type="checkbox" checked ' +
+                        'data-key="' + k + '" id="expCol' + idx + '">' +
+                        '<label class="form-check-label small" for="expCol' + idx + '">' + label + '</label>' +
+                        '</div>'
+                    );
+                });
+                new bootstrap.Modal('#exportModal').show();
             });
+
+            $('#expSelectAll').on('click', function () { $('.exp-col-cb').prop('checked', true); });
+            $('#expDeselectAll').on('click', function () { $('.exp-col-cb').prop('checked', false); });
+
+            $('#btnConfirmExport').on('click', function () {
+                var selectedKeys = [];
+                $('.exp-col-cb:checked').each(function () { selectedKeys.push($(this).data('key')); });
+                if (selectedKeys.length === 0) { alert('Select at least one column.'); return; }
+
+                var data = filterApi.getCurrentData();
+                var hasSrNo = selectedKeys.indexOf('sr_no') !== -1;
+
+                /* Build rows with fresh serial numbers */
+                var headers = selectedKeys.map(function (k) { return HEADER_MAP[k] || k; });
+                var aoa = [headers];
+                data.forEach(function (row, ri) {
+                    var r = [];
+                    selectedKeys.forEach(function (k) {
+                        r.push(k === 'sr_no' ? (ri + 1) : (row[k] || ''));
+                    });
+                    aoa.push(r);
+                });
+
+                var ws = XLSX.utils.aoa_to_sheet(aoa);
+
+                /* ── Styling ─────────────────────────────────── */
+                var range = XLSX.utils.decode_range(ws['!ref']);
+                var headerStyle = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+                    fill: { fgColor: { rgb: '1B3A6B' } },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                    border: {
+                        top: { style: 'thin', color: { rgb: '000000' } },
+                        bottom: { style: 'thin', color: { rgb: '000000' } },
+                        left: { style: 'thin', color: { rgb: '000000' } },
+                        right: { style: 'thin', color: { rgb: '000000' } }
+                    }
+                };
+                var cellStyle = {
+                    alignment: { horizontal: 'center', vertical: 'center' },
+                    border: {
+                        top: { style: 'thin', color: { rgb: '000000' } },
+                        bottom: { style: 'thin', color: { rgb: '000000' } },
+                        left: { style: 'thin', color: { rgb: '000000' } },
+                        right: { style: 'thin', color: { rgb: '000000' } }
+                    }
+                };
+
+                for (var C = range.s.c; C <= range.e.c; C++) {
+                    /* Header row */
+                    var hAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+                    if (ws[hAddr]) ws[hAddr].s = headerStyle;
+                    /* Data rows */
+                    for (var R = 1; R <= range.e.r; R++) {
+                        var addr = XLSX.utils.encode_cell({ r: R, c: C });
+                        if (ws[addr]) ws[addr].s = cellStyle;
+                    }
+                }
+
+                /* Auto-fit column widths */
+                ws['!cols'] = selectedKeys.map(function (k) {
+                    var header = HEADER_MAP[k] || k;
+                    var maxLen = header.length;
+                    data.forEach(function (row) {
+                        var v = String(row[k] || '');
+                        if (v.length > maxLen) maxLen = v.length;
+                    });
+                    return { wch: Math.min(maxLen + 2, 45) };
+                });
+
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Students');
+                var label = activeFilter === 'all' ? 'all_students' : activeFilter;
+                var fname = 'placement_' + label + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+                XLSX.writeFile(wb, fname);
+                bootstrap.Modal.getInstance('#exportModal').hide();
+            });
+
+            /* ── Saved Views ───────────────────────────────────── */
+            var VIEWS_KEY = 'pmis_saved_views';
+            var FILTER_LABELS = {
+                all: 'All Students', placed: 'Placed', unplaced: 'Unplaced',
+                eligible: 'Eligible', ineligible: 'Ineligible', opted_out: 'Opted Out',
+                cse: 'CSE', mba: 'MBA', bba: 'BBA', pharmacy: 'Pharmacy'
+            };
+
+            function getSavedViews() {
+                try { return JSON.parse(localStorage.getItem(VIEWS_KEY)) || []; }
+                catch (e) { return []; }
+            }
+            function saveViews(views) { localStorage.setItem(VIEWS_KEY, JSON.stringify(views)); }
+
+            function renderViewsMenu() {
+                var views = getSavedViews();
+                var $menu = $('#savedViewsMenu');
+                $('#viewCount').text(views.length);
+                $menu.empty();
+                if (views.length === 0) {
+                    $menu.append('<li><span class="dropdown-item text-muted small">No saved views</span></li>');
+                    return;
+                }
+                views.forEach(function (v, idx) {
+                    var safe = $('<i>').text(v.name).html();
+                    var cols = v.columnFilters ? Object.keys(v.columnFilters).length : 0;
+                    var extra = cols > 0 ? ' +' + cols + ' filter' + (cols > 1 ? 's' : '') : '';
+                    $menu.append(
+                        '<li class="sv-item">' +
+                        '<a class="dropdown-item sv-load" href="#" data-idx="' + idx + '">' +
+                        '<span class="sv-name">' + safe + '</span>' +
+                        '<small class="text-muted ms-2">' + (v.filterLabel || '') + extra + '</small>' +
+                        '</a>' +
+                        '<button class="sv-delete" data-idx="' + idx + '" title="Delete view">&times;</button>' +
+                        '</li>'
+                    );
+                });
+            }
+
+            /* Save View */
+            $('#btnSaveView').on('click', function () {
+                $('#viewNameInput').val('').removeClass('is-invalid');
+                new bootstrap.Modal('#saveViewModal').show();
+                setTimeout(function () { $('#viewNameInput').focus(); }, 300);
+            });
+
+            $('#btnConfirmSave').on('click', function () {
+                var name = $('#viewNameInput').val().trim();
+                if (!name) { $('#viewNameInput').addClass('is-invalid').focus(); return; }
+                var views = getSavedViews();
+                views.push({
+                    name: name,
+                    filter: activeFilter,
+                    filterLabel: FILTER_LABELS[activeFilter] || activeFilter,
+                    columnFilters: filterApi.getColumnFilters(),
+                    createdAt: new Date().toISOString()
+                });
+                saveViews(views);
+                renderViewsMenu();
+                bootstrap.Modal.getInstance('#saveViewModal').hide();
+            });
+
+            $('#viewNameInput').on('keydown', function (e) {
+                if (e.key === 'Enter') $('#btnConfirmSave').click();
+                $(this).removeClass('is-invalid');
+            });
+
+            /* Load View */
+            $(document).on('click', '.sv-load', function (e) {
+                e.preventDefault();
+                var v = getSavedViews()[$(this).data('idx')];
+                if (!v) return;
+                activeFilter = v.filter || 'all';
+                $('.qv-tile').removeClass('qv-tile--active');
+                $('.qv-tile[data-filter="' + activeFilter + '"]').addClass('qv-tile--active');
+                filterApi.setPreFilter(FILTER_FUNCTIONS[activeFilter]);
+                if (v.columnFilters && Object.keys(v.columnFilters).length > 0) {
+                    filterApi.setColumnFilters(v.columnFilters);
+                } else {
+                    filterApi.clearColumnFilters();
+                }
+                updateStats();
+            });
+
+            /* Delete View */
+            $(document).on('click', '.sv-delete', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                var views = getSavedViews();
+                views.splice($(this).data('idx'), 1);
+                saveViews(views);
+                renderViewsMenu();
+            });
+
+            renderViewsMenu();
 
             /* ── Click student name → open profile ─────────────── */
-            $(document).on('click', '#studentsTable tbody td:nth-child(3)', function (e) {
+            $(document).on('click', '#studentsTable tbody td:nth-child(3)', function () {
                 var table = $('#studentsTable').DataTable();
                 var rowData = table.row($(this).parent()).data();
                 if (rowData && rowData.reg_no) {

@@ -56,7 +56,8 @@ function initFilterSystem(opts) {
 
     /* ── 7. Lazy-populate tracking ──────────────────────────── */
     var FILTER_POPULATED = {};
-
+    /* ── Pre-filter function (set by external caller) ───── */
+    var preFilterFn = null;
     /* ── Build filter cells (buttons in table, panels on body) ── */
     var $fr = $('#filterRow');
     var cols = $('#headerRow th').length;
@@ -108,12 +109,13 @@ function initFilterSystem(opts) {
        2 + 3 + 4 + 5.  Optimised filter engine
        ────────────────────────────────────────────────────────── */
     function applyAllFilters() {
+        var baseData = preFilterFn ? LOCAL_DATA.filter(preFilterFn) : LOCAL_DATA;
         var keys = Object.keys(ACTIVE_FILTERS);
 
-        /* 5. Short-circuit: no filters → show everything */
+        /* 5. Short-circuit: no column filters → show pre-filtered set */
         if (keys.length === 0) {
             table.rows().remove();
-            table.rows.add(LOCAL_DATA);
+            table.rows.add(baseData);
             table.draw(false);
             return;
         }
@@ -129,13 +131,13 @@ function initFilterSystem(opts) {
 
         if (compiled.length === 0) {
             table.rows().remove();
-            table.rows.add(LOCAL_DATA);
+            table.rows.add(baseData);
             table.draw(false);
             return;
         }
 
         /* 3. Single-pass filter with compiled predicates */
-        var filtered = LOCAL_DATA.filter(function (row) {
+        var filtered = baseData.filter(function (row) {
             for (var j = 0; j < compiled.length; j++) {
                 if (!compiled[j].set.has(row[compiled[j].key])) return false;
             }
@@ -291,4 +293,71 @@ function initFilterSystem(opts) {
         if (!$(e.target).closest('.cf-panel, .cf-btn').length)
             $('.cf-panel.open').removeClass('open');
     });
+
+    /* ── Public API ──────────────────────────────────────── */
+    return {
+        setPreFilter: function (fn) {
+            preFilterFn = fn || null;
+            applyAllFilters();
+        },
+        getColumnFilters: function () {
+            return JSON.parse(JSON.stringify(ACTIVE_FILTERS));
+        },
+        setColumnFilters: function (filters) {
+            ACTIVE_FILTERS = filters || {};
+            for (var i = 0; i < DATA_KEYS.length; i++) {
+                var k = DATA_KEYS[i];
+                var $btn = $('.cf-btn[data-col="' + i + '"]:first');
+                if (ACTIVE_FILTERS[k] && ACTIVE_FILTERS[k].length > 0) {
+                    $btn.text('\u25BC ' + ACTIVE_FILTERS[k].length + ' sel').addClass('cf-active');
+                    if (FILTER_POPULATED[k]) {
+                        var $panel = getPanel(i);
+                        var allowed = new Set(ACTIVE_FILTERS[k]);
+                        $panel.find('.cf-list li').each(function () {
+                            $(this).find('input').prop('checked', allowed.has($(this).attr('data-val')));
+                        });
+                        countUpdate(i);
+                    }
+                } else {
+                    $btn.text('\u25BC All').removeClass('cf-active');
+                    if (FILTER_POPULATED[k]) {
+                        getPanel(i).find('.cf-list li input').prop('checked', true);
+                        countUpdate(i);
+                    }
+                }
+            }
+            applyAllFilters();
+        },
+        clearColumnFilters: function () {
+            ACTIVE_FILTERS = {};
+            $('.cf-btn').text('\u25BC All').removeClass('cf-active');
+            Object.keys(FILTER_POPULATED).forEach(function (k) {
+                var idx = DATA_KEYS.indexOf(k);
+                if (idx >= 0) {
+                    getPanel(idx).find('.cf-list li input').prop('checked', true);
+                    countUpdate(idx);
+                }
+            });
+            applyAllFilters();
+        },
+        getCurrentData: function () {
+            var baseData = preFilterFn ? LOCAL_DATA.filter(preFilterFn) : LOCAL_DATA;
+            var keys = Object.keys(ACTIVE_FILTERS);
+            if (keys.length === 0) return baseData.slice();
+            var compiled = [];
+            for (var i = 0; i < keys.length; i++) {
+                var vals = ACTIVE_FILTERS[keys[i]];
+                if (vals && vals.length > 0) compiled.push({ key: keys[i], set: new Set(vals) });
+            }
+            if (compiled.length === 0) return baseData.slice();
+            return baseData.filter(function (row) {
+                for (var j = 0; j < compiled.length; j++) {
+                    if (!compiled[j].set.has(row[compiled[j].key])) return false;
+                }
+                return true;
+            });
+        },
+        getRawData: function () { return LOCAL_DATA; },
+        getTable: function () { return table; }
+    };
 }

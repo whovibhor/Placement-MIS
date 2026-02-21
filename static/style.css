@@ -879,13 +879,6 @@ table.dataTable thead .sorting_desc::after {
     margin-bottom: 8px;
 }
 
-/* ── Program Tile Active State ──────────────────────── */
-.qv-prog--active {
-    border-color: var(--accent-red);
-    background: rgba(229, 57, 53, 0.12);
-    box-shadow: 0 0 8px rgba(229, 57, 53, 0.2);
-}
-
 /* ── Program Stats Panel ────────────────────────────── */
 .prog-stats-panel {
     background: var(--bg-card);
@@ -1292,8 +1285,128 @@ table.dataTable thead .sorting_desc::after {
     color: var(--text-secondary);
 }
 
+/* ── Data Toolbar ───────────────────────────────────── */
+.data-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.data-toolbar .btn-outline-light {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    padding: 5px 14px;
+}
+
+.data-toolbar .btn-outline-light:hover {
+    border-color: var(--accent-red);
+    color: var(--text-primary);
+    background: rgba(229, 57, 53, 0.08);
+}
+
+.data-toolbar .dropdown-toggle::after {
+    margin-left: 6px;
+}
+
+/* ── Saved View Dropdown Items ──────────────────────── */
+.sv-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.sv-item .sv-load {
+    flex: 1;
+    padding-right: 32px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+}
+
+.sv-item .sv-name {
+    font-weight: 500;
+}
+
+.sv-delete {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1;
+    opacity: 0.4;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.sv-delete:hover {
+    opacity: 1;
+    color: var(--accent-red);
+}
+
 @media (max-width: 768px) {
     .global-search-wrap {
         width: 180px;
     }
+
+    .data-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ── Sticky Table Header ─────────────────────────────── */
+.table-responsive {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+#studentsTable thead tr#headerRow th {
+    position: sticky;
+    top: 0;
+    z-index: 11;
+    box-shadow: 0 1px 0 var(--border-color);
+}
+
+/* Filter row sticks just below header row */
+#studentsTable thead tr#filterRow th {
+    position: sticky;
+    top: 32px;
+    z-index: 10;
+    background: var(--bg-surface) !important;
+}
+
+/* ── Column Toggle Dropdown ──────────────────────────── */
+#colToggleMenu .form-check-input {
+    background-color: var(--bg-surface);
+    border-color: var(--border-color);
+}
+
+#colToggleMenu .form-check-input:checked {
+    background-color: var(--accent-red);
+    border-color: var(--accent-red);
+}
+
+.btn-xs {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.72rem;
+}
+
+/* ── Export Modal checkboxes ─────────────────────────── */
+#exportColList .form-check-input {
+    background-color: var(--bg-surface);
+    border-color: var(--border-color);
+}
+
+#exportColList .form-check-input:checked {
+    background-color: var(--accent-red);
+    border-color: var(--accent-red);
 }
