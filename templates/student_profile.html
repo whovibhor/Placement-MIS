@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ student.student_name }} — Placement MIS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Placement MIS</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
+                <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4" style="max-width: 960px;">
+
+        <!-- Toast for save feedback -->
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+            <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body" id="toastMsg">Saved successfully.</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- ── Profile Header ──────────────────────────────── -->
+        <div class="profile-header">
+            <h4 id="displayName">{{ student.student_name or 'N/A' }}</h4>
+            <div class="profile-meta">
+                <span id="displayRegNo">{{ student.reg_no }}</span> &middot;
+                <span id="displayDept">{{ student.department or '' }}</span> &middot;
+                <span id="displayCourse">{{ student.course or '' }}</span>
+            </div>
+            <div class="profile-meta mt-1" id="statusBadges">
+                {% if student.status == 'Placed' %}
+                <span class="badge bg-success">Placed</span>
+                {% elif student.seeking_placement == 'Opted Out' %}
+                <span class="badge bg-secondary">Opted Out</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Unplaced</span>
+                {% endif %}
+                {% if student.seeking_placement == 'Opted In' %}
+                {% set b = student.backlogs|default('', true) %}
+                {% if b == '' or b is none or b|string|int(-1) < 3 %} <span class="badge bg-info text-dark">
+                    Eligible</span>
+                    {% else %}
+                    <span class="badge bg-danger">Ineligible</span>
+                    {% endif %}
+                    {% endif %}
+            </div>
+        </div>
+
+        <!-- ── Personal Information ────────────────────────── -->
+        <div class="profile-section">
+            <h6>Personal Information</h6>
+            <div class="profile-grid">
+                <div class="profile-field" data-field="student_name">
+                    <div class="profile-field-label">Student Name</div>
+                    <div class="profile-field-value editable-field">{{ student.student_name or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="gender">
+                    <div class="profile-field-label">Gender</div>
+                    <div class="profile-field-value editable-field" data-choices="Male,Female">{{ student.gender or '—'
+                        }}</div>
+                </div>
+                <div class="profile-field" data-field="mobile_number">
+                    <div class="profile-field-label">Mobile Number</div>
+                    <div class="profile-field-value editable-field">{{ student.mobile_number or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="email">
+                    <div class="profile-field-label">Email</div>
+                    <div class="profile-field-value editable-field">{{ student.email or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="hometown">
+                    <div class="profile-field-label">Hometown</div>
+                    <div class="profile-field-value editable-field">{{ student.hometown or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="address" style="grid-column: span 2;">
+                    <div class="profile-field-label">Address</div>
+                    <div class="profile-field-value editable-field">{{ student.address or '—' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Academic Information ────────────────────────── -->
+        <div class="profile-section">
+            <h6>Academic Information</h6>
+            <div class="profile-grid">
+                <div class="profile-field" data-field="course">
+                    <div class="profile-field-label">Course</div>
+                    <div class="profile-field-value editable-field">{{ student.course or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="department">
+                    <div class="profile-field-label">Department</div>
+                    <div class="profile-field-value editable-field">{{ student.department or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="graduation_course">
+                    <div class="profile-field-label">Graduation Course</div>
+                    <div class="profile-field-value editable-field">{{ student.graduation_course or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="graduation_ogpa">
+                    <div class="profile-field-label">Graduation / OGPA</div>
+                    <div class="profile-field-value editable-field">{{ student.graduation_ogpa or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="percent_10">
+                    <div class="profile-field-label">10th Percentage</div>
+                    <div class="profile-field-value editable-field">{{ student.percent_10 or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="percent_12">
+                    <div class="profile-field-label">12th Percentage</div>
+                    <div class="profile-field-value editable-field">{{ student.percent_12 or '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="backlogs">
+                    <div class="profile-field-label">Backlogs</div>
+                    <div class="profile-field-value editable-field">{{ student.backlogs if student.backlogs is not none
+                        else '—' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Placement Information (special flow) ────────── -->
+        <div class="profile-section" id="placementSection">
+            <h6>Placement Information</h6>
+            <div class="profile-grid">
+                <div class="profile-field" data-field="seeking_placement">
+                    <div class="profile-field-label">Seeking Placement</div>
+                    <div class="profile-field-value editable-field"
+                        data-choices="Opted In,Opted Out,Not Registered,Debarred">{{ student.seeking_placement or '—' }}
+                    </div>
+                </div>
+                <div class="profile-field" data-field="resume_status">
+                    <div class="profile-field-label">Resume Status</div>
+                    <div class="profile-field-value editable-field" data-choices="Yes,No">{{ student.resume_status or
+                        '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="status">
+                    <div class="profile-field-label">Placement Status</div>
+                    <div class="profile-field-value editable-field" data-choices="Placed,Unplaced">{{ student.status or
+                        '—' }}</div>
+                </div>
+                <div class="profile-field" data-field="reason" style="grid-column: span 2;">
+                    <div class="profile-field-label">Reason</div>
+                    <div class="profile-field-value editable-field">{{ student.reason or '—' }}</div>
+                </div>
+            </div>
+
+            <!-- ── Placement Details (shown when Placed) ──── -->
+            <div id="placementDetails" class="mt-3" style="{{ '' if student.status == 'Placed' else 'display:none;' }}">
+                <div class="placement-details-banner">Placement Details</div>
+                <div class="profile-grid">
+                    <div class="profile-field" data-field="company_name">
+                        <div class="profile-field-label">Company Name</div>
+                        <div class="profile-field-value editable-field">{{ student.company_name or '—' }}</div>
+                    </div>
+                    <div class="profile-field" data-field="designation">
+                        <div class="profile-field-label">Designation</div>
+                        <div class="profile-field-value editable-field">{{ student.designation or '—' }}</div>
+                    </div>
+                    <div class="profile-field" data-field="ctc">
+                        <div class="profile-field-label">CTC (LPA)</div>
+                        <div class="profile-field-value editable-field">{{ student.ctc or '—' }}</div>
+                    </div>
+                    <div class="profile-field" data-field="offer_letter_status">
+                        <div class="profile-field-label">Offer Letter Status</div>
+                        <div class="profile-field-value editable-field"
+                            data-choices="Yes,No,Mail Only,LOI,Confirmation Message">{{ student.offer_letter_status or
+                            '—' }}</div>
+                    </div>
+                    <div class="profile-field" data-field="joining_date">
+                        <div class="profile-field-label">Joining Date</div>
+                        <div class="profile-field-value editable-field">{{ student.joining_date or '—' }}</div>
+                    </div>
+                    <div class="profile-field" data-field="joining_status">
+                        <div class="profile-field-label">Joining Status</div>
+                        <div class="profile-field-value editable-field" data-choices="Joined,Not Joined,Pending">{{
+                            student.joining_status or '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Files ───────────────────────────────────────── -->
+        <div class="profile-section">
+            <h6>Documents &amp; Files</h6>
+
+            {% if files %}
+            <ul class="profile-files-list mb-3">
+                {% for f in files %}
+                <li>
+                    <div>
+                        <span class="badge bg-secondary me-2">{{ f.file_type }}</span>
+                        <a href="{{ url_for('serve_upload', filename=f.stored_name) }}" target="_blank">
+                            {{ f.original_name }}
+                        </a>
+                        <small class="text-muted ms-2">{{ f.uploaded_at.strftime('%d %b %Y, %I:%M %p') if f.uploaded_at
+                            else '' }}</small>
+                    </div>
+                    <form method="POST"
+                        action="{{ url_for('delete_student_file', reg_no=student.reg_no, file_id=f.id) }}"
+                        onsubmit="return confirm('Delete this file?');" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">No files uploaded yet.</p>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('upload_student_file', reg_no=student.reg_no) }}"
+                enctype="multipart/form-data" class="d-flex align-items-end gap-3 flex-wrap">
+                <div>
+                    <label class="form-label" style="font-size:0.8rem;">File Type</label>
+                    <select name="file_type" class="form-select form-select-sm"
+                        style="width:180px; background:var(--bg-dark); color:var(--text-primary); border-color:var(--border-color);">
+                        <option value="resume">Resume</option>
+                        <option value="offer_letter">Offer Letter</option>
+                        <option value="loi">LOI</option>
+                        <option value="confirmation">Confirmation Message</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:0.8rem;">Choose File</label>
+                    <input type="file" name="file" class="form-control form-control-sm"
+                        style="width:280px; background:var(--bg-dark); color:var(--text-primary); border-color:var(--border-color);"
+                        required>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+            </form>
+        </div>
+
+        <!-- ── Change History for this student ─────────────── -->
+        <div class="profile-section">
+            <h6>Change History</h6>
+            <div id="studentChangeLog">
+                <p class="text-muted">Loading...</p>
+            </div>
+        </div>
+
+        <div class="text-center my-4">
+            <a href="{{ url_for('data_page') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Data</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var REG_NO = {{ student.reg_no | tojson
+        }};
+        var saveToast = new bootstrap.Toast(document.getElementById('saveToast'), { delay: 2000 });
+
+        function showToast(msg, isError) {
+            var el = document.getElementById('saveToast');
+            el.className = 'toast align-items-center border-0 ' + (isError ? 'text-bg-danger' : 'text-bg-success');
+            document.getElementById('toastMsg').textContent = msg;
+            saveToast.show();
+        }
+
+        /* ── Inline Editing ──────────────────────────────── */
+        // Click on any editable-field to edit it
+        $(document).on('click', '.editable-field', function () {
+            var $val = $(this);
+            if ($val.find('input, select').length) return; // already editing
+
+            var $field = $val.closest('.profile-field');
+            var fieldName = $field.data('field');
+            var currentVal = $val.text().trim();
+            if (currentVal === '—') currentVal = '';
+
+            var choices = $val.data('choices');
+
+            var $input;
+            if (choices) {
+                var opts = String(choices).split(',');
+                $input = $('<select class="form-select form-select-sm edit-inline-input"></select>');
+                $input.append('<option value="">— Clear —</option>');
+                opts.forEach(function (o) {
+                    var sel = (o.trim() === currentVal) ? ' selected' : '';
+                    $input.append('<option value="' + o.trim() + '"' + sel + '>' + o.trim() + '</option>');
+                });
+            } else {
+                $input = $('<input type="text" class="form-control form-control-sm edit-inline-input">');
+                $input.val(currentVal);
+            }
+
+            $val.data('original', currentVal);
+            $val.html('').append($input);
+            $input.focus();
+            if ($input.is('input')) $input.select();
+
+            // Save on blur or Enter
+            function saveField() {
+                var newVal = $input.val().trim();
+                var origVal = $val.data('original') || '';
+
+                $val.html(newVal || '—');
+
+                if (newVal === origVal) return; // unchanged
+
+                // If status changed to "Placed", show placement details
+                if (fieldName === 'status') {
+                    if (newVal === 'Placed') {
+                        $('#placementDetails').slideDown(200);
+                    } else {
+                        $('#placementDetails').slideUp(200);
+                    }
+                }
+
+                // Save to server
+                $.ajax({
+                    url: '/api/student/' + encodeURIComponent(REG_NO),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ field: fieldName, value: newVal || null }),
+                    success: function () {
+                        showToast('Saved: ' + fieldName.replace(/_/g, ' '));
+                        loadChangeLog();
+                    },
+                    error: function (xhr) {
+                        showToast('Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown'), true);
+                        $val.text(origVal || '—');
+                    }
+                });
+            }
+
+            $input.on('blur', function () {
+                setTimeout(saveField, 100);
+            });
+            $input.on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); $input.blur(); }
+                if (e.key === 'Escape') {
+                    $val.text($val.data('original') || '—');
+                }
+            });
+            if ($input.is('select')) {
+                $input.on('change', function () {
+                    saveField();
+                });
+            }
+        });
+
+        /* ── Change Log ──────────────────────────────────── */
+        function loadChangeLog() {
+            $.getJSON('/api/edit-log?reg_no=' + encodeURIComponent(REG_NO) + '&limit=50', function (res) {
+                var box = $('#studentChangeLog');
+                if (!res.data || res.data.length === 0) {
+                    box.html('<p class="text-muted">No changes recorded for this student.</p>');
+                    return;
+                }
+                var html = '<table class="table table-sm" style="font-size:0.82rem;"><thead><tr><th>Time</th><th>Field</th><th>Old</th><th>New</th></tr></thead><tbody>';
+                res.data.forEach(function (r) {
+                    html += '<tr><td>' + r.changed_at + '</td><td>' + r.field_name.replace(/_/g, ' ') + '</td><td class="text-danger">' + (r.old_value || '—') + '</td><td class="text-success">' + (r.new_value || '—') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                box.html(html);
+            });
+        }
+        loadChangeLog();
+        });
+    </script>
+</body>
+
+</html>

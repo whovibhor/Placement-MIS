@@ -716,3 +716,455 @@ table.dataTable thead .sorting_desc::after {
     padding: 3px 10px !important;
     font-size: 0.75rem !important;
 }
+
+/* ── Analytics: Stat Cards ──────────────────────────── */
+.stat-cards-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    flex: 1 1 130px;
+    min-width: 120px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.15s;
+}
+
+.stat-card:hover {
+    border-color: var(--accent-red);
+    transform: translateY(-2px);
+}
+
+.stat-card--accent {
+    border-color: var(--accent-red);
+    background: rgba(229, 57, 53, 0.06);
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-white);
+    line-height: 1.2;
+}
+
+.stat-value small {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value--sm {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* ── Analytics: Charts ──────────────────────────────── */
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.chart-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    min-height: 280px;
+}
+
+.chart-box--wide {
+    grid-column: span 1;
+}
+
+.chart-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.chart-box canvas {
+    width: 100% !important;
+    max-height: 250px;
+}
+
+@media (max-width: 992px) {
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+        flex: 1 1 100px;
+        min-width: 100px;
+    }
+}
+
+/* ── Quick-View Tiles ───────────────────────────────── */
+.qv-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.qv-tile {
+    flex: 1 1 120px;
+    max-width: 180px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.qv-tile:hover {
+    border-color: var(--accent-red);
+    background: rgba(229, 57, 53, 0.06);
+}
+
+.qv-tile--active {
+    border-color: var(--accent-red);
+    background: rgba(229, 57, 53, 0.12);
+    box-shadow: 0 0 8px rgba(229, 57, 53, 0.2);
+}
+
+.qv-count {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.qv-label {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* ── Quick-View Section Label ───────────────────────── */
+.qv-section-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+/* ── Program Tile Active State ──────────────────────── */
+.qv-prog--active {
+    border-color: var(--accent-red);
+    background: rgba(229, 57, 53, 0.12);
+    box-shadow: 0 0 8px rgba(229, 57, 53, 0.2);
+}
+
+/* ── Program Stats Panel ────────────────────────────── */
+.prog-stats-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--accent-red);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+}
+
+.prog-stats-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.prog-stat {
+    text-align: center;
+    min-width: 80px;
+    flex: 0 1 auto;
+}
+
+.prog-stat-val {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-white);
+    line-height: 1.2;
+}
+
+.prog-stat-lbl {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* ── Muted Stat Card (Opted Out / Ineligible) ───────── */
+.stat-card--muted {
+    opacity: 0.6;
+    max-width: 200px;
+}
+
+.stat-card--muted:hover {
+    opacity: 0.85;
+}
+
+/* ── Table Section Hint ─────────────────────────────── */
+.table-section-hint {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+/* ── Clickable Student Name ─────────────────────────── */
+#studentsTable tbody td:nth-child(3) {
+    cursor: pointer;
+    color: #64b5f6;
+    text-decoration: none;
+}
+
+#studentsTable tbody td:nth-child(3):hover {
+    text-decoration: underline;
+    color: #90caf9;
+}
+
+/* ── Edit Modal Dark Theme ──────────────────────────── */
+#editModal .modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+#editModal .modal-header {
+    border-bottom-color: var(--border-color);
+}
+
+#editModal .modal-footer {
+    border-top-color: var(--border-color);
+}
+
+#editModal .form-control {
+    background: var(--bg-dark);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+#editModal .form-control:focus {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 0 0.15rem rgba(229, 57, 53, 0.25);
+}
+
+#editModal .form-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── Student Profile Page ───────────────────────────── */
+.profile-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.profile-header h4 {
+    margin: 0 0 4px 0;
+    font-weight: 700;
+}
+
+.profile-header .profile-meta {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.profile-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.profile-section h6 {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.78rem;
+    color: var(--accent-red);
+    margin-bottom: 14px;
+    font-weight: 700;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.profile-field {
+    padding: 6px 0;
+}
+
+.profile-field-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.profile-field-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.profile-files-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile-files-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.profile-files-list li:last-child {
+    border-bottom: none;
+}
+
+.profile-files-list a {
+    color: #64b5f6;
+    text-decoration: none;
+}
+
+.profile-files-list a:hover {
+    text-decoration: underline;
+}
+
+/* ── Dashboard Section ──────────────────────────────── */
+.dash-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.dash-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent-red);
+    margin-bottom: 14px;
+}
+
+/* ── Inline Editable Field (Student Profile) ────────── */
+.editable-field {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    min-height: 28px;
+}
+
+.editable-field:hover {
+    border-color: var(--border-color);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.edit-inline-input {
+    background: var(--bg-dark) !important;
+    border-color: var(--accent-red) !important;
+    color: var(--text-primary) !important;
+    font-size: 0.9rem !important;
+    padding: 2px 6px !important;
+}
+
+.edit-inline-input:focus {
+    box-shadow: 0 0 0 0.15rem rgba(229, 57, 53, 0.25) !important;
+}
+
+/* ── Placement Details Banner ───────────────────────── */
+.placement-details-banner {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #4caf50;
+    padding: 6px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ── Nav Tabs (Version page) ────────────────────────── */
+.nav-tabs {
+    border-bottom-color: var(--border-color);
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    border-radius: 6px 6px 0 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 18px;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: var(--border-color) var(--border-color) transparent;
+    color: var(--text-primary);
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--bg-card);
+    color: var(--accent-red);
+    border-color: var(--border-color) var(--border-color) var(--bg-card);
+}
+
+/* ── Recent Changes / Change Log Links ──────────────── */
+.recent-changes-list a,
+#changeLogContent a {
+    color: #64b5f6;
+    text-decoration: none;
+}
+
+.recent-changes-list a:hover,
+#changeLogContent a:hover {
+    text-decoration: underline;
+}

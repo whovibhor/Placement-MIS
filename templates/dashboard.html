@@ -5,11 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard — Placement MIS</title>
-
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- DataTables + Bootstrap 5 -->
-    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -20,83 +16,247 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link active" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
                 <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
             </div>
         </div>
     </nav>
 
     <div class="container-fluid mt-4 px-4">
-        <h3 class="mb-3">Student Placement Dashboard</h3>
 
-        <div class="table-responsive">
-            <table id="studentsTable" class="table table-striped table-bordered table-hover" style="width:100%">
-                <thead>
-                    <tr id="headerRow">
-                        <th>Sr No</th>
-                        <th>Reg No</th>
-                        <th>Student Name</th>
-                        <th>Gender</th>
-                        <th>Course</th>
-                        <th>Resume Status</th>
-                        <th>Seeking Placement</th>
-                        <th>Department</th>
-                        <th>Offer Letter Status</th>
-                        <th>Status</th>
-                        <th>Company Name</th>
-                        <th>Designation</th>
-                        <th>CTC</th>
-                        <th>Joining Date</th>
-                        <th>Joining Status</th>
-                        <th>School Name</th>
-                        <th>Mobile Number</th>
-                        <th>Email</th>
-                        <th>Graduation Course</th>
-                        <th>Graduation/OGPA</th>
-                        <th>10%</th>
-                        <th>12%</th>
-                        <th>Backlogs</th>
-                        <th>Hometown</th>
-                        <th>Address</th>
-                        <th>Reason</th>
-                    </tr>
-                    <tr id="filterRow"></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        {% if analytics %}
+        <!-- ── Stat Cards ──────────────────────────────────────── -->
+        <div class="stat-cards-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value">{{ analytics.total }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Opted In</div>
+                <div class="stat-value">{{ analytics.opted_in }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Eligible</div>
+                <div class="stat-value">{{ analytics.eligible }}</div>
+            </div>
+            <div class="stat-card stat-card--accent">
+                <div class="stat-label">Placed</div>
+                <div class="stat-value">{{ analytics.placed }}</div>
+            </div>
+            <div class="stat-card stat-card--accent">
+                <div class="stat-label">Placement Rate</div>
+                <div class="stat-value">{{ analytics.placement_rate }}%</div>
+            </div>
         </div>
+
+        <!-- ── CTC Summary Row ─────────────────────────────────── -->
+        <div class="stat-cards-row">
+            <div class="stat-card">
+                <div class="stat-label">Avg CTC</div>
+                <div class="stat-value">{{ analytics.avg_ctc }} <small>LPA</small></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Median CTC</div>
+                <div class="stat-value">{{ analytics.median_ctc }} <small>LPA</small></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Highest CTC</div>
+                <div class="stat-value">{{ analytics.max_ctc }} <small>LPA</small></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Top Recruiter</div>
+                <div class="stat-value stat-value--sm">{{ analytics.top_company }}</div>
+            </div>
+        </div>
+
+        <!-- ── Opted Out / Ineligible Row ──────────────────────── -->
+        <div class="stat-cards-row">
+            <div class="stat-card stat-card--muted">
+                <div class="stat-label">Opted Out</div>
+                <div class="stat-value">{{ analytics.opted_out }}</div>
+            </div>
+            <div class="stat-card stat-card--muted">
+                <div class="stat-label">Ineligible</div>
+                <div class="stat-value">{{ analytics.ineligible }}</div>
+            </div>
+        </div>
+
+        <!-- ── Charts ──────────────────────────────────────────── -->
+        <div class="charts-row">
+            <div class="chart-box" style="grid-column: span 2;">
+                <div class="chart-title">Department-wise Placements</div>
+                <canvas id="deptChart" style="max-height:350px;"></canvas>
+            </div>
+        </div>
+        <div class="charts-row">
+            <div class="chart-box">
+                <div class="chart-title">Placement Funnel</div>
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">Top 10 Recruiters</div>
+                <canvas id="companyChart"></canvas>
+            </div>
+        </div>
+        <div class="charts-row">
+            <div class="chart-box">
+                <div class="chart-title">Gender Distribution</div>
+                <canvas id="genderChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">Gender-wise Placement</div>
+                <canvas id="genderPlacementChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ── Recent Changes ──────────────────────────────────── -->
+        <div class="dash-section">
+            <div class="dash-section-title">Recent Changes</div>
+            <div id="recentChanges" class="recent-changes-list">
+                <p class="text-muted">Loading...</p>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="alert alert-info">No data yet. <a href="{{ url_for('upload') }}">Upload an Excel file</a> to get
+            started.</div>
+        {% endif %}
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="{{ url_for('static', filename='filterSystem.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <script id="json-data" type="application/json">{{ students_json | tojson }}</script>
-
+    {% if analytics %}
+    <script id="analytics-data" type="application/json">{{ analytics | tojson }}</script>
     <script>
         $(document).ready(function () {
-            initFilterSystem({
-                tableSelector: '#studentsTable',
-                data: JSON.parse(document.getElementById('json-data').textContent),
-                keys: [
-                    'sr_no', 'reg_no', 'student_name', 'gender', 'course', 'resume_status',
-                    'seeking_placement', 'department', 'offer_letter_status', 'status',
-                    'company_name', 'designation', 'ctc', 'joining_date', 'joining_status',
-                    'school_name', 'mobile_number', 'email', 'graduation_course',
-                    'graduation_ogpa', 'percent_10', 'percent_12', 'backlogs',
-                    'hometown', 'address', 'reason'
-                ],
-                tableConfig: {
-                    language: {
-                        lengthMenu: "Show _MENU_ records",
-                        info: "Showing _START_ to _END_ of _TOTAL_ students",
-                        emptyTable: "No student records found. Upload an Excel file first."
+            var A = JSON.parse(document.getElementById('analytics-data').textContent);
+
+            var txtColor = '#a0a0a0';
+            var gridColor = 'rgba(255,255,255,0.06)';
+            var red = '#e53935';
+            var redAlpha = 'rgba(229,57,53,0.75)';
+            var whiteAlpha = 'rgba(255,255,255,0.18)';
+            var greenAlpha = 'rgba(76,175,80,0.5)';
+
+            Chart.defaults.color = txtColor;
+            Chart.defaults.borderColor = gridColor;
+
+            /* Department bar chart */
+            new Chart(document.getElementById('deptChart'), {
+                type: 'bar',
+                data: {
+                    labels: A.dept_labels,
+                    datasets: [
+                        { label: 'Placed', data: A.dept_placed, backgroundColor: redAlpha, borderColor: red, borderWidth: 1, borderRadius: 3 },
+                        { label: 'Eligible', data: A.dept_eligible, backgroundColor: greenAlpha, borderColor: '#4caf50', borderWidth: 1, borderRadius: 3 },
+                        { label: 'Total', data: A.dept_total, backgroundColor: whiteAlpha, borderColor: 'rgba(255,255,255,0.3)', borderWidth: 1, borderRadius: 3 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { font: { size: 10 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
                     }
                 }
             });
+
+            /* Placement funnel doughnut */
+            new Chart(document.getElementById('statusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Placed', 'Eligible (Unplaced)', 'Ineligible', 'Opted Out / Other'],
+                    datasets: [{
+                        data: [A.placed, A.eligible - A.placed, A.ineligible, A.total - A.opted_in],
+                        backgroundColor: [red, greenAlpha, 'rgba(255,193,7,0.4)', 'rgba(255,255,255,0.05)'],
+                        borderColor: ['#c62828', '#388e3c', '#f9a825', 'rgba(255,255,255,0.08)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '60%',
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 8 } } }
+                }
+            });
+
+            /* Top companies */
+            new Chart(document.getElementById('companyChart'), {
+                type: 'bar',
+                data: {
+                    labels: A.company_labels,
+                    datasets: [{
+                        label: 'Students Placed', data: A.company_values,
+                        backgroundColor: redAlpha, borderColor: red, borderWidth: 1, borderRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { font: { size: 10 }, stepSize: 1 } },
+                        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            /* Gender doughnut */
+            var gLabels = Object.keys(A.gender_counts);
+            var gValues = gLabels.map(function (k) { return A.gender_counts[k]; });
+            new Chart(document.getElementById('genderChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: gLabels,
+                    datasets: [{ data: gValues, backgroundColor: ['#42a5f5', '#ef5350', '#78909c', '#ab47bc'], borderWidth: 1, borderColor: '#1e1e1e' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '55%',
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 8 } } }
+                }
+            });
+
+            /* Gender-wise placement bar */
+            var gpLabels = Object.keys(A.gender_placement);
+            var gpPlaced = gpLabels.map(function (k) { return A.gender_placement[k].placed; });
+            var gpTotal = gpLabels.map(function (k) { return A.gender_placement[k].total; });
+            new Chart(document.getElementById('genderPlacementChart'), {
+                type: 'bar',
+                data: {
+                    labels: gpLabels,
+                    datasets: [
+                        { label: 'Placed', data: gpPlaced, backgroundColor: redAlpha, borderColor: red, borderWidth: 1, borderRadius: 3 },
+                        { label: 'Total', data: gpTotal, backgroundColor: whiteAlpha, borderColor: 'rgba(255,255,255,0.3)', borderWidth: 1, borderRadius: 3 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: { grid: { color: gridColor }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            /* Recent changes */
+            $.getJSON('/api/edit-log?limit=15', function (res) {
+                var box = $('#recentChanges');
+                if (!res.data || res.data.length === 0) {
+                    box.html('<p class="text-muted">No changes recorded yet.</p>');
+                    return;
+                }
+                var html = '<table class="table table-sm" style="font-size:0.82rem;"><thead><tr><th>Time</th><th>Reg No</th><th>Student</th><th>Field</th><th>Old Value</th><th>New Value</th></tr></thead><tbody>';
+                res.data.forEach(function (r) {
+                    html += '<tr><td>' + r.changed_at + '</td><td>' + r.reg_no + '</td><td>' + (r.student_name || '') + '</td><td>' + r.field_name + '</td><td class="text-danger">' + (r.old_value || '—') + '</td><td class="text-success">' + (r.new_value || '—') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                box.html(html);
+            });
         });
     </script>
+    {% endif %}
 </body>
 
 </html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Student Data — Placement MIS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Placement MIS</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link active" href="{{ url_for('data_page') }}">Data</a>
+                <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4 px-4">
+        <h3 class="mb-3">Student Data</h3>
+
+        {% if analytics %}
+        <!-- ── Status Quick-View Tiles ─────────────────────────── -->
+        <div class="qv-section-label">Filter by Status</div>
+        <div class="qv-row">
+            <button class="qv-tile qv-status qv-tile--active" data-view="all">
+                <span class="qv-count">{{ analytics.total }}</span>
+                <span class="qv-label">All Students</span>
+            </button>
+            <button class="qv-tile qv-status" data-view="placed">
+                <span class="qv-count">{{ analytics.placed }}</span>
+                <span class="qv-label">Placed</span>
+            </button>
+            <button class="qv-tile qv-status" data-view="unplaced">
+                <span class="qv-count">{{ analytics.unplaced }}</span>
+                <span class="qv-label">Unplaced</span>
+            </button>
+            <button class="qv-tile qv-status" data-view="eligible">
+                <span class="qv-count">{{ analytics.eligible }}</span>
+                <span class="qv-label">Eligible</span>
+            </button>
+            <button class="qv-tile qv-status" data-view="ineligible">
+                <span class="qv-count">{{ analytics.ineligible }}</span>
+                <span class="qv-label">Ineligible</span>
+            </button>
+            <button class="qv-tile qv-status" data-view="opted_out">
+                <span class="qv-count">{{ analytics.opted_out }}</span>
+                <span class="qv-label">Opted Out</span>
+            </button>
+        </div>
+
+        <!-- ── Program Quick-View Tiles ────────────────────────── -->
+        <div class="qv-section-label">Filter by Program</div>
+        <div class="qv-row">
+            <button class="qv-tile qv-prog qv-prog--active" data-program="all">
+                <span class="qv-count">{{ analytics.total }}</span>
+                <span class="qv-label">All Programs</span>
+            </button>
+            <button class="qv-tile qv-prog" data-program="btech_cse">
+                <span class="qv-count" id="cnt-btech_cse">—</span>
+                <span class="qv-label">B.Tech CSE</span>
+            </button>
+            <button class="qv-tile qv-prog" data-program="ai">
+                <span class="qv-count" id="cnt-ai">—</span>
+                <span class="qv-label">B.Tech AI</span>
+            </button>
+            <button class="qv-tile qv-prog" data-program="bca">
+                <span class="qv-count" id="cnt-bca">—</span>
+                <span class="qv-label">BCA</span>
+            </button>
+            <button class="qv-tile qv-prog" data-program="mtech_cse">
+                <span class="qv-count" id="cnt-mtech_cse">—</span>
+                <span class="qv-label">M.Tech CSE</span>
+            </button>
+            <button class="qv-tile qv-prog" data-program="mba">
+                <span class="qv-count" id="cnt-mba">—</span>
+                <span class="qv-label">MBA</span>
+            </button>
+            <button class="qv-tile qv-prog" data-program="bba">
+                <span class="qv-count" id="cnt-bba">—</span>
+                <span class="qv-label">BBA</span>
+            </button>
+            <button class="qv-tile qv-prog" data-program="pharmacy">
+                <span class="qv-count" id="cnt-pharmacy">—</span>
+                <span class="qv-label">Pharmacy</span>
+            </button>
+        </div>
+
+        <!-- ── Program Stats Panel ─────────────────────────────── -->
+        <div id="programStats" class="prog-stats-panel" style="display:none;">
+            <div class="prog-stats-row">
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-total">0</span>
+                    <span class="prog-stat-lbl">Total</span>
+                </div>
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-optedin">0</span>
+                    <span class="prog-stat-lbl">Opted In</span>
+                </div>
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-eligible">0</span>
+                    <span class="prog-stat-lbl">Eligible</span>
+                </div>
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-placed">0</span>
+                    <span class="prog-stat-lbl">Placed</span>
+                </div>
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-mean">—</span>
+                    <span class="prog-stat-lbl">Mean CTC</span>
+                </div>
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-median">—</span>
+                    <span class="prog-stat-lbl">Median CTC</span>
+                </div>
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-highest">—</span>
+                    <span class="prog-stat-lbl">Highest CTC</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ── Data Table ──────────────────────────────────────── -->
+        <div class="table-section">
+            <div class="table-section-hint">Click student name to open profile</div>
+            <div class="table-responsive">
+                <table id="studentsTable" class="table table-striped table-bordered table-hover" style="width:100%">
+                    <thead>
+                        <tr id="headerRow">
+                            <th>Sr No</th>
+                            <th>Reg No</th>
+                            <th>Student Name</th>
+                            <th>Gender</th>
+                            <th>Course</th>
+                            <th>Resume Status</th>
+                            <th>Seeking Placement</th>
+                            <th>Department</th>
+                            <th>Offer Letter Status</th>
+                            <th>Status</th>
+                            <th>Company Name</th>
+                            <th>Designation</th>
+                            <th>CTC</th>
+                            <th>Joining Date</th>
+                            <th>Joining Status</th>
+                            <th>Mobile Number</th>
+                            <th>Email</th>
+                            <th>Graduation Course</th>
+                            <th>Graduation/OGPA</th>
+                            <th>10%</th>
+                            <th>12%</th>
+                            <th>Backlogs</th>
+                            <th>Hometown</th>
+                            <th>Address</th>
+                            <th>Reason</th>
+                        </tr>
+                        <tr id="filterRow"></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="{{ url_for('static', filename='filterSystem.js') }}"></script>
+
+    <script id="json-data" type="application/json">{{ students_json | tojson }}</script>
+
+    <script>
+        $(document).ready(function () {
+
+            var DATA_KEYS = [
+                'sr_no', 'reg_no', 'student_name', 'gender', 'course', 'resume_status',
+                'seeking_placement', 'department', 'offer_letter_status', 'status',
+                'company_name', 'designation', 'ctc', 'joining_date', 'joining_status',
+                'mobile_number', 'email', 'graduation_course',
+                'graduation_ogpa', 'percent_10', 'percent_12', 'backlogs',
+                'hometown', 'address', 'reason'
+            ];
+
+            var RAW_DATA = JSON.parse(document.getElementById('json-data').textContent);
+
+            initFilterSystem({
+                tableSelector: '#studentsTable',
+                data: RAW_DATA,
+                keys: DATA_KEYS,
+                tableConfig: {
+                    language: {
+                        lengthMenu: "Show _MENU_ records",
+                        info: "Showing _START_ to _END_ of _TOTAL_ students",
+                        emptyTable: "No student records found. Upload an Excel file first."
+                    }
+                }
+            });
+
+            /* ── Program Filter Definitions ────────────────────── */
+            var PROGRAM_FILTERS = {
+                'btech_cse': function (r) { return r.course && r.course.indexOf('B Tech CSE') === 0; },
+                'ai': function (r) { return r.course && r.course.indexOf('B Tech Artificial Intelligence') === 0; },
+                'bca': function (r) { return r.course && r.course.indexOf('BCA') === 0; },
+                'mtech_cse': function (r) { return r.course && r.course.indexOf('MTech Computer Science') === 0; },
+                'mba': function (r) { return r.course && r.course.indexOf('MBA') === 0; },
+                'bba': function (r) { return r.course && r.course.indexOf('BBA') === 0; },
+                'pharmacy': function (r) { return r.course && r.course.toLowerCase().indexOf('pharma') >= 0; }
+            };
+
+            /* ── Init program tile counts ──────────────────────── */
+            Object.keys(PROGRAM_FILTERS).forEach(function (key) {
+                var count = RAW_DATA.filter(PROGRAM_FILTERS[key]).length;
+                var el = document.getElementById('cnt-' + key);
+                if (el) el.textContent = count;
+            });
+
+            /* ── Status Filters ────────────────────────────────── */
+            var activeStatus = 'all';
+            var activeProgram = 'all';
+
+            function getStatusFilter(view) {
+                switch (view) {
+                    case 'placed':
+                        return function (r) { return r.status === 'Placed'; };
+                    case 'unplaced':
+                        return function (r) { return r.seeking_placement === 'Opted In' && r.status !== 'Placed'; };
+                    case 'eligible':
+                        return function (r) {
+                            if (r.seeking_placement !== 'Opted In') return false;
+                            var b = parseFloat(r.backlogs);
+                            return isNaN(b) || b < 3;
+                        };
+                    case 'ineligible':
+                        return function (r) {
+                            if (r.seeking_placement !== 'Opted In') return false;
+                            var b = parseFloat(r.backlogs);
+                            return !isNaN(b) && b >= 3;
+                        };
+                    case 'opted_out':
+                        return function (r) { return r.seeking_placement === 'Opted Out'; };
+                    default:
+                        return null;
+                }
+            }
+
+            /* ── Combined Filter ───────────────────────────────── */
+            function getFilteredData() {
+                var data = RAW_DATA;
+                if (activeProgram !== 'all' && PROGRAM_FILTERS[activeProgram]) {
+                    data = data.filter(PROGRAM_FILTERS[activeProgram]);
+                }
+                var statusFn = getStatusFilter(activeStatus);
+                if (statusFn) data = data.filter(statusFn);
+                return data;
+            }
+
+            function refreshTable() {
+                var table = $('#studentsTable').DataTable();
+                var displayData = getFilteredData();
+                table.rows().remove();
+                table.rows.add(displayData);
+                table.draw(false);
+            }
+
+            /* ── Program Stats Computation ─────────────────────── */
+            function computeProgramStats(programData) {
+                var total = programData.length;
+                var optedIn = programData.filter(function (r) { return r.seeking_placement === 'Opted In'; }).length;
+                var eligible = programData.filter(function (r) {
+                    if (r.seeking_placement !== 'Opted In') return false;
+                    var b = parseFloat(r.backlogs);
+                    return isNaN(b) || b < 3;
+                }).length;
+                var placed = programData.filter(function (r) { return r.status === 'Placed'; }).length;
+
+                var ctcVals = programData
+                    .filter(function (r) { return r.status === 'Placed' && r.ctc; })
+                    .map(function (r) { return parseFloat(r.ctc); })
+                    .filter(function (v) { return !isNaN(v) && v > 0; });
+
+                var meanCTC = '—', medianCTC = '—', highestCTC = '—';
+                if (ctcVals.length > 0) {
+                    var sum = ctcVals.reduce(function (a, b) { return a + b; }, 0);
+                    meanCTC = (sum / ctcVals.length).toFixed(2);
+                    ctcVals.sort(function (a, b) { return a - b; });
+                    var mid = Math.floor(ctcVals.length / 2);
+                    medianCTC = ctcVals.length % 2 === 0
+                        ? ((ctcVals[mid - 1] + ctcVals[mid]) / 2).toFixed(2)
+                        : ctcVals[mid].toFixed(2);
+                    highestCTC = ctcVals[ctcVals.length - 1].toFixed(2);
+                }
+
+                return {
+                    total: total, optedIn: optedIn, eligible: eligible, placed: placed,
+                    meanCTC: meanCTC, medianCTC: medianCTC, highestCTC: highestCTC
+                };
+            }
+
+            function updateProgramStats() {
+                if (activeProgram === 'all') {
+                    $('#programStats').slideUp(150);
+                    return;
+                }
+                var progData = RAW_DATA.filter(PROGRAM_FILTERS[activeProgram]);
+                var s = computeProgramStats(progData);
+                $('#ps-total').text(s.total);
+                $('#ps-optedin').text(s.optedIn);
+                $('#ps-eligible').text(s.eligible);
+                $('#ps-placed').text(s.placed);
+                $('#ps-mean').text(s.meanCTC !== '—' ? s.meanCTC + ' LPA' : '—');
+                $('#ps-median').text(s.medianCTC !== '—' ? s.medianCTC + ' LPA' : '—');
+                $('#ps-highest').text(s.highestCTC !== '—' ? s.highestCTC + ' LPA' : '—');
+                $('#programStats').slideDown(150);
+            }
+
+            /* ── Status Tile Click ─────────────────────────────── */
+            $(document).on('click', '.qv-status', function () {
+                activeStatus = $(this).data('view');
+                $('.qv-status').removeClass('qv-tile--active');
+                $(this).addClass('qv-tile--active');
+                refreshTable();
+            });
+
+            /* ── Program Tile Click ────────────────────────────── */
+            $(document).on('click', '.qv-prog', function () {
+                activeProgram = $(this).data('program');
+                $('.qv-prog').removeClass('qv-prog--active');
+                $(this).addClass('qv-prog--active');
+                updateProgramStats();
+                refreshTable();
+            });
+
+            /* ── Click student name → open profile ─────────────── */
+            $(document).on('click', '#studentsTable tbody td:nth-child(3)', function (e) {
+                var table = $('#studentsTable').DataTable();
+                var rowData = table.row($(this).parent()).data();
+                if (rowData && rowData.reg_no) {
+                    window.open('/student/' + encodeURIComponent(rowData.reg_no), '_blank');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

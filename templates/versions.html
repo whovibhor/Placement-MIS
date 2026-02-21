@@ -4,27 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Upload Versions — Placement MIS</title>
+    <title>Version History — Placement MIS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/">Placement MIS</a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
                 <a class="nav-link active" href="{{ url_for('versions') }}">Versions</a>
             </div>
         </div>
     </nav>
 
     <div class="container mt-4">
-        <h3 class="mb-3">Upload Version History</h3>
 
-        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
@@ -36,48 +35,146 @@
         {% endif %}
         {% endwith %}
 
-        {% if versions %}
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>Version #</th>
-                        <th>Filename</th>
-                        <th>Uploaded At</th>
-                        <th>Total Records</th>
-                        <th>Inserted</th>
-                        <th>Updated</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for v in versions %}
-                    <tr>
-                        <td>{{ v.version_id }}</td>
-                        <td>{{ v.filename }}</td>
-                        <td>{{ v.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</td>
-                        <td>{{ v.total_records }}</td>
-                        <td><span class="badge bg-success">{{ v.inserted }}</span></td>
-                        <td><span class="badge bg-warning text-dark">{{ v.updated }}</span></td>
-                        <td>
-                            <a href="{{ url_for('version_detail', version_id=v.version_id) }}"
-                                class="btn btn-sm btn-outline-primary">View Data</a>
-                            <form method="POST" action="{{ url_for('delete_version', version_id=v.version_id) }}"
-                                style="display:inline" onsubmit="return confirm('Delete version #{{ v.version_id }}?')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- ── Tabs ────────────────────────────────────────── -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#uploadTab" type="button">Upload
+                    Versions</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#changeLogTab" type="button">Change
+                    Log</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- ── Upload Versions Tab ─────────────────────── -->
+            <div class="tab-pane fade show active" id="uploadTab">
+                <h5 class="mb-3">Upload Version History</h5>
+                {% if versions %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Version #</th>
+                                <th>Filename</th>
+                                <th>Uploaded At</th>
+                                <th>Total Records</th>
+                                <th>Inserted</th>
+                                <th>Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in versions %}
+                            <tr>
+                                <td>{{ v.version_id }}</td>
+                                <td>{{ v.filename }}</td>
+                                <td>{{ v.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                                <td>{{ v.total_records }}</td>
+                                <td><span class="badge bg-success">{{ v.inserted }}</span></td>
+                                <td><span class="badge bg-warning text-dark">{{ v.updated }}</span></td>
+                                <td>
+                                    <a href="{{ url_for('version_detail', version_id=v.version_id) }}"
+                                        class="btn btn-sm btn-outline-primary">View Data</a>
+                                    <form method="POST"
+                                        action="{{ url_for('delete_version', version_id=v.version_id) }}"
+                                        style="display:inline"
+                                        onsubmit="return confirm('Delete version #{{ v.version_id }}?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">No upload versions found. Upload an Excel file first.</div>
+                {% endif %}
+            </div>
+
+            <!-- ── Change Log Tab ──────────────────────────── -->
+            <div class="tab-pane fade" id="changeLogTab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">All Field Changes</h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="text" id="changeLogSearch" class="form-control form-control-sm"
+                            placeholder="Filter by Reg No or Name..." style="width:260px;">
+                        <select id="changeLogLimit" class="form-select form-select-sm" style="width:120px;">
+                            <option value="50">Last 50</option>
+                            <option value="100">Last 100</option>
+                            <option value="200" selected>Last 200</option>
+                            <option value="500">Last 500</option>
+                            <option value="9999">All</option>
+                        </select>
+                        <button class="btn btn-sm btn-primary" id="changeLogRefresh">Refresh</button>
+                    </div>
+                </div>
+                <div id="changeLogContent">
+                    <p class="text-muted">Loading...</p>
+                </div>
+            </div>
         </div>
-        {% else %}
-        <div class="alert alert-info">No upload versions found. Upload an Excel file first.</div>
-        {% endif %}
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var allLogs = [];
+
+            function loadChangeLog() {
+                var limit = $('#changeLogLimit').val();
+                $.getJSON('/api/edit-log?limit=' + limit, function (res) {
+                    allLogs = res.data || [];
+                    renderChangeLog();
+                });
+            }
+
+            function renderChangeLog() {
+                var search = ($('#changeLogSearch').val() || '').toLowerCase();
+                var filtered = allLogs;
+                if (search) {
+                    filtered = allLogs.filter(function (r) {
+                        return (r.reg_no || '').toLowerCase().indexOf(search) >= 0 ||
+                            (r.student_name || '').toLowerCase().indexOf(search) >= 0;
+                    });
+                }
+
+                var box = $('#changeLogContent');
+                if (filtered.length === 0) {
+                    box.html('<p class="text-muted">No changes found.</p>');
+                    return;
+                }
+
+                var html = '<div class="table-responsive"><table class="table table-striped table-bordered table-hover table-sm" style="font-size:0.82rem;">';
+                html += '<thead><tr><th>Time</th><th>Reg No</th><th>Student Name</th><th>Field Changed</th><th>Old Value</th><th>New Value</th></tr></thead><tbody>';
+                filtered.forEach(function (r) {
+                    html += '<tr>';
+                    html += '<td style="white-space:nowrap;">' + r.changed_at + '</td>';
+                    html += '<td><a href="/student/' + encodeURIComponent(r.reg_no) + '" target="_blank">' + r.reg_no + '</a></td>';
+                    html += '<td>' + (r.student_name || '') + '</td>';
+                    html += '<td>' + r.field_name.replace(/_/g, ' ') + '</td>';
+                    html += '<td class="text-danger">' + (r.old_value || '—') + '</td>';
+                    html += '<td class="text-success">' + (r.new_value || '—') + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+                box.html(html);
+            }
+
+            // Load when change log tab is shown
+            $('button[data-bs-target="#changeLogTab"]').on('shown.bs.tab', function () {
+                if (allLogs.length === 0) loadChangeLog();
+            });
+
+            $('#changeLogRefresh').on('click', loadChangeLog);
+            $('#changeLogLimit').on('change', loadChangeLog);
+            $('#changeLogSearch').on('input', renderChangeLog);
+        });
+    </script>
 </body>
 
 </html>
