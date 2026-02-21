@@ -13,7 +13,12 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">Placement MIS</a>
-            <div class="navbar-nav ms-auto">
+            <div class="global-search-wrap ms-auto me-3">
+                <input type="text" id="globalSearch" class="form-control form-control-sm"
+                    placeholder="Search students..." autocomplete="off">
+                <div id="globalSearchResults" class="global-search-dropdown"></div>
+            </div>
+            <div class="navbar-nav">
                 <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
@@ -102,11 +107,9 @@
                         <input type="text" id="changeLogSearch" class="form-control form-control-sm"
                             placeholder="Filter by Reg No or Name..." style="width:260px;">
                         <select id="changeLogLimit" class="form-select form-select-sm" style="width:120px;">
-                            <option value="50">Last 50</option>
-                            <option value="100">Last 100</option>
-                            <option value="200" selected>Last 200</option>
-                            <option value="500">Last 500</option>
-                            <option value="9999">All</option>
+                            <option value="50" selected>50 per page</option>
+                            <option value="100">100 per page</option>
+                            <option value="200">200 per page</option>
                         </select>
                         <button class="btn btn-sm btn-primary" id="changeLogRefresh">Refresh</button>
                     </div>
@@ -114,23 +117,57 @@
                 <div id="changeLogContent">
                     <p class="text-muted">Loading...</p>
                 </div>
+                <div id="changeLogPagination" class="d-flex justify-content-between align-items-center mt-2"
+                    style="display:none!important;">
+                    <span id="changeLogInfo" class="text-muted" style="font-size:0.8rem;"></span>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" id="clPrev" disabled>&laquo; Prev</button>
+                        <button class="btn btn-outline-secondary" id="clPageInfo" disabled>1 / 1</button>
+                        <button class="btn btn-outline-secondary" id="clNext" disabled>Next &raquo;</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="{{ url_for('static', filename='globalSearch.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         $(document).ready(function () {
             var allLogs = [];
+            var currentPage = 1;
+            var totalPages = 1;
+            var totalCount = 0;
 
-            function loadChangeLog() {
+            function loadChangeLog(page) {
+                page = page || 1;
                 var limit = $('#changeLogLimit').val();
-                $.getJSON('/api/edit-log?limit=' + limit, function (res) {
+                $.getJSON('/api/edit-log?limit=' + limit + '&page=' + page, function (res) {
                     allLogs = res.data || [];
+                    currentPage = res.page || 1;
+                    totalPages = res.total_pages || 1;
+                    totalCount = res.total_count || 0;
                     renderChangeLog();
+                    updatePagination();
                 });
+            }
+
+            function updatePagination() {
+                var $wrap = $('#changeLogPagination');
+                if (totalCount > 0) {
+                    $wrap.css('display', '').removeClass('d-none');
+                    var limit = parseInt($('#changeLogLimit').val());
+                    var start = (currentPage - 1) * limit + 1;
+                    var end = Math.min(currentPage * limit, totalCount);
+                    $('#changeLogInfo').text('Showing ' + start + '-' + end + ' of ' + totalCount + ' changes');
+                    $('#clPageInfo').text(currentPage + ' / ' + totalPages);
+                    $('#clPrev').prop('disabled', currentPage <= 1);
+                    $('#clNext').prop('disabled', currentPage >= totalPages);
+                } else {
+                    $wrap.hide();
+                }
             }
 
             function renderChangeLog() {
@@ -167,12 +204,20 @@
 
             // Load when change log tab is shown
             $('button[data-bs-target="#changeLogTab"]').on('shown.bs.tab', function () {
-                if (allLogs.length === 0) loadChangeLog();
+                if (allLogs.length === 0) loadChangeLog(1);
             });
 
-            $('#changeLogRefresh').on('click', loadChangeLog);
-            $('#changeLogLimit').on('change', loadChangeLog);
+            $('#changeLogRefresh').on('click', function () { loadChangeLog(1); });
+            $('#changeLogLimit').on('change', function () { loadChangeLog(1); });
             $('#changeLogSearch').on('input', renderChangeLog);
+
+            // Pagination buttons
+            $('#clPrev').on('click', function () {
+                if (currentPage > 1) loadChangeLog(currentPage - 1);
+            });
+            $('#clNext').on('click', function () {
+                if (currentPage < totalPages) loadChangeLog(currentPage + 1);
+            });
         });
     </script>
 </body>

@@ -6,6 +6,7 @@ from datetime import datetime
 import statistics
 import os
 import uuid
+import re
 import config
 
 app = Flask(__name__)
@@ -308,6 +309,34 @@ def compute_analytics(rows):
     # Quick-view counts
     unplaced_opted_in = sum(1 for r in rows if r.get("seeking_placement") == "Opted In" and r.get("status") != "Placed")
 
+    # CTC distribution histogram (for chart)
+    ctc_ranges = [
+        ("0-2", 0, 2), ("2-4", 2, 4), ("4-6", 4, 6), ("6-8", 6, 8),
+        ("8-10", 8, 10), ("10-12", 10, 12), ("12-14", 12, 14), ("14+", 14, 9999),
+    ]
+    ctc_dist_labels = [r[0] + " LPA" for r in ctc_ranges]
+    ctc_dist_values = [0] * len(ctc_ranges)
+    for v in ctc_values:
+        for i, (_, lo, hi) in enumerate(ctc_ranges):
+            if lo <= v < hi:
+                ctc_dist_values[i] += 1
+                break
+
+    # Department → Course breakdown (nested)
+    dept_course_breakdown = {}
+    for r in rows:
+        dept = r.get("department") or "Unknown"
+        course = r.get("course") or "Unknown"
+        if dept not in dept_course_breakdown:
+            dept_course_breakdown[dept] = {}
+        if course not in dept_course_breakdown[dept]:
+            dept_course_breakdown[dept][course] = {"total": 0, "placed": 0, "eligible": 0}
+        dept_course_breakdown[dept][course]["total"] += 1
+        if r.get("status") == "Placed":
+            dept_course_breakdown[dept][course]["placed"] += 1
+        if is_eligible(r):
+            dept_course_breakdown[dept][course]["eligible"] += 1
+
     return {
         "total": total,
         "opted_in": opted_in,
@@ -332,6 +361,9 @@ def compute_analytics(rows):
         "company_values": company_values,
         "gender_counts": gender_counts,
         "gender_placement": gender_placement,
+        "ctc_dist_labels": ctc_dist_labels,
+        "ctc_dist_values": ctc_dist_values,
+        "dept_course_breakdown": dept_course_breakdown,
     }
 
 
@@ -548,6 +580,20 @@ def update_student(reg_no):
     # Empty string → NULL
     if value is not None and str(value).strip() == "":
         value = None
+
+    # ── Data Validation ──────────────────────────────────────────────────
+    if value is not None:
+        if field == "ctc":
+            try:
+                float(value)
+            except (ValueError, TypeError):
+                return jsonify({"error": "CTC must be a numeric value (e.g. 5.5)"}), 400
+        elif field == "email":
+            if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', str(value)):
+                return jsonify({"error": "Invalid email format"}), 400
+        elif field == "mobile_number":
+            if len(re.findall(r'\d', str(value))) < 10:
+                return jsonify({"error": "Mobile number must have at least 10 digits"}), 400
 
     try:
         conn = get_connection()
@@ -766,20 +812,33 @@ def bulk_update_student(reg_no):
 # ── Change Log API ───────────────────────────────────────────────────────────
 @app.route("/api/edit-log")
 def api_edit_log():
-    """Return all edit log entries."""
+    """Return edit log entries with pagination support."""
     limit = request.args.get("limit", 200, type=int)
+    page = request.args.get("page", 1, type=int)
     reg_no = request.args.get("reg_no", None)
+    offset = (page - 1) * limit
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        # Get total count
         if reg_no:
             cursor.execute(
-                "SELECT * FROM edit_log WHERE reg_no = %s ORDER BY changed_at DESC LIMIT %s",
-                (reg_no, limit),
+                "SELECT COUNT(*) as cnt FROM edit_log WHERE reg_no = %s", (reg_no,)
+            )
+        else:
+            cursor.execute("SELECT COUNT(*) as cnt FROM edit_log")
+        total_count = cursor.fetchone()["cnt"]
+
+        if reg_no:
+            cursor.execute(
+                "SELECT * FROM edit_log WHERE reg_no = %s ORDER BY changed_at DESC LIMIT %s OFFSET %s",
+                (reg_no, limit, offset),
             )
         else:
             cursor.execute(
-                "SELECT * FROM edit_log ORDER BY changed_at DESC LIMIT %s", (limit,)
+                "SELECT * FROM edit_log ORDER BY changed_at DESC LIMIT %s OFFSET %s",
+                (limit, offset),
             )
         rows = cursor.fetchall()
         for r in rows:
@@ -787,7 +846,14 @@ def api_edit_log():
                 r["changed_at"] = r["changed_at"].strftime("%d %b %Y, %I:%M %p")
         cursor.close()
         conn.close()
-        return jsonify({"data": rows})
+
+        total_pages = (total_count + limit - 1) // limit if limit > 0 else 1
+        return jsonify({
+            "data": rows,
+            "page": page,
+            "total_pages": total_pages,
+            "total_count": total_count,
+        })
     except Error as e:
         return jsonify({"data": [], "error": str(e)}), 500
 
@@ -806,6 +872,31 @@ def api_students():
         return jsonify({"data": rows})
     except Error as e:
         return jsonify({"data": [], "error": str(e)}), 500
+
+
+@app.route("/api/search")
+def api_search():
+    """Global student search — search by name, reg_no, course, company."""
+    q = request.args.get("q", "").strip()
+    if len(q) < 2:
+        return jsonify({"results": []})
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        like = f"%{q}%"
+        cursor.execute(
+            "SELECT reg_no, student_name, course, department, status, company_name "
+            "FROM students WHERE "
+            "student_name LIKE %s OR reg_no LIKE %s OR course LIKE %s OR company_name LIKE %s "
+            "ORDER BY student_name LIMIT 15",
+            (like, like, like, like),
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify({"results": rows})
+    except Error as e:
+        return jsonify({"results": [], "error": str(e)}), 500
 
 
 @app.route("/drop-all", methods=["POST"])

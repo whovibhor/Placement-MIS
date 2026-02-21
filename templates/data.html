@@ -14,7 +14,12 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">Placement MIS</a>
-            <div class="navbar-nav ms-auto">
+            <div class="global-search-wrap ms-auto me-3">
+                <input type="text" id="globalSearch" class="form-control form-control-sm"
+                    placeholder="Search students..." autocomplete="off">
+                <div id="globalSearchResults" class="global-search-dropdown"></div>
+            </div>
+            <div class="navbar-nav">
                 <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link active" href="{{ url_for('data_page') }}">Data</a>
@@ -63,21 +68,9 @@
                 <span class="qv-count">{{ analytics.total }}</span>
                 <span class="qv-label">All Programs</span>
             </button>
-            <button class="qv-tile qv-prog" data-program="btech_cse">
-                <span class="qv-count" id="cnt-btech_cse">—</span>
-                <span class="qv-label">B.Tech CSE</span>
-            </button>
-            <button class="qv-tile qv-prog" data-program="ai">
-                <span class="qv-count" id="cnt-ai">—</span>
-                <span class="qv-label">B.Tech AI</span>
-            </button>
-            <button class="qv-tile qv-prog" data-program="bca">
-                <span class="qv-count" id="cnt-bca">—</span>
-                <span class="qv-label">BCA</span>
-            </button>
-            <button class="qv-tile qv-prog" data-program="mtech_cse">
-                <span class="qv-count" id="cnt-mtech_cse">—</span>
-                <span class="qv-label">M.Tech CSE</span>
+            <button class="qv-tile qv-prog" data-program="cse">
+                <span class="qv-count" id="cnt-cse">—</span>
+                <span class="qv-label">CSE</span>
             </button>
             <button class="qv-tile qv-prog" data-program="mba">
                 <span class="qv-count" id="cnt-mba">—</span>
@@ -123,6 +116,10 @@
                 <div class="prog-stat">
                     <span class="prog-stat-val" id="ps-highest">—</span>
                     <span class="prog-stat-lbl">Highest CTC</span>
+                </div>
+                <div class="prog-stat">
+                    <span class="prog-stat-val" id="ps-rate">—</span>
+                    <span class="prog-stat-lbl">Placement Rate</span>
                 </div>
             </div>
         </div>
@@ -170,6 +167,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="{{ url_for('static', filename='globalSearch.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
@@ -205,14 +203,29 @@
             });
 
             /* ── Program Filter Definitions ────────────────────── */
+            var CSE_COURSES = [
+                'B Tech Artificial Intelligence',
+                'B Tech CSE',
+                'BCA',
+                'MCA',
+                'MTech Computer Science'
+            ];
+
             var PROGRAM_FILTERS = {
-                'btech_cse': function (r) { return r.course && r.course.indexOf('B Tech CSE') === 0; },
-                'ai': function (r) { return r.course && r.course.indexOf('B Tech Artificial Intelligence') === 0; },
-                'bca': function (r) { return r.course && r.course.indexOf('BCA') === 0; },
-                'mtech_cse': function (r) { return r.course && r.course.indexOf('MTech Computer Science') === 0; },
+                'cse': function (r) {
+                    if (!r.course) return false;
+                    for (var i = 0; i < CSE_COURSES.length; i++) {
+                        if (r.course.indexOf(CSE_COURSES[i]) === 0) return true;
+                    }
+                    return false;
+                },
                 'mba': function (r) { return r.course && r.course.indexOf('MBA') === 0; },
                 'bba': function (r) { return r.course && r.course.indexOf('BBA') === 0; },
-                'pharmacy': function (r) { return r.course && r.course.toLowerCase().indexOf('pharma') >= 0; }
+                'pharmacy': function (r) {
+                    if (!r.course) return false;
+                    var c = r.course;
+                    return c.indexOf('B Pharmacy') === 0 || c.indexOf('M Pharmacy') === 0;
+                }
             };
 
             /* ── Init program tile counts ──────────────────────── */
@@ -300,7 +313,8 @@
 
                 return {
                     total: total, optedIn: optedIn, eligible: eligible, placed: placed,
-                    meanCTC: meanCTC, medianCTC: medianCTC, highestCTC: highestCTC
+                    meanCTC: meanCTC, medianCTC: medianCTC, highestCTC: highestCTC,
+                    placementRate: eligible > 0 ? (placed / eligible * 100).toFixed(1) : '—'
                 };
             }
 
@@ -318,6 +332,7 @@
                 $('#ps-mean').text(s.meanCTC !== '—' ? s.meanCTC + ' LPA' : '—');
                 $('#ps-median').text(s.medianCTC !== '—' ? s.medianCTC + ' LPA' : '—');
                 $('#ps-highest').text(s.highestCTC !== '—' ? s.highestCTC + ' LPA' : '—');
+                $('#ps-rate').text(s.placementRate !== '—' ? s.placementRate + '%' : '—');
                 $('#programStats').slideDown(150);
             }
 
