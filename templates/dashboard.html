@@ -22,6 +22,7 @@
                 <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link active" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
+                <a class="nav-link" href="{{ url_for('cdm_page') }}">CDM</a>
                 <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
             </div>
         </div>
@@ -30,65 +31,70 @@
     <div class="container-fluid mt-4 px-4">
 
         {% if analytics %}
-        <!-- ── Stat Cards ──────────────────────────────────────── -->
-        <div class="stat-cards-row">
-            <div class="stat-card">
-                <div class="stat-label">Total Students</div>
-                <div class="stat-value">{{ analytics.total }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Opted In</div>
-                <div class="stat-value">{{ analytics.opted_in }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Eligible</div>
-                <div class="stat-value">{{ analytics.eligible }}</div>
-            </div>
-            <div class="stat-card stat-card--accent">
-                <div class="stat-label">Placed</div>
-                <div class="stat-value">{{ analytics.placed }}</div>
-            </div>
-            <div class="stat-card stat-card--accent">
-                <div class="stat-label">Placement Rate</div>
-                <div class="stat-value">{{ analytics.placement_rate }}%</div>
-            </div>
-        </div>
-
-        <!-- ── CTC Summary Row ─────────────────────────────────── -->
-        <div class="stat-cards-row">
-            <div class="stat-card">
-                <div class="stat-label">Avg CTC</div>
-                <div class="stat-value">{{ analytics.avg_ctc }} <small>LPA</small></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Median CTC</div>
-                <div class="stat-value">{{ analytics.median_ctc }} <small>LPA</small></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Highest CTC</div>
-                <div class="stat-value">{{ analytics.max_ctc }} <small>LPA</small></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Top Recruiter</div>
-                <div class="stat-value stat-value--sm">{{ analytics.top_company }}</div>
-            </div>
-        </div>
-
-        <!-- ── Opted Out / Ineligible Row ──────────────────────── -->
-        <div class="stat-cards-row">
-            <div class="stat-card stat-card--muted">
-                <div class="stat-label">Opted Out</div>
-                <div class="stat-value">{{ analytics.opted_out }}</div>
-            </div>
-            <div class="stat-card stat-card--muted">
-                <div class="stat-label">Ineligible</div>
-                <div class="stat-value">{{ analytics.ineligible }}</div>
+        <!-- ═══ HERO SECTION ═══════════════════════════════════ -->
+        <div class="hero-section">
+            <div class="hero-grid">
+                <!-- Placements Column -->
+                <div class="hero-col">
+                    <div class="hero-col-header">
+                        <span class="hero-col-icon">&#x1F393;</span>
+                        <span class="hero-col-title">Placements</span>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <span class="hero-stat-value">{{ analytics.total }}</span>
+                            <span class="hero-stat-label">Students</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value">{{ analytics.eligible }}</span>
+                            <span class="hero-stat-label">Eligible</span>
+                        </div>
+                        <div class="hero-stat hero-stat--accent">
+                            <span class="hero-stat-value">{{ analytics.placed }}</span>
+                            <span class="hero-stat-label">Placed</span>
+                        </div>
+                        <div class="hero-stat hero-stat--accent">
+                            <span class="hero-stat-value">{{ analytics.placement_rate }}%</span>
+                            <span class="hero-stat-label">Rate</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value">{{ analytics.avg_ctc }}</span>
+                            <span class="hero-stat-label">Avg CTC</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value">{{ analytics.max_ctc }}</span>
+                            <span class="hero-stat-label">Max CTC</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- CDM Column -->
+                <div class="hero-col">
+                    <div class="hero-col-header">
+                        <span class="hero-col-icon">&#x1F3E2;</span>
+                        <span class="hero-col-title">Company Drives</span>
+                    </div>
+                    <div class="hero-stats" id="heroCdmStats">
+                        <div class="hero-stat"><span class="hero-stat-value">--</span><span
+                                class="hero-stat-label">Companies</span></div>
+                        <div class="hero-stat"><span class="hero-stat-value">--</span><span
+                                class="hero-stat-label">Drives</span></div>
+                        <div class="hero-stat hero-stat--accent"><span class="hero-stat-value">--</span><span
+                                class="hero-stat-label">Completed</span></div>
+                        <div class="hero-stat"><span class="hero-stat-value">--</span><span
+                                class="hero-stat-label">Ongoing</span></div>
+                        <div class="hero-stat"><span class="hero-stat-value">--</span><span class="hero-stat-label">Mean
+                                CTC</span></div>
+                        <div class="hero-stat"><span class="hero-stat-value">--</span><span class="hero-stat-label">Top
+                                CTC</span></div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- ── View Tabs ───────────────────────────────────────── -->
         <div class="dash-view-tabs mb-3">
-            <button class="dash-tab active" data-view="charts">Charts</button>
+            <button class="dash-tab active" data-view="charts">Placement Charts</button>
+            <button class="dash-tab" data-view="cdmCharts">CDM Analytics</button>
             <button class="dash-tab" data-view="trends">Placement Trends</button>
             <button class="dash-tab" data-view="courseSummary">Course Summary</button>
             <button class="dash-tab" data-view="deptSummary">Department Summary</button>
@@ -148,6 +154,53 @@
             </div>
 
         </div><!-- /view-charts -->
+
+        <!-- ═══ CDM ANALYTICS VIEW ═══════════════════════════════ -->
+        <div id="view-cdmCharts" class="dash-view" style="display:none;">
+            <div class="stat-cards-row mb-3" id="cdmDashStats"></div>
+
+            <!-- Team Performance Table -->
+            <div class="chart-box mb-3">
+                <div class="chart-title">Placement Team Performance</div>
+                <div style="overflow-x:auto;">
+                    <table class="table table-sm table-hover mb-0" id="teamPerfTable"
+                        style="color:var(--text-primary);font-size:0.85rem;">
+                        <thead>
+                            <tr style="border-color:var(--border-color);">
+                                <th>Team Member</th>
+                                <th class="text-center">Companies Brought</th>
+                                <th class="text-center">Total Drives</th>
+                                <th class="text-center">Selections</th>
+                                <th class="text-center">Avg CTC (LPA)</th>
+                                <th class="text-center">Highest CTC (LPA)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teamPerfBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-box">
+                    <div class="chart-title">Team — Companies Brought</div>
+                    <canvas id="dashCdmTeamCompanies" style="max-height:300px;"></canvas>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">Team — Selections</div>
+                    <canvas id="dashCdmTeamSelections" style="max-height:300px;"></canvas>
+                </div>
+            </div>
+            <div class="charts-row">
+                <div class="chart-box">
+                    <div class="chart-title">Companies — Most Selections</div>
+                    <canvas id="dashCdmTopPlaced" style="max-height:300px;"></canvas>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">Companies — Highest CTC</div>
+                    <canvas id="dashCdmHighestCtc" style="max-height:300px;"></canvas>
+                </div>
+            </div>
+        </div><!-- /view-cdmCharts -->
 
         <!-- ═══ PLACEMENT TRENDS VIEW ════════════════════════════ -->
         <div id="view-trends" class="dash-view" style="display:none;">
@@ -732,6 +785,181 @@
             });
             $('#exportDeptSummary').on('click', function () {
                 exportTableToXlsx('deptSummaryTable', 'Department_Summary.xlsx');
+            });
+
+            /* ═══ CDM HERO + CDM ANALYTICS TAB ═══════════════════════ */
+            var cdmAnalyticsLoaded = false;
+            var cdmData = null;
+
+            // Load CDM hero stats immediately
+            $.getJSON('/api/cdm/analytics', function (data) {
+                if (data.error) return;
+                cdmData = data;
+                var ctc = data.ctc_stats || {};
+                var completed = (data.status_dist || {})['Completed'] || 0;
+                var ongoing = (data.status_dist || {})['Ongoing'] || 0;
+                var totalSelections = 0;
+                if (data.team_performance) {
+                    data.team_performance.forEach(function (t) { totalSelections += (t.selections || 0); });
+                }
+                var heroHtml = '';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + data.total_companies + '</span><span class="hero-stat-label">Companies</span></div>';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + data.total_drives + '</span><span class="hero-stat-label">Drives</span></div>';
+                heroHtml += '<div class="hero-stat hero-stat--accent"><span class="hero-stat-value">' + completed + '</span><span class="hero-stat-label">Completed</span></div>';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + totalSelections + '</span><span class="hero-stat-label">Selections</span></div>';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + (ctc.mean || '—') + '</span><span class="hero-stat-label">Avg CTC</span></div>';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + (ctc.highest || '—') + '</span><span class="hero-stat-label">Top CTC</span></div>';
+                $('#heroCdmStats').html(heroHtml);
+            });
+
+            function renderCdmCharts(data) {
+                var CC = ['#e53935', '#42a5f5', '#66bb6a', '#ffa726', '#ab47bc',
+                    '#26c6da', '#ef5350', '#7e57c2', '#8d6e63', '#78909c'];
+
+                var ctc = data.ctc_stats || {};
+                var statsHtml = '';
+                statsHtml += '<div class="stat-card"><div class="stat-label">Total Drives</div><div class="stat-value">' + data.total_drives + '</div></div>';
+                statsHtml += '<div class="stat-card stat-card--accent"><div class="stat-label">Companies</div><div class="stat-value">' + data.total_companies + '</div></div>';
+                if (ctc.mean) statsHtml += '<div class="stat-card"><div class="stat-label">Avg CTC</div><div class="stat-value">' + ctc.mean + ' LPA</div></div>';
+                if (ctc.highest) statsHtml += '<div class="stat-card"><div class="stat-label">Highest CTC</div><div class="stat-value">' + ctc.highest + ' LPA</div></div>';
+                if (ctc.lowest) statsHtml += '<div class="stat-card"><div class="stat-label">Lowest CTC</div><div class="stat-value">' + ctc.lowest + ' LPA</div></div>';
+
+                var totalSel = 0;
+                if (data.team_performance) data.team_performance.forEach(function (t) { totalSel += (t.selections || 0); });
+                statsHtml += '<div class="stat-card"><div class="stat-label">Total Selections</div><div class="stat-value">' + totalSel + '</div></div>';
+                $('#cdmDashStats').html(statsHtml);
+
+                // ── Team Performance Table ──────────────────────────
+                if (data.team_performance && data.team_performance.length) {
+                    var tbody = '';
+                    data.team_performance.forEach(function (t) {
+                        tbody += '<tr style="border-color:var(--border-color);">';
+                        tbody += '<td><strong>' + t.name + '</strong></td>';
+                        tbody += '<td class="text-center">' + t.companies_brought + '</td>';
+                        tbody += '<td class="text-center">' + t.total_drives + '</td>';
+                        tbody += '<td class="text-center">' + t.selections + '</td>';
+                        tbody += '<td class="text-center">' + (t.avg_ctc ? t.avg_ctc + ' LPA' : '—') + '</td>';
+                        tbody += '<td class="text-center">' + (t.highest_ctc ? t.highest_ctc + ' LPA' : '—') + '</td>';
+                        tbody += '</tr>';
+                    });
+                    $('#teamPerfBody').html(tbody);
+                }
+
+                // ── Team — Companies Brought (bar) ──────────────────
+                if (data.team_performance && data.team_performance.length) {
+                    var tp = data.team_performance;
+                    new Chart($('#dashCdmTeamCompanies')[0], {
+                        type: 'bar',
+                        data: {
+                            labels: tp.map(function (t) { return t.name.split(' ')[0]; }),
+                            datasets: [{
+                                label: 'Companies',
+                                data: tp.map(function (t) { return t.companies_brought; }),
+                                backgroundColor: CC.slice(0, tp.length),
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        title: function (ctx) { return tp[ctx[0].dataIndex].name; }
+                                    }
+                                }
+                            },
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }
+                        }
+                    });
+                }
+
+                // ── Team — Selections (bar) ─────────────────────────
+                if (data.team_performance && data.team_performance.length) {
+                    var tp2 = data.team_performance.slice().sort(function (a, b) { return b.selections - a.selections; });
+                    new Chart($('#dashCdmTeamSelections')[0], {
+                        type: 'bar',
+                        data: {
+                            labels: tp2.map(function (t) { return t.name.split(' ')[0]; }),
+                            datasets: [{
+                                label: 'Selections',
+                                data: tp2.map(function (t) { return t.selections; }),
+                                backgroundColor: '#42a5f5',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        title: function (ctx) { return tp2[ctx[0].dataIndex].name; }
+                                    }
+                                }
+                            },
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }
+                        }
+                    });
+                }
+
+                // ── Companies — Most Selections (horizontal bar) ────
+                if (data.top_placed_companies && data.top_placed_companies.length) {
+                    new Chart($('#dashCdmTopPlaced')[0], {
+                        type: 'bar',
+                        data: {
+                            labels: data.top_placed_companies.map(function (c) { return c.company_name; }),
+                            datasets: [{
+                                label: 'Selections',
+                                data: data.top_placed_companies.map(function (c) { return c.selected_count; }),
+                                backgroundColor: '#66bb6a',
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                            plugins: { legend: { display: false } },
+                            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
+                        }
+                    });
+                }
+
+                // ── Companies — Highest CTC (horizontal bar) ────────
+                if (data.highest_ctc_companies && data.highest_ctc_companies.length) {
+                    new Chart($('#dashCdmHighestCtc')[0], {
+                        type: 'bar',
+                        data: {
+                            labels: data.highest_ctc_companies.map(function (c) { return c.company_name; }),
+                            datasets: [{
+                                label: 'CTC (LPA)',
+                                data: data.highest_ctc_companies.map(function (c) { return c.ctc; }),
+                                backgroundColor: '#ffa726',
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                            plugins: { legend: { display: false } },
+                            scales: { x: { beginAtZero: true }, y: { grid: { display: false } } }
+                        }
+                    });
+                }
+            }
+
+            // Lazy-load CDM analytics charts when tab is shown
+            $('.dash-tab[data-view="cdmCharts"]').on('click', function () {
+                if (cdmAnalyticsLoaded) return;
+                cdmAnalyticsLoaded = true;
+                if (cdmData) {
+                    setTimeout(function () { renderCdmCharts(cdmData); }, 100);
+                } else {
+                    $.getJSON('/api/cdm/analytics', function (data) {
+                        if (!data.error) {
+                            cdmData = data;
+                            renderCdmCharts(data);
+                        }
+                    });
+                }
             });
         });
     </script>

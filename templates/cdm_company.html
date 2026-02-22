@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ company.company_name }} — CDM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Placement MIS</a>
+            <div class="global-search-wrap ms-auto me-3">
+                <input type="text" id="globalSearch" class="form-control form-control-sm"
+                    placeholder="Search students..." autocomplete="off">
+                <div id="globalSearchResults" class="global-search-dropdown"></div>
+            </div>
+            <div class="navbar-nav">
+                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
+                <a class="nav-link active" href="{{ url_for('cdm_page') }}">CDM</a>
+                <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4 px-4">
+        <div class="d-flex align-items-center mb-3">
+            <a href="{{ url_for('cdm_page') }}" class="btn btn-sm btn-outline-light me-3">&larr; Back to CDM</a>
+            <h3 class="mb-0 editable-company-name" title="Click to edit company name" style="cursor:pointer;">{{
+                company.company_name }}</h3>
+            <span class="badge bg-secondary ms-2" style="font-size:0.75rem;">{{ company.company_id }}</span>
+            <button class="btn btn-sm btn-outline-danger ms-3" id="btnDeleteCompany" title="Delete company">Delete
+                Company</button>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stat-cards-row mb-4">
+            <div class="stat-card">
+                <div class="stat-label">Total Drives</div>
+                <div class="stat-value">{{ drives|length }}</div>
+            </div>
+            <div class="stat-card stat-card--accent">
+                <div class="stat-label">HR Contacts</div>
+                <div class="stat-value">{{ hr_contacts|length }}</div>
+            </div>
+            {% set completed_count = drives|selectattr('status','equalto','Completed')|list|length %}
+            <div class="stat-card">
+                <div class="stat-label">Completed</div>
+                <div class="stat-value">{{ completed_count }}</div>
+            </div>
+        </div>
+
+        <!-- ══════════════ Drives Section ══════════════ -->
+        <div class="dash-section mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="dash-section-title mb-0">Drives</div>
+                <button class="btn btn-xs btn-outline-light" id="btnAddDrive">+ Add Drive</button>
+            </div>
+            {% if drives %}
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered table-hover" style="font-size:0.85rem;"
+                    id="drivesTable">
+                    <thead>
+                        <tr>
+                            <th>Drive #</th>
+                            <th>Position</th>
+                            <th>CTC</th>
+                            <th>Status</th>
+                            <th>Courses</th>
+                            <th>JD Received</th>
+                            <th>Process Date</th>
+                            <th>Mode</th>
+                            <th>Location</th>
+                            <th>Received By</th>
+                            <th>Data Shared</th>
+                            <th>Notes</th>
+                            <th>Students</th>
+                            <th>Rounds</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in drives %}
+                        <tr data-drive-id="{{ d.drive_id }}">
+                            <td>{{ d.drive_id }}</td>
+                            <td class="editable-drive" data-field="role">{{ d.role or '—' }}</td>
+                            <td class="editable-drive" data-field="ctc_text">{{ d.ctc_text or '—' }}</td>
+                            <td class="editable-drive" data-field="status">
+                                {% set st = (d.status or 'Upcoming')|lower %}
+                                <span
+                                    class="badge {{ 'bg-success' if st == 'completed' else 'bg-warning text-dark' if st == 'ongoing' else 'bg-danger' if st == 'cancelled' else 'bg-info' }}">
+                                    {{ d.status or 'Upcoming' }}
+                                </span>
+                            </td>
+                            <td>{{ d.courses or '—' }}</td>
+                            <td class="editable-drive" data-field="jd_received_date">{{ d.jd_received_date or '—' }}
+                            </td>
+                            <td class="editable-drive" data-field="process_date">{{ d.process_date or '—' }}</td>
+                            <td class="editable-drive" data-field="process_mode">{{ d.process_mode or '—' }}</td>
+                            <td class="editable-drive" data-field="location">{{ d.location or '—' }}</td>
+                            <td class="editable-drive" data-field="received_by">{{ d.received_by or '—' }}</td>
+                            <td class="editable-drive" data-field="data_shared">{{ d.data_shared }}</td>
+                            <td class="editable-drive" data-field="notes">{{ d.notes or '—' }}</td>
+                            <td>
+                                <button class="btn btn-xs btn-outline-info btn-students" data-id="{{ d.drive_id }}"
+                                    title="Manage students">
+                                    {{ d.student_count }} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                        fill="currentColor" viewBox="0 0 16 16">
+                                        <path
+                                            d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-.779.357-1.85 1.084-2.79.243-.314.52-.6.852-.862zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+                                    </svg>
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-xs btn-outline-warning btn-rounds" data-id="{{ d.drive_id }}"
+                                    title="Manage rounds">
+                                    {{ d.round_count }} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                        fill="currentColor" viewBox="0 0 16 16">
+                                        <path
+                                            d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                                        <path
+                                            d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z" />
+                                    </svg>
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-xs btn-outline-danger delete-drive" data-id="{{ d.drive_id }}"
+                                    title="Delete drive">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                                        <path fill-rule="evenodd"
+                                            d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H5.5l1-1h3l1 1H14a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No drives recorded for this company.</p>
+            {% endif %}
+        </div>
+
+        <!-- ══════════════ HR Contacts Section ══════════════ -->
+        <div class="dash-section mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="dash-section-title mb-0">HR Contacts</div>
+                <button class="btn btn-xs btn-outline-light" id="btnAddHR">+ Add Contact</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered table-hover" style="font-size:0.85rem;" id="hrTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Designation</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th style="width:80px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hr in hr_contacts %}
+                        <tr data-hr-id="{{ hr.hr_id }}">
+                            <td class="editable-hr" data-field="name">{{ hr.name or '—' }}</td>
+                            <td class="editable-hr" data-field="designation">{{ hr.designation or '—' }}</td>
+                            <td class="editable-hr" data-field="email">
+                                {% if hr.email %}
+                                <a href="mailto:{{ hr.email }}" class="text-info">{{ hr.email }}</a>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td class="editable-hr" data-field="phone">{{ hr.phone or '—' }}</td>
+                            <td>
+                                <button class="btn btn-xs btn-outline-danger delete-hr" data-id="{{ hr.hr_id }}"
+                                    title="Delete contact">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                                        <path fill-rule="evenodd"
+                                            d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H5.5l1-1h3l1 1H14a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not hr_contacts %}
+                        <tr id="noHrRow">
+                            <td colspan="5" class="text-muted text-center">No HR contacts recorded.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ Student Linking Modal ══════════════ -->
+    <div class="modal fade" id="studentsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content"
+                style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title">Drive Students — <span id="smDriveId"></span></h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Search to add student -->
+                    <div class="mb-3">
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="studentSearchInput" class="form-control"
+                                placeholder="Search student by name or reg no..."
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            <button class="btn btn-outline-light" id="btnLinkStudent" disabled>Add</button>
+                        </div>
+                        <div id="studentSearchResults" class="cdm-search-dropdown"></div>
+                    </div>
+
+                    <!-- Linked students table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover" style="font-size:0.82rem;"
+                            id="linkedStudentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Reg No</th>
+                                    <th>Name</th>
+                                    <th>Course</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="noStudentsRow">
+                                    <td colspan="6" class="text-muted text-center">No students linked</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ Rounds Modal ══════════════ -->
+    <div class="modal fade" id="roundsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title">Drive Rounds — <span id="rmDriveId"></span></h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Add round form -->
+                    <div class="mb-3 d-flex gap-2">
+                        <input type="text" id="roundNameInput" class="form-control form-control-sm"
+                            placeholder="Round name (e.g. Aptitude, Interview)"
+                            style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        <input type="date" id="roundDateInput" class="form-control form-control-sm"
+                            style="width:140px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        <button class="btn btn-sm btn-danger" id="btnAddRound">Add</button>
+                    </div>
+
+                    <!-- Rounds list -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover" style="font-size:0.82rem;"
+                            id="roundsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Round Name</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="noRoundsRow">
+                                    <td colspan="4" class="text-muted text-center">No rounds added</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Add HR Modal ──────────────────────────── -->
+    <div class="modal fade" id="addHrModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content"
+                style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title">Add HR Contact</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="hrNameInput" class="form-control form-control-sm mb-2" placeholder="Name *"
+                        style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                    <input type="text" id="hrDesigInput" class="form-control form-control-sm mb-2"
+                        placeholder="Designation"
+                        style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                    <input type="email" id="hrEmailInput" class="form-control form-control-sm mb-2" placeholder="Email"
+                        style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                    <input type="text" id="hrPhoneInput" class="form-control form-control-sm" placeholder="Phone"
+                        style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="btnConfirmAddHR">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Add Drive Modal ──────────────────────────── -->
+    <div class="modal fade" id="addDriveModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title">Add New Drive</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Position / Role *</label>
+                            <input type="text" id="driveRoleInput" class="form-control form-control-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">CTC</label>
+                            <input type="text" id="driveCtcInput" class="form-control form-control-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Process Date</label>
+                            <input type="date" id="driveDateInput" class="form-control form-control-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Mode</label>
+                            <select id="driveModeInput" class="form-select form-select-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <option value="">—</option>
+                                <option>On-Campus</option>
+                                <option>Virtual</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Location</label>
+                            <input type="text" id="driveLocationInput" class="form-control form-control-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Status</label>
+                            <select id="driveStatusInput" class="form-select form-select-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <option>Upcoming</option>
+                                <option>Ongoing</option>
+                                <option>Completed</option>
+                                <option>Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Notes</label>
+                            <textarea id="driveNotesInput" class="form-control form-control-sm" rows="2"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);"></textarea>
+                        </div>
+                    </div>
+                    <div id="addDriveError" class="text-danger small d-none mt-2"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="btnConfirmAddDrive">Add Drive</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Toast ──────────────────────────── -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+        <div id="editToast" class="toast align-items-center text-bg-success border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="editToastMsg">Saved</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="{{ url_for('static', filename='globalSearch.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(function () {
+            var COMPANY_ID = '{{ company.company_id }}';
+
+            function showToast(msg, type) {
+                var $t = $('#editToast');
+                $t.removeClass('text-bg-success text-bg-danger').addClass('text-bg-' + (type || 'success'));
+                $('#editToastMsg').text(msg);
+                bootstrap.Toast.getOrCreateInstance($t[0], { delay: 2000 }).show();
+            }
+
+            var DRIVE_DROPDOWNS = {
+                status: ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'],
+                process_mode: ['On-Campus', 'Virtual'],
+                data_shared: ['Yes', 'No']
+            };
+
+            /* ══════════════ DRIVE INLINE EDITING ══════════════ */
+            $(document).on('click', '.editable-drive', function () {
+                var $td = $(this);
+                if ($td.find('input, select').length) return;
+                var driveId = $td.closest('tr').data('drive-id');
+                var field = $td.data('field');
+                var currentVal = $td.text().trim();
+                if (currentVal === '—') currentVal = '';
+                var originalHtml = $td.html();
+
+                if (DRIVE_DROPDOWNS[field]) {
+                    var opts = DRIVE_DROPDOWNS[field].map(function (o) {
+                        return '<option value="' + o + '"' + (o === currentVal ? ' selected' : '') + '>' + o + '</option>';
+                    }).join('');
+                    var $sel = $('<select class="form-select form-select-sm edit-inline-input">' + opts + '</select>');
+                    $td.empty().append($sel);
+                    $sel.focus();
+                    var saved = false;
+                    $sel.on('change', function () {
+                        if (!saved) { saved = true; saveDriveField(driveId, field, $sel.val(), $td, originalHtml); }
+                    });
+                    $sel.on('blur', function () { if (!saved) $td.html(originalHtml); });
+                } else {
+                    var inputType = (field === 'jd_received_date' || field === 'process_date') ? 'date' : 'text';
+                    var $inp = $('<input type="' + inputType + '" class="form-control form-control-sm edit-inline-input" value="' +
+                        $('<i>').text(currentVal).html() + '">');
+                    $td.empty().append($inp);
+                    $inp.focus().select();
+                    $inp.on('keydown', function (ev) {
+                        if (ev.key === 'Enter') saveDriveField(driveId, field, $inp.val(), $td, originalHtml);
+                        else if (ev.key === 'Escape') $td.html(originalHtml);
+                    });
+                    $inp.on('blur', function () {
+                        if ($inp.val() !== currentVal) saveDriveField(driveId, field, $inp.val(), $td, originalHtml);
+                        else $td.html(originalHtml);
+                    });
+                }
+            });
+
+            function saveDriveField(driveId, field, value, $td, originalHtml) {
+                $.ajax({
+                    url: '/api/cdm/drive/' + driveId,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ field: field, value: value }),
+                    success: function (res) {
+                        if (res.ok) {
+                            var v = res.value != null ? res.value : '';
+                            if (field === 'status') {
+                                var st = v.toLowerCase();
+                                var cls = st === 'completed' ? 'bg-success' : st === 'ongoing' ? 'bg-warning text-dark' : st === 'cancelled' ? 'bg-danger' : 'bg-info';
+                                $td.html('<span class="badge ' + cls + '">' + v + '</span>');
+                            } else if (field === 'email') {
+                                $td.html(v ? '<a href="mailto:' + v + '" class="text-info">' + v + '</a>' : '—');
+                            } else {
+                                $td.text(v || '—');
+                            }
+                            showToast('Saved', 'success');
+                        } else {
+                            $td.html(originalHtml);
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { $td.html(originalHtml); showToast('Save failed', 'danger'); }
+                });
+            }
+
+            /* ══════════════ DELETE DRIVE ══════════════ */
+            $(document).on('click', '.delete-drive', function () {
+                var id = $(this).data('id');
+                if (!confirm('Delete drive #' + id + '? This cannot be undone.')) return;
+                $.post('/api/cdm/delete-drive/' + id, function (res) {
+                    if (res.ok) location.reload();
+                    else alert('Error: ' + (res.error || 'Unknown'));
+                });
+            });
+
+            /* ══════════════ HR INLINE EDITING ══════════════ */
+            $(document).on('click', '.editable-hr', function () {
+                var $td = $(this);
+                if ($td.find('input').length) return;
+                var hrId = $td.closest('tr').data('hr-id');
+                var field = $td.data('field');
+                var currentVal = $td.text().trim();
+                if (currentVal === '—') currentVal = '';
+                var originalHtml = $td.html();
+
+                var $inp = $('<input type="text" class="form-control form-control-sm edit-inline-input" value="' +
+                    $('<i>').text(currentVal).html() + '">');
+                $td.empty().append($inp);
+                $inp.focus().select();
+
+                $inp.on('keydown', function (ev) {
+                    if (ev.key === 'Enter') saveHrField(hrId, field, $inp.val(), $td, originalHtml);
+                    else if (ev.key === 'Escape') $td.html(originalHtml);
+                });
+                $inp.on('blur', function () {
+                    if ($inp.val() !== currentVal) saveHrField(hrId, field, $inp.val(), $td, originalHtml);
+                    else $td.html(originalHtml);
+                });
+            });
+
+            function saveHrField(hrId, field, value, $td, originalHtml) {
+                $.ajax({
+                    url: '/api/cdm/hr/' + hrId,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ field: field, value: value }),
+                    success: function (res) {
+                        if (res.ok) {
+                            var v = res.value || '';
+                            if (field === 'email' && v) {
+                                $td.html('<a href="mailto:' + v + '" class="text-info">' + v + '</a>');
+                            } else {
+                                $td.text(v || '—');
+                            }
+                            showToast('HR updated', 'success');
+                        } else {
+                            $td.html(originalHtml);
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { $td.html(originalHtml); showToast('Save failed', 'danger'); }
+                });
+            }
+
+            /* ══════════════ DELETE HR ══════════════ */
+            $(document).on('click', '.delete-hr', function () {
+                var $btn = $(this);
+                var id = $btn.data('id');
+                if (!confirm('Delete this HR contact?')) return;
+                $.ajax({
+                    url: '/api/cdm/hr/' + id,
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            $btn.closest('tr').fadeOut(300, function () { $(this).remove(); });
+                            showToast('HR contact deleted', 'success');
+                        } else {
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { showToast('Delete failed', 'danger'); }
+                });
+            });
+
+            /* ══════════════ ADD HR ══════════════ */
+            $('#btnAddHR').on('click', function () {
+                $('#hrNameInput, #hrDesigInput, #hrEmailInput, #hrPhoneInput').val('');
+                new bootstrap.Modal('#addHrModal').show();
+                setTimeout(function () { $('#hrNameInput').focus(); }, 300);
+            });
+
+            $('#btnConfirmAddHR').on('click', function () {
+                var name = $('#hrNameInput').val().trim();
+                if (!name) { $('#hrNameInput').addClass('is-invalid').focus(); return; }
+                $.ajax({
+                    url: '/api/cdm/hr',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        company_id: COMPANY_ID,
+                        name: name,
+                        designation: $('#hrDesigInput').val().trim() || null,
+                        email: $('#hrEmailInput').val().trim() || null,
+                        phone: $('#hrPhoneInput').val().trim() || null
+                    }),
+                    success: function (res) {
+                        if (res.ok) {
+                            bootstrap.Modal.getInstance('#addHrModal').hide();
+                            location.reload();
+                        } else {
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { showToast('Add failed', 'danger'); }
+                });
+            });
+
+            /* ══════════════ STUDENT LINKING MODAL ══════════════ */
+            var currentDriveId = null;
+            var selectedStudent = null;
+
+            $(document).on('click', '.btn-students', function () {
+                currentDriveId = $(this).data('id');
+                $('#smDriveId').text('#' + currentDriveId);
+                loadDriveStudents(currentDriveId);
+                new bootstrap.Modal('#studentsModal').show();
+            });
+
+            function loadDriveStudents(driveId) {
+                $.getJSON('/api/cdm/drive/' + driveId + '/students', function (data) {
+                    var $tbody = $('#linkedStudentsTable tbody').empty();
+                    var students = data.students || [];
+                    if (!students.length) {
+                        $tbody.append('<tr id="noStudentsRow"><td colspan="6" class="text-muted text-center">No students linked</td></tr>');
+                        return;
+                    }
+                    students.forEach(function (s) {
+                        var statusOpts = ['Applied', 'Shortlisted', 'In Process', 'Selected', 'Rejected', 'On Hold'].map(function (o) {
+                            return '<option' + (o === s.status ? ' selected' : '') + '>' + o + '</option>';
+                        }).join('');
+                        $tbody.append(
+                            '<tr>' +
+                            '<td>' + s.reg_no + '</td>' +
+                            '<td>' + (s.student_name || '') + '</td>' +
+                            '<td>' + (s.course || '') + '</td>' +
+                            '<td>' + (s.department || '') + '</td>' +
+                            '<td><select class="form-select form-select-sm student-status-sel" data-reg="' + s.reg_no + '" ' +
+                            'style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);width:120px;">' + statusOpts + '</select></td>' +
+                            '<td><button class="btn btn-xs btn-outline-danger unlink-student" data-reg="' + s.reg_no + '" title="Remove">&times;</button></td>' +
+                            '</tr>'
+                        );
+                    });
+                });
+            }
+
+            // Student search for linking
+            var stuSearchTimer = null;
+            $('#studentSearchInput').on('input', function () {
+                var q = $(this).val().trim();
+                clearTimeout(stuSearchTimer);
+                selectedStudent = null;
+                $('#btnLinkStudent').prop('disabled', true);
+                if (q.length < 2) { $('#studentSearchResults').hide().empty(); return; }
+                stuSearchTimer = setTimeout(function () {
+                    $.getJSON('/api/cdm/search-students?q=' + encodeURIComponent(q), function (res) {
+                        var $dd = $('#studentSearchResults').empty();
+                        if (!res.results || !res.results.length) {
+                            $dd.html('<div class="gs-empty">No students found</div>').show();
+                            return;
+                        }
+                        res.results.forEach(function (s) {
+                            var badge = s.status === 'Placed' ? '<span class="badge bg-success ms-1" style="font-size:0.6rem;">Placed</span>' : '';
+                            $dd.append(
+                                '<div class="gs-item cdm-stu-pick" data-reg="' + s.reg_no + '" data-name="' + (s.student_name || '') + '">' +
+                                '<div class="gs-name">' + (s.student_name || '') + badge + '</div>' +
+                                '<div class="gs-meta">' + s.reg_no + ' &middot; ' + (s.course || '') + '</div>' +
+                                '</div>'
+                            );
+                        });
+                        $dd.show();
+                    });
+                }, 250);
+            });
+
+            $(document).on('click', '.cdm-stu-pick', function () {
+                selectedStudent = { reg_no: $(this).data('reg'), name: $(this).data('name') };
+                $('#studentSearchInput').val(selectedStudent.name + ' (' + selectedStudent.reg_no + ')');
+                $('#studentSearchResults').hide();
+                $('#btnLinkStudent').prop('disabled', false);
+            });
+
+            $('#btnLinkStudent').on('click', function () {
+                if (!selectedStudent || !currentDriveId) return;
+                $.ajax({
+                    url: '/api/cdm/drive/' + currentDriveId + '/students',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ reg_no: selectedStudent.reg_no, status: 'Applied' }),
+                    success: function (res) {
+                        if (res.ok) {
+                            loadDriveStudents(currentDriveId);
+                            $('#studentSearchInput').val('');
+                            selectedStudent = null;
+                            $('#btnLinkStudent').prop('disabled', true);
+                            showToast('Student linked', 'success');
+                        } else {
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { showToast('Link failed', 'danger'); }
+                });
+            });
+
+            // Update student status in drive
+            $(document).on('change', '.student-status-sel', function () {
+                var regNo = $(this).data('reg');
+                var newStatus = $(this).val();
+                $.ajax({
+                    url: '/api/cdm/drive/' + currentDriveId + '/students/' + encodeURIComponent(regNo),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ status: newStatus }),
+                    success: function (res) {
+                        if (res.ok) showToast('Status updated', 'success');
+                        else showToast(res.error || 'Error', 'danger');
+                    }
+                });
+            });
+
+            // Unlink student
+            $(document).on('click', '.unlink-student', function () {
+                var regNo = $(this).data('reg');
+                if (!confirm('Remove this student from the drive?')) return;
+                $.ajax({
+                    url: '/api/cdm/drive/' + currentDriveId + '/students/' + encodeURIComponent(regNo),
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            loadDriveStudents(currentDriveId);
+                            showToast('Student removed', 'success');
+                        }
+                    }
+                });
+            });
+
+            /* ══════════════ ROUNDS MODAL ══════════════ */
+            var currentRoundsDriveId = null;
+
+            $(document).on('click', '.btn-rounds', function () {
+                currentRoundsDriveId = $(this).data('id');
+                $('#rmDriveId').text('#' + currentRoundsDriveId);
+                loadDriveRounds(currentRoundsDriveId);
+                new bootstrap.Modal('#roundsModal').show();
+            });
+
+            function loadDriveRounds(driveId) {
+                $.getJSON('/api/cdm/drive/' + driveId + '/rounds', function (data) {
+                    var $tbody = $('#roundsTable tbody').empty();
+                    var rounds = data.rounds || [];
+                    if (!rounds.length) {
+                        $tbody.append('<tr id="noRoundsRow"><td colspan="4" class="text-muted text-center">No rounds added</td></tr>');
+                        return;
+                    }
+                    rounds.forEach(function (r) {
+                        $tbody.append(
+                            '<tr>' +
+                            '<td>' + r.round_order + '</td>' +
+                            '<td>' + r.round_name + '</td>' +
+                            '<td>' + (r.round_date || '—') + '</td>' +
+                            '<td><button class="btn btn-xs btn-outline-danger delete-round" data-id="' + r.round_id + '">&times;</button></td>' +
+                            '</tr>'
+                        );
+                    });
+                });
+            }
+
+            $('#btnAddRound').on('click', function () {
+                var name = $('#roundNameInput').val().trim();
+                if (!name) { $('#roundNameInput').focus(); return; }
+                $.ajax({
+                    url: '/api/cdm/drive/' + currentRoundsDriveId + '/rounds',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ round_name: name, round_date: $('#roundDateInput').val() || null }),
+                    success: function (res) {
+                        if (res.ok) {
+                            loadDriveRounds(currentRoundsDriveId);
+                            $('#roundNameInput').val('');
+                            $('#roundDateInput').val('');
+                            showToast('Round added', 'success');
+                        } else {
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.delete-round', function () {
+                var id = $(this).data('id');
+                $.ajax({
+                    url: '/api/cdm/round/' + id,
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            loadDriveRounds(currentRoundsDriveId);
+                            showToast('Round deleted', 'success');
+                        }
+                    }
+                });
+            });
+
+            /* ══════════════ EDIT COMPANY NAME ══════════════ */
+            $(document).on('click', '.editable-company-name', function () {
+                var $h = $(this);
+                if ($h.find('input').length) return;
+                var currentName = $h.text().trim();
+                var $inp = $('<input type="text" class="form-control form-control-sm d-inline-block" style="width:300px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);font-size:1.5rem;font-weight:700;" value="' +
+                    $('<i>').text(currentName).html() + '">');
+                $h.empty().append($inp);
+                $inp.focus().select();
+                $inp.on('keydown', function (ev) {
+                    if (ev.key === 'Enter') saveCompanyName($inp.val().trim(), $h, currentName);
+                    else if (ev.key === 'Escape') $h.text(currentName);
+                });
+                $inp.on('blur', function () {
+                    var v = $inp.val().trim();
+                    if (v && v !== currentName) saveCompanyName(v, $h, currentName);
+                    else $h.text(currentName);
+                });
+            });
+
+            function saveCompanyName(name, $h, fallback) {
+                $.ajax({
+                    url: '/api/cdm/company/' + encodeURIComponent(COMPANY_ID),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ company_name: name }),
+                    success: function (res) {
+                        if (res.ok) {
+                            $h.text(res.company_name);
+                            document.title = res.company_name + ' — CDM';
+                            showToast('Company name updated', 'success');
+                        } else {
+                            $h.text(fallback);
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { $h.text(fallback); showToast('Save failed', 'danger'); }
+                });
+            }
+
+            /* ══════════════ DELETE COMPANY ══════════════ */
+            $('#btnDeleteCompany').on('click', function () {
+                if (!confirm('Delete this company and ALL its drives, HR contacts, rounds, and linked students? This cannot be undone.')) return;
+                $.ajax({
+                    url: '/api/cdm/company/' + encodeURIComponent(COMPANY_ID),
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            window.location.href = '/cdm';
+                        } else {
+                            showToast(res.error || 'Delete failed', 'danger');
+                        }
+                    },
+                    error: function () { showToast('Delete failed', 'danger'); }
+                });
+            });
+
+            /* ══════════════ ADD DRIVE ══════════════ */
+            $('#btnAddDrive').on('click', function () {
+                $('#driveRoleInput, #driveCtcInput, #driveDateInput, #driveLocationInput, #driveNotesInput').val('');
+                $('#driveModeInput').val('');
+                $('#driveStatusInput').val('Upcoming');
+                $('#addDriveError').addClass('d-none');
+                new bootstrap.Modal('#addDriveModal').show();
+                setTimeout(function () { $('#driveRoleInput').focus(); }, 300);
+            });
+
+            $('#btnConfirmAddDrive').on('click', function () {
+                var role = $('#driveRoleInput').val().trim();
+                if (!role) { $('#driveRoleInput').addClass('is-invalid').focus(); return; }
+                $.ajax({
+                    url: '/api/cdm/drive',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        company_id: COMPANY_ID,
+                        role: role,
+                        ctc_text: $('#driveCtcInput').val().trim() || null,
+                        process_date: $('#driveDateInput').val() || null,
+                        process_mode: $('#driveModeInput').val() || null,
+                        location: $('#driveLocationInput').val().trim() || null,
+                        status: $('#driveStatusInput').val() || 'Upcoming',
+                        notes: $('#driveNotesInput').val().trim() || null
+                    }),
+                    success: function (res) {
+                        if (res.ok) {
+                            bootstrap.Modal.getInstance('#addDriveModal').hide();
+                            showToast('Drive #' + res.drive_id + ' created', 'success');
+                            location.reload();
+                        } else {
+                            $('#addDriveError').text(res.error || 'Error').removeClass('d-none');
+                        }
+                    },
+                    error: function (xhr) {
+                        var msg = 'Create failed';
+                        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
+                        $('#addDriveError').text(msg).removeClass('d-none');
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+
+</html>

@@ -27,6 +27,8 @@ function initFilterSystem(opts) {
     var tableSelector = opts.tableSelector;
     var DATA_KEYS = opts.keys;
     var tableConfig = opts.tableConfig || {};
+    var headerRowSelector = opts.headerRowSelector || '#headerRow';
+    var filterRowSelector = opts.filterRowSelector || '#filterRow';
 
     /* ──────────────────────────────────────────────────────────
        1. Pre-normalise LOCAL_DATA — all values become strings
@@ -59,8 +61,8 @@ function initFilterSystem(opts) {
     /* ── Pre-filter function (set by external caller) ───── */
     var preFilterFn = null;
     /* ── Build filter cells (buttons in table, panels on body) ── */
-    var $fr = $('#filterRow');
-    var cols = $('#headerRow th').length;
+    var $fr = $(filterRowSelector);
+    var cols = $(headerRowSelector + ' th').length;
     for (var i = 0; i < cols; i++) {
         $fr.append(
             '<th><div class="cf-wrap">' +
