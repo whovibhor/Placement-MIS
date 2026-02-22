@@ -86,55 +86,189 @@
             </div>
         </div>
 
-        <!-- ── Charts ──────────────────────────────────────────── -->
-        <div class="charts-row">
-            <div class="chart-box" style="grid-column: span 2;">
-                <div class="chart-title">Department-wise Placements</div>
-                <canvas id="deptChart" style="max-height:350px;"></canvas>
-            </div>
-        </div>
-        <div class="charts-row">
-            <div class="chart-box">
-                <div class="chart-title">Placement Funnel</div>
-                <canvas id="statusChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-title">Top 10 Recruiters</div>
-                <canvas id="companyChart"></canvas>
-            </div>
-        </div>
-        <div class="charts-row">
-            <div class="chart-box">
-                <div class="chart-title">Gender Distribution</div>
-                <canvas id="genderChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-title">Gender-wise Placement</div>
-                <canvas id="genderPlacementChart"></canvas>
-            </div>
+        <!-- ── View Tabs ───────────────────────────────────────── -->
+        <div class="dash-view-tabs mb-3">
+            <button class="dash-tab active" data-view="charts">Charts</button>
+            <button class="dash-tab" data-view="trends">Placement Trends</button>
+            <button class="dash-tab" data-view="courseSummary">Course Summary</button>
+            <button class="dash-tab" data-view="deptSummary">Department Summary</button>
         </div>
 
-        <!-- ── CTC Distribution Chart ─────────────────────────── -->
-        <div class="charts-row">
-            <div class="chart-box" style="grid-column: span 2;">
-                <div class="chart-title">CTC Distribution</div>
-                <canvas id="ctcDistChart" style="max-height:300px;"></canvas>
-            </div>
-        </div>
+        <!-- ═══ CHARTS VIEW ═══════════════════════════════════════ -->
+        <div id="view-charts" class="dash-view">
 
-        <!-- ── Department → Course Breakdown ───────────────────── -->
-        <div class="dash-section">
-            <div class="dash-section-title">Department &rarr; Course Breakdown</div>
-            <div id="deptCourseBreakdown" class="dept-breakdown-wrap"></div>
-        </div>
-
-        <!-- ── Recent Changes ──────────────────────────────────── -->
-        <div class="dash-section">
-            <div class="dash-section-title">Recent Changes</div>
-            <div id="recentChanges" class="recent-changes-list">
-                <p class="text-muted">Loading...</p>
+            <!-- ── Charts ──────────────────────────────────────────── -->
+            <div class="charts-row">
+                <div class="chart-box" style="grid-column: span 2;">
+                    <div class="chart-title">Department-wise Placements</div>
+                    <canvas id="deptChart" style="max-height:350px;"></canvas>
+                </div>
             </div>
-        </div>
+            <div class="charts-row">
+                <div class="chart-box">
+                    <div class="chart-title">Placement Funnel</div>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">Top 10 Recruiters</div>
+                    <canvas id="companyChart"></canvas>
+                </div>
+            </div>
+            <div class="charts-row">
+                <div class="chart-box">
+                    <div class="chart-title">Gender Distribution</div>
+                    <canvas id="genderChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">Gender-wise Placement</div>
+                    <canvas id="genderPlacementChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ── CTC Distribution Chart ─────────────────────────── -->
+            <div class="charts-row">
+                <div class="chart-box" style="grid-column: span 2;">
+                    <div class="chart-title">CTC Distribution</div>
+                    <canvas id="ctcDistChart" style="max-height:300px;"></canvas>
+                </div>
+            </div>
+
+            <!-- ── Department → Course Breakdown ───────────────────── -->
+            <div class="dash-section">
+                <div class="dash-section-title">Department &rarr; Course Breakdown</div>
+                <div id="deptCourseBreakdown" class="dept-breakdown-wrap"></div>
+            </div>
+
+            <!-- ── Recent Changes ──────────────────────────────────── -->
+            <div class="dash-section">
+                <div class="dash-section-title">Recent Changes</div>
+                <div id="recentChanges" class="recent-changes-list">
+                    <p class="text-muted">Loading...</p>
+                </div>
+            </div>
+
+        </div><!-- /view-charts -->
+
+        <!-- ═══ PLACEMENT TRENDS VIEW ════════════════════════════ -->
+        <div id="view-trends" class="dash-view" style="display:none;">
+            <div class="dash-section">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="dash-section-title mb-0">Placement Trends</div>
+                    <div class="d-flex gap-2">
+                        <select id="trendPeriod" class="form-select form-select-sm"
+                            style="width:auto; background:var(--bg-surface); color:var(--text-primary); border-color:var(--border-color);">
+                            <option value="daily">Daily</option>
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cumulative Placement Growth -->
+                <div class="charts-row">
+                    <div class="chart-box" style="grid-column: span 2;">
+                        <div class="chart-title">Cumulative Placements Over Time</div>
+                        <canvas id="trendCumulativeChart" style="max-height:350px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- New Placements Per Period -->
+                <div class="charts-row">
+                    <div class="chart-box" style="grid-column: span 2;">
+                        <div class="chart-title">New Placements Per Period</div>
+                        <canvas id="trendNewChart" style="max-height:300px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Trend Stats Cards -->
+                <div id="trendStatsRow" class="stat-cards-row mt-3"></div>
+            </div>
+        </div><!-- /view-trends -->
+
+        <!-- ═══ COURSE SUMMARY VIEW ══════════════════════════════ -->
+        <div id="view-courseSummary" class="dash-view" style="display:none;">
+            <div class="dash-section">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="dash-section-title mb-0">Course Summary</div>
+                    <button class="btn btn-sm btn-outline-light" id="exportCourseSummary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                            class="bi bi-download me-1" viewBox="0 0 16 16">
+                            <path
+                                d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                            <path
+                                d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                        </svg>
+                        Export Excel
+                    </button>
+                </div>
+                <div class="table-responsive summary-table-wrap">
+                    <table class="table table-sm summary-tbl" id="courseSummaryTable">
+                        <thead>
+                            <tr>
+                                <th>Department</th>
+                                <th>Stream</th>
+                                <th>Total Students</th>
+                                <th>Seeking Placement</th>
+                                <th>Not Seeking</th>
+                                <th>Eligible</th>
+                                <th>Ineligible (Backlogs)</th>
+                                <th>Gap %</th>
+                                <th>Backlogs</th>
+                                <th>Deemed Placed</th>
+                                <th>Placed</th>
+                                <th>Unplaced</th>
+                                <th>Pending</th>
+                                <th>Target %</th>
+                                <th>Achieved %</th>
+                                <th>Avg CTC (LPA)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="courseSummaryBody"></tbody>
+                        <tfoot id="courseSummaryFoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /view-courseSummary -->
+
+        <!-- ═══ DEPARTMENT SUMMARY VIEW ══════════════════════════ -->
+        <div id="view-deptSummary" class="dash-view" style="display:none;">
+            <div class="dash-section">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="dash-section-title mb-0">Department Summary</div>
+                    <button class="btn btn-sm btn-outline-light" id="exportDeptSummary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                            class="bi bi-download me-1" viewBox="0 0 16 16">
+                            <path
+                                d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                            <path
+                                d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                        </svg>
+                        Export Excel
+                    </button>
+                </div>
+                <div class="table-responsive summary-table-wrap">
+                    <table class="table table-sm summary-tbl" id="deptSummaryTable">
+                        <thead>
+                            <tr>
+                                <th>Sr. No.</th>
+                                <th>School Name</th>
+                                <th>Total Graduating Students</th>
+                                <th>Opted In for Placements</th>
+                                <th>Placed Students</th>
+                                <th>Placed %</th>
+                                <th>Highest CTC</th>
+                                <th>Avg CTC</th>
+                                <th>Median CTC</th>
+                                <th>Unique Companies</th>
+                                <th>Companies</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deptSummaryBody"></tbody>
+                        <tfoot id="deptSummaryFoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /view-deptSummary -->
 
         {% else %}
         <div class="alert alert-info">No data yet. <a href="{{ url_for('upload') }}">Upload an Excel file</a> to get
@@ -146,6 +280,7 @@
     <script src="{{ url_for('static', filename='globalSearch.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
     {% if analytics %}
     <script id="analytics-data" type="application/json">{{ analytics | tojson }}</script>
@@ -327,6 +462,276 @@
                 });
                 html += '</tbody></table>';
                 box.html(html);
+            });
+
+            /* ═══ TAB SWITCHING ═══════════════════════════════════════ */
+            $('.dash-tab').on('click', function () {
+                var view = $(this).data('view');
+                $('.dash-tab').removeClass('active');
+                $(this).addClass('active');
+                $('.dash-view').hide();
+                $('#view-' + view).show();
+            });
+
+            /* ═══ PLACEMENT TREND CHARTS ══════════════════════════════ */
+            var trendData = {
+                daily: { labels: A.trend_daily_labels || [], cumulative: A.trend_daily_values || [], newPlacements: A.trend_daily_new || [] },
+                weekly: { labels: A.trend_weekly_labels || [], cumulative: A.trend_weekly_values || [], newPlacements: A.trend_weekly_new || [] },
+                monthly: { labels: A.trend_monthly_labels || [], cumulative: A.trend_monthly_values || [], newPlacements: A.trend_monthly_new || [] }
+            };
+
+            var trendCumulativeChart = null;
+            var trendNewChart = null;
+
+            function renderTrendCharts(period) {
+                var d = trendData[period];
+                if (!d || d.labels.length === 0) {
+                    if (trendCumulativeChart) { trendCumulativeChart.destroy(); trendCumulativeChart = null; }
+                    if (trendNewChart) { trendNewChart.destroy(); trendNewChart = null; }
+                    $('#trendStatsRow').html('<div class="stat-card stat-card--muted"><div class="stat-label">No trend data</div><div class="stat-value stat-value--sm">Set student status to Placed to start tracking</div></div>');
+                    return;
+                }
+
+                // Cumulative chart
+                if (trendCumulativeChart) trendCumulativeChart.destroy();
+                trendCumulativeChart = new Chart(document.getElementById('trendCumulativeChart'), {
+                    type: 'line',
+                    data: {
+                        labels: d.labels,
+                        datasets: [{
+                            label: 'Total Placed',
+                            data: d.cumulative,
+                            borderColor: red,
+                            backgroundColor: 'rgba(229,57,53,0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: period === 'daily' && d.labels.length > 60 ? 0 : 3,
+                            pointBackgroundColor: red,
+                            borderWidth: 2
+                        }, {
+                            label: 'Eligible Target',
+                            data: d.labels.map(function () { return A.eligible; }),
+                            borderColor: 'rgba(76,175,80,0.5)',
+                            borderDash: [6, 4],
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function (ctx) {
+                                        if (ctx.datasetIndex === 0) {
+                                            var pct = A.eligible > 0 ? (ctx.raw / A.eligible * 100).toFixed(1) : 0;
+                                            return 'Rate: ' + pct + '%';
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 20 } },
+                            y: { grid: { color: gridColor }, ticks: { font: { size: 10 } }, beginAtZero: true }
+                        }
+                    }
+                });
+
+                // New placements bar chart
+                if (trendNewChart) trendNewChart.destroy();
+                trendNewChart = new Chart(document.getElementById('trendNewChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: d.labels,
+                        datasets: [{
+                            label: 'New Placements',
+                            data: d.newPlacements,
+                            backgroundColor: redAlpha,
+                            borderColor: red,
+                            borderWidth: 1,
+                            borderRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 20 } },
+                            y: { grid: { color: gridColor }, ticks: { font: { size: 10 }, stepSize: 1 }, beginAtZero: true }
+                        }
+                    }
+                });
+
+                // Trend stats
+                var totalPlaced = d.cumulative.length > 0 ? d.cumulative[d.cumulative.length - 1] : 0;
+                var maxNew = d.newPlacements.length > 0 ? Math.max.apply(null, d.newPlacements) : 0;
+                var peakIdx = d.newPlacements.indexOf(maxNew);
+                var peakLabel = peakIdx >= 0 ? d.labels[peakIdx] : '—';
+                var avgNew = d.newPlacements.length > 0 ? (d.newPlacements.reduce(function (a, b) { return a + b; }, 0) / d.newPlacements.length).toFixed(1) : 0;
+                var lastNew = d.newPlacements.length > 0 ? d.newPlacements[d.newPlacements.length - 1] : 0;
+
+                var statsHtml = '';
+                statsHtml += '<div class="stat-card"><div class="stat-label">Total Placed</div><div class="stat-value">' + totalPlaced + '</div></div>';
+                statsHtml += '<div class="stat-card stat-card--accent"><div class="stat-label">Peak (' + peakLabel + ')</div><div class="stat-value">' + maxNew + '</div></div>';
+                statsHtml += '<div class="stat-card"><div class="stat-label">Avg / Period</div><div class="stat-value">' + avgNew + '</div></div>';
+                statsHtml += '<div class="stat-card"><div class="stat-label">Latest Period</div><div class="stat-value">' + lastNew + '</div></div>';
+                $('#trendStatsRow').html(statsHtml);
+            }
+
+            // Initial render
+            renderTrendCharts($('#trendPeriod').val());
+
+            // Period switch
+            $('#trendPeriod').on('change', function () {
+                renderTrendCharts($(this).val());
+            });
+
+            /* ═══ COURSE SUMMARY TABLE ════════════════════════════════ */
+            var cs = A.course_summary || [];
+            var csBody = '';
+            var totals = { total: 0, seeking: 0, not_seeking: 0, eligible: 0, ineligible_backlogs: 0, backlogs: 0, deemed_placed: 0, placed: 0, unplaced: 0, pending: 0, ctc_sum: 0, ctc_count: 0 };
+            cs.forEach(function (r) {
+                csBody += '<tr>';
+                csBody += '<td>' + r.department + '</td>';
+                csBody += '<td>' + r.stream + '</td>';
+                csBody += '<td>' + r.total + '</td>';
+                csBody += '<td>' + r.seeking + '</td>';
+                csBody += '<td>' + r.not_seeking + '</td>';
+                csBody += '<td>' + r.eligible + '</td>';
+                csBody += '<td>' + r.ineligible_backlogs + '</td>';
+                csBody += '<td>' + r.gap_pct + '%</td>';
+                csBody += '<td>' + r.backlogs + '</td>';
+                csBody += '<td>' + r.deemed_placed + '</td>';
+                csBody += '<td class="fw-bold">' + r.placed + '</td>';
+                csBody += '<td>' + r.unplaced + '</td>';
+                csBody += '<td>' + r.pending + '</td>';
+                csBody += '<td>' + r.target_pct + '%</td>';
+                var achClass = r.achieved_pct >= 75 ? 'text-success' : r.achieved_pct >= 50 ? 'text-warning' : 'text-danger';
+                csBody += '<td class="fw-bold ' + achClass + '">' + r.achieved_pct + '%</td>';
+                csBody += '<td>' + r.avg_ctc + '</td>';
+                csBody += '</tr>';
+                totals.total += r.total; totals.seeking += r.seeking; totals.not_seeking += r.not_seeking;
+                totals.eligible += r.eligible; totals.ineligible_backlogs += r.ineligible_backlogs;
+                totals.backlogs += r.backlogs; totals.deemed_placed += r.deemed_placed;
+                totals.placed += r.placed; totals.unplaced += r.unplaced; totals.pending += r.pending;
+                if (r.avg_ctc > 0) { totals.ctc_sum += r.avg_ctc * r.placed; totals.ctc_count += r.placed; }
+            });
+            $('#courseSummaryBody').html(csBody);
+            var tGap = totals.seeking > 0 ? ((totals.seeking - totals.eligible) / totals.seeking * 100).toFixed(1) : 0;
+            var tAch = totals.eligible > 0 ? (totals.placed / totals.eligible * 100).toFixed(1) : 0;
+            var tAvgCtc = totals.ctc_count > 0 ? (totals.ctc_sum / totals.ctc_count).toFixed(2) : 0;
+            var footHtml = '<tr class="summary-total-row"><td colspan="2"><strong>TOTAL</strong></td>';
+            footHtml += '<td><strong>' + totals.total + '</strong></td>';
+            footHtml += '<td><strong>' + totals.seeking + '</strong></td>';
+            footHtml += '<td><strong>' + totals.not_seeking + '</strong></td>';
+            footHtml += '<td><strong>' + totals.eligible + '</strong></td>';
+            footHtml += '<td><strong>' + totals.ineligible_backlogs + '</strong></td>';
+            footHtml += '<td><strong>' + tGap + '%</strong></td>';
+            footHtml += '<td><strong>' + totals.backlogs + '</strong></td>';
+            footHtml += '<td><strong>' + totals.deemed_placed + '</strong></td>';
+            footHtml += '<td><strong>' + totals.placed + '</strong></td>';
+            footHtml += '<td><strong>' + totals.unplaced + '</strong></td>';
+            footHtml += '<td><strong>' + totals.pending + '</strong></td>';
+            footHtml += '<td><strong>100%</strong></td>';
+            footHtml += '<td><strong>' + tAch + '%</strong></td>';
+            footHtml += '<td><strong>' + tAvgCtc + '</strong></td></tr>';
+            $('#courseSummaryFoot').html(footHtml);
+
+            /* ═══ DEPARTMENT SUMMARY TABLE ════════════════════════════ */
+            var ds = A.dept_summary || [];
+            var dsBody = '';
+            var dTotals = { total: 0, opted_in: 0, placed: 0, ctc_vals: [], companies: new Set() };
+            ds.forEach(function (r) {
+                dsBody += '<tr>';
+                dsBody += '<td>' + r.sr_no + '</td>';
+                dsBody += '<td>' + r.school_name + '</td>';
+                dsBody += '<td>' + r.total + '</td>';
+                dsBody += '<td>' + r.opted_in + '</td>';
+                dsBody += '<td class="fw-bold">' + r.placed + '</td>';
+                var pClass = r.placed_pct >= 75 ? 'text-success' : r.placed_pct >= 50 ? 'text-warning' : 'text-danger';
+                dsBody += '<td class="fw-bold ' + pClass + '">' + r.placed_pct + '%</td>';
+                dsBody += '<td>' + r.highest_ctc + '</td>';
+                dsBody += '<td>' + r.avg_ctc + '</td>';
+                dsBody += '<td>' + r.median_ctc + '</td>';
+                dsBody += '<td>' + r.unique_companies_count + '</td>';
+                dsBody += '<td class="companies-cell" title="' + r.unique_companies + '">' + r.unique_companies + '</td>';
+                dsBody += '</tr>';
+                dTotals.total += r.total; dTotals.opted_in += r.opted_in; dTotals.placed += r.placed;
+            });
+            $('#deptSummaryBody').html(dsBody);
+            var dPlacedPct = dTotals.opted_in > 0 ? (dTotals.placed / dTotals.opted_in * 100).toFixed(1) : 0;
+            var dFoot = '<tr class="summary-total-row"><td></td><td><strong>TOTAL</strong></td>';
+            dFoot += '<td><strong>' + dTotals.total + '</strong></td>';
+            dFoot += '<td><strong>' + dTotals.opted_in + '</strong></td>';
+            dFoot += '<td><strong>' + dTotals.placed + '</strong></td>';
+            dFoot += '<td><strong>' + dPlacedPct + '%</strong></td>';
+            dFoot += '<td colspan="5"></td></tr>';
+            $('#deptSummaryFoot').html(dFoot);
+
+            /* ═══ EXPORT HELPERS ══════════════════════════════════════ */
+            function exportTableToXlsx(tableId, fileName) {
+                var wb = XLSX.utils.book_new();
+                var tbl = document.getElementById(tableId);
+                var ws = XLSX.utils.table_to_sheet(tbl, { raw: false });
+
+                // Style header row
+                var range = XLSX.utils.decode_range(ws['!ref']);
+                for (var c = range.s.c; c <= range.e.c; c++) {
+                    var addr = XLSX.utils.encode_cell({ r: 0, c: c });
+                    if (ws[addr]) {
+                        ws[addr].s = {
+                            fill: { fgColor: { rgb: "E53935" } },
+                            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+                            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                            border: {
+                                top: { style: "thin", color: { rgb: "333333" } },
+                                bottom: { style: "thin", color: { rgb: "333333" } },
+                                left: { style: "thin", color: { rgb: "333333" } },
+                                right: { style: "thin", color: { rgb: "333333" } }
+                            }
+                        };
+                    }
+                }
+                // Style total row (last row)
+                for (var c2 = range.s.c; c2 <= range.e.c; c2++) {
+                    var addr2 = XLSX.utils.encode_cell({ r: range.e.r, c: c2 });
+                    if (ws[addr2]) {
+                        ws[addr2].s = {
+                            fill: { fgColor: { rgb: "2C2C2C" } },
+                            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+                            alignment: { horizontal: "center" },
+                            border: {
+                                top: { style: "thin", color: { rgb: "555555" } },
+                                bottom: { style: "thin", color: { rgb: "555555" } }
+                            }
+                        };
+                    }
+                }
+                // Auto-width columns
+                var colWidths = [];
+                for (var c3 = range.s.c; c3 <= range.e.c; c3++) {
+                    var maxLen = 10;
+                    for (var r = range.s.r; r <= range.e.r; r++) {
+                        var cell = ws[XLSX.utils.encode_cell({ r: r, c: c3 })];
+                        if (cell && cell.v) maxLen = Math.max(maxLen, String(cell.v).length);
+                    }
+                    colWidths.push({ wch: Math.min(maxLen + 2, 50) });
+                }
+                ws['!cols'] = colWidths;
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Summary');
+                XLSX.writeFile(wb, fileName);
+            }
+
+            $('#exportCourseSummary').on('click', function () {
+                exportTableToXlsx('courseSummaryTable', 'Course_Summary.xlsx');
+            });
+            $('#exportDeptSummary').on('click', function () {
+                exportTableToXlsx('deptSummaryTable', 'Department_Summary.xlsx');
             });
         });
     </script>

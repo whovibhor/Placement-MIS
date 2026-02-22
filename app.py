@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import pandas as pd
 import mysql.connector
 from mysql.connector import Error
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 import statistics
 import os
 import uuid
 import re
 import json
+import hashlib
 import config
 
 app = Flask(__name__)
@@ -85,15 +86,15 @@ DB_COLUMNS = list(HEADER_TO_COL.values())
 DISPLAY_COLUMNS = [
     'sr_no', 'reg_no', 'student_name', 'gender', 'course',
     'mobile_number', 'email', 'seeking_placement', 'department',
-    'status', 'company_name', 'designation', 'ctc',
+    'status', 'company_name', 'designation', 'ctc', 'placed_date',
     'graduation_ogpa', 'percent_10', 'percent_12', 'backlogs',
     'hometown', 'address', 'reason',
     'resume_status', 'offer_letter_status', 'joining_date', 'joining_status',
     'graduation_course',
 ]
 
-# Columns that are editable via inline editing
-EDITABLE_COLUMNS = set(DB_COLUMNS) - {"sr_no", "reg_no"}
+# Columns that are editable via inline editing (placed_date is auto-managed)
+EDITABLE_COLUMNS = set(DB_COLUMNS) - {"sr_no", "reg_no", "placed_date"}
 
 # Numeric column sets for type conversion
 NUMERIC_FLOAT_COLS = {"ctc", "percent_10", "percent_12", "graduation_ogpa"}
@@ -121,12 +122,14 @@ def to_int_or_none(v):
 
 
 def normalize_row(row):
-    """Convert Decimal values to float for JSON serialization."""
+    """Convert Decimal values to float, date to str for JSON serialization."""
     if row is None:
         return None
     for k, v in row.items():
         if isinstance(v, Decimal):
             row[k] = float(v)
+        elif isinstance(v, (date, datetime)):
+            row[k] = v.strftime("%Y-%m-%d") if isinstance(v, date) else v.strftime("%Y-%m-%d %H:%M:%S")
     return row
 
 
@@ -280,6 +283,19 @@ def init_db():
     cursor.execute("INSERT IGNORE INTO analytics_cache (id, data, updated_at) VALUES (1, NULL, NOW())")
     conn.commit()
 
+    # ── Add content_hash column to upload_versions (idempotent) ──────
+    try:
+        cursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS "
+            "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'upload_versions' AND COLUMN_NAME = 'content_hash'",
+            (config.DB_NAME,)
+        )
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE upload_versions ADD COLUMN content_hash VARCHAR(32) NULL")
+            conn.commit()
+    except Error:
+        pass
+
     # ── Migrate numeric columns (safe, idempotent) ───────────────────
     try:
         cursor.execute(
@@ -330,6 +346,34 @@ def init_db():
             cursor.execute(stmt)
         except Error:
             pass
+
+    # ── Add placed_date column to students (idempotent) ────────────────
+    try:
+        cursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS "
+            "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'students' AND COLUMN_NAME = 'placed_date'",
+            (config.DB_NAME,)
+        )
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE students ADD COLUMN placed_date DATE NULL AFTER status")
+            # Backfill: use edit_log date when status was changed to Placed
+            cursor.execute(
+                "UPDATE students s "
+                "LEFT JOIN (SELECT reg_no, MIN(changed_at) AS first_placed "
+                "  FROM edit_log WHERE field_name = 'status' AND new_value = 'Placed' "
+                "  GROUP BY reg_no) e ON s.reg_no = e.reg_no "
+                "SET s.placed_date = COALESCE(DATE(e.first_placed), CURDATE()) "
+                "WHERE s.status = 'Placed' AND s.placed_date IS NULL"
+            )
+            conn.commit()
+    except Error:
+        pass
+
+    # ── Add index on placed_date (idempotent) ────────────────────────
+    try:
+        cursor.execute("CREATE INDEX idx_placed_date ON students(placed_date)")
+    except Error:
+        pass
 
     conn.commit()
     cursor.close()
@@ -498,6 +542,242 @@ def compute_analytics(rows):
         if is_eligible(r):
             dept_course_breakdown[dept][course]["eligible"] += 1
 
+    # ── Course Summary (per-stream aggregation) ──────────────────────────
+    course_agg = {}
+    for r in rows:
+        course = r.get("course") or "Unknown"
+        if course not in course_agg:
+            course_agg[course] = {
+                "department": r.get("department") or "Unknown",
+                "total": 0, "seeking": 0, "eligible": 0,
+                "ineligible_backlogs": 0, "has_backlogs": 0,
+                "deemed_placed": 0, "placed": 0,
+                "ctc_values": [],
+            }
+        agg = course_agg[course]
+        agg["total"] += 1
+        if r.get("seeking_placement") == "Opted In":
+            agg["seeking"] += 1
+        if is_eligible(r):
+            agg["eligible"] += 1
+        # Opted In but has backlogs >= 3 (ineligible due to backlogs)
+        if r.get("seeking_placement") == "Opted In":
+            try:
+                bl = float(r.get("backlogs") or 0)
+                if bl >= 3:
+                    agg["ineligible_backlogs"] += 1
+            except (ValueError, TypeError):
+                pass
+        # Has any backlogs > 0
+        try:
+            bl = float(r.get("backlogs") or 0)
+            if bl > 0:
+                agg["has_backlogs"] += 1
+        except (ValueError, TypeError):
+            pass
+        if r.get("status") == "Deemed Placed":
+            agg["deemed_placed"] += 1
+        if r.get("status") == "Placed":
+            agg["placed"] += 1
+            if r.get("ctc"):
+                try:
+                    agg["ctc_values"].append(float(r["ctc"]))
+                except (ValueError, TypeError):
+                    pass
+
+    course_summary = []
+    for course, agg in sorted(course_agg.items(), key=lambda x: x[1]["department"]):
+        not_seeking = agg["total"] - agg["seeking"]
+        gap_pct = round((agg["seeking"] - agg["eligible"]) / agg["seeking"] * 100, 1) if agg["seeking"] > 0 else 0
+        unplaced = max(0, agg["eligible"] - agg["placed"] - agg["deemed_placed"])
+        pending = unplaced
+        achieved_pct = round(agg["placed"] / agg["eligible"] * 100, 1) if agg["eligible"] > 0 else 0
+        avg_ctc_course = round(sum(agg["ctc_values"]) / len(agg["ctc_values"]), 2) if agg["ctc_values"] else 0
+        course_summary.append({
+            "department": agg["department"],
+            "stream": course,
+            "total": agg["total"],
+            "seeking": agg["seeking"],
+            "not_seeking": not_seeking,
+            "eligible": agg["eligible"],
+            "ineligible_backlogs": agg["ineligible_backlogs"],
+            "gap_pct": gap_pct,
+            "backlogs": agg["has_backlogs"],
+            "deemed_placed": agg["deemed_placed"],
+            "placed": agg["placed"],
+            "unplaced": unplaced,
+            "pending": pending,
+            "target_pct": 100,
+            "achieved_pct": achieved_pct,
+            "avg_ctc": avg_ctc_course,
+        })
+
+    # ── Department Summary (per-school aggregation) ──────────────────────
+    dept_agg = {}
+    for r in rows:
+        dept = r.get("department") or "Unknown"
+        if dept not in dept_agg:
+            dept_agg[dept] = {
+                "total": 0, "opted_in": 0, "placed": 0,
+                "ctc_values": [], "companies": set(),
+            }
+        da = dept_agg[dept]
+        da["total"] += 1
+        if r.get("seeking_placement") == "Opted In":
+            da["opted_in"] += 1
+        if r.get("status") == "Placed":
+            da["placed"] += 1
+            if r.get("ctc"):
+                try:
+                    da["ctc_values"].append(float(r["ctc"]))
+                except (ValueError, TypeError):
+                    pass
+            if r.get("company_name"):
+                da["companies"].add(r["company_name"])
+
+    dept_summary = []
+    sr = 1
+    for dept, da in sorted(dept_agg.items()):
+        placed_pct = round(da["placed"] / da["opted_in"] * 100, 1) if da["opted_in"] > 0 else 0
+        highest = max(da["ctc_values"]) if da["ctc_values"] else 0
+        avg_c = round(sum(da["ctc_values"]) / len(da["ctc_values"]), 2) if da["ctc_values"] else 0
+        med_c = round(statistics.median(da["ctc_values"]), 2) if da["ctc_values"] else 0
+        companies_list = sorted(da["companies"])
+        dept_summary.append({
+            "sr_no": sr,
+            "school_name": dept,
+            "total": da["total"],
+            "opted_in": da["opted_in"],
+            "placed": da["placed"],
+            "placed_pct": placed_pct,
+            "highest_ctc": highest,
+            "avg_ctc": avg_c,
+            "median_ctc": med_c,
+            "unique_companies_count": len(companies_list),
+            "unique_companies": ", ".join(companies_list),
+        })
+        sr += 1
+
+    # ── Placement Trend (daily → aggregate to weekly/monthly) ────────────
+    # Collect all placed_date values
+    placement_dates = []
+    for r in rows:
+        if r.get("status") == "Placed" and r.get("placed_date"):
+            pd_val = r["placed_date"]
+            try:
+                if isinstance(pd_val, str):
+                    pd_val = datetime.strptime(pd_val, "%Y-%m-%d").date()
+                elif isinstance(pd_val, datetime):
+                    pd_val = pd_val.date()
+                placement_dates.append(pd_val)
+            except (ValueError, TypeError):
+                pass
+
+    # Sort dates
+    placement_dates.sort()
+
+    # Build daily cumulative data
+    trend_daily_labels = []
+    trend_daily_values = []
+    if placement_dates:
+        first_date = placement_dates[0]
+        last_date = placement_dates[-1]
+        day = first_date
+        cumulative = 0
+        date_counts = {}
+        for d in placement_dates:
+            date_counts[d] = date_counts.get(d, 0) + 1
+        while day <= last_date:
+            cumulative += date_counts.get(day, 0)
+            trend_daily_labels.append(day.strftime("%Y-%m-%d"))
+            trend_daily_values.append(cumulative)
+            day += timedelta(days=1)
+
+    # Build weekly cumulative (ISO week)
+    trend_weekly_labels = []
+    trend_weekly_values = []
+    if placement_dates:
+        week_counts = {}
+        for d in placement_dates:
+            iso = d.isocalendar()
+            wk_key = f"{iso[0]}-W{iso[1]:02d}"
+            week_counts[wk_key] = week_counts.get(wk_key, 0) + 1
+        # Build sorted weeks from first to last
+        first_date = placement_dates[0]
+        last_date = placement_dates[-1]
+        day = first_date
+        seen_weeks = {}
+        while day <= last_date:
+            iso = day.isocalendar()
+            wk_key = f"{iso[0]}-W{iso[1]:02d}"
+            if wk_key not in seen_weeks:
+                seen_weeks[wk_key] = day  # Monday of that week
+            day += timedelta(days=1)
+        cumulative = 0
+        for wk_key in sorted(seen_weeks.keys()):
+            cumulative += week_counts.get(wk_key, 0)
+            trend_weekly_labels.append(wk_key)
+            trend_weekly_values.append(cumulative)
+
+    # Build monthly cumulative
+    trend_monthly_labels = []
+    trend_monthly_values = []
+    if placement_dates:
+        month_counts = {}
+        for d in placement_dates:
+            mk = d.strftime("%Y-%m")
+            month_counts[mk] = month_counts.get(mk, 0) + 1
+        # Build sorted months
+        first_month = placement_dates[0].strftime("%Y-%m")
+        last_month = placement_dates[-1].strftime("%Y-%m")
+        ym = first_month
+        cumulative = 0
+        while ym <= last_month:
+            cumulative += month_counts.get(ym, 0)
+            trend_monthly_labels.append(ym)
+            trend_monthly_values.append(cumulative)
+            # Next month
+            y, m = int(ym[:4]), int(ym[5:7])
+            m += 1
+            if m > 12:
+                m = 1
+                y += 1
+            ym = f"{y}-{m:02d}"
+
+    # Per-day NEW placements (not cumulative — for bar chart)
+    trend_daily_new = []
+    if placement_dates:
+        date_counts = {}
+        for d in placement_dates:
+            date_counts[d] = date_counts.get(d, 0) + 1
+        first_date = placement_dates[0]
+        last_date = placement_dates[-1]
+        day = first_date
+        while day <= last_date:
+            trend_daily_new.append(date_counts.get(day, 0))
+            day += timedelta(days=1)
+
+    # Per-week NEW placements
+    trend_weekly_new = []
+    if placement_dates:
+        week_counts = {}
+        for d in placement_dates:
+            iso = d.isocalendar()
+            wk_key = f"{iso[0]}-W{iso[1]:02d}"
+            week_counts[wk_key] = week_counts.get(wk_key, 0) + 1
+        for wk in trend_weekly_labels:
+            trend_weekly_new.append(week_counts.get(wk, 0))
+
+    # Per-month NEW placements
+    trend_monthly_new = []
+    if placement_dates:
+        month_counts = {}
+        for d in placement_dates:
+            mk = d.strftime("%Y-%m")
+            month_counts[mk] = month_counts.get(mk, 0) + 1
+        for mk in trend_monthly_labels:
+            trend_monthly_new.append(month_counts.get(mk, 0))
+
     return {
         "total": total,
         "opted_in": opted_in,
@@ -525,6 +805,17 @@ def compute_analytics(rows):
         "ctc_dist_labels": ctc_dist_labels,
         "ctc_dist_values": ctc_dist_values,
         "dept_course_breakdown": dept_course_breakdown,
+        "course_summary": course_summary,
+        "dept_summary": dept_summary,
+        "trend_daily_labels": trend_daily_labels,
+        "trend_daily_values": trend_daily_values,
+        "trend_daily_new": trend_daily_new,
+        "trend_weekly_labels": trend_weekly_labels,
+        "trend_weekly_values": trend_weekly_values,
+        "trend_weekly_new": trend_weekly_new,
+        "trend_monthly_labels": trend_monthly_labels,
+        "trend_monthly_values": trend_monthly_values,
+        "trend_monthly_new": trend_monthly_new,
     }
 
 
@@ -579,6 +870,9 @@ def upload():
     df = df[EXPECTED_HEADERS]
     df.rename(columns=HEADER_TO_COL, inplace=True)
     df = df.where(pd.notnull(df), None)
+    # Force object dtype so None stays None (not numpy.nan)
+    for col in DB_COLUMNS:
+        df[col] = df[col].astype(object).where(df[col].notna(), None)
 
     df["sr_no"] = df["sr_no"].apply(to_int_or_none)
 
@@ -637,57 +931,125 @@ def upload():
 
     try:
         conn = get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        # Get existing reg_nos in one query for insert/update tracking
-        cursor.execute("SELECT reg_no FROM students")
-        existing_regs = set(row[0] for row in cursor.fetchall())
+        # Fetch full existing data for accurate change detection
+        cursor.execute("SELECT * FROM students")
+        existing_rows = {row["reg_no"]: row for row in cursor.fetchall()}
 
+        # Compare uploaded data against DB to find real changes
         values_list = []
         for _, row in df.iterrows():
-            values = tuple(row[c] for c in DB_COLUMNS)
+            values = tuple(
+                None if (v is not None and isinstance(v, float) and pd.isna(v)) else v
+                for c in DB_COLUMNS for v in [row[c]]
+            )
             values_list.append(values)
-            if row["reg_no"] in existing_regs:
-                updated += 1
-            else:
+            reg = row["reg_no"]
+            if reg not in existing_rows:
                 inserted += 1
+            else:
+                # Field-by-field comparison for real updates
+                db_row = existing_rows[reg]
+                for col in DB_COLUMNS:
+                    if col == "reg_no":
+                        continue
+                    new_val = row[col]
+                    old_val = db_row.get(col)
+                    # Normalize Decimal for comparison
+                    if isinstance(old_val, Decimal):
+                        old_val = float(old_val)
+                    # Compare as strings to handle type mismatches
+                    if str(new_val if new_val is not None else "") != str(old_val if old_val is not None else ""):
+                        updated += 1
+                        break
 
-        cursor.executemany(upsert_sql, values_list)
+        # Always do the upsert (idempotent sync)
+        cursor2 = conn.cursor()
+        cursor2.executemany(upsert_sql, values_list)
         conn.commit()
 
-        # ── Save version snapshot (batch) ────────────────────────────────
-        total = inserted + updated
-        cursor.execute(
-            "INSERT INTO upload_versions (filename, uploaded_at, total_records, inserted, updated) "
-            "VALUES (%s, %s, %s, %s, %s)",
-            (file.filename, datetime.now(), total, inserted, updated),
-        )
-        version_id = cursor.lastrowid
-
-        snap_cols = ", ".join(DB_COLUMNS)
-        snap_placeholders = ", ".join(["%s"] * (len(DB_COLUMNS) + 1))
-        snap_sql = (
-            f"INSERT INTO version_snapshots (version_id, {snap_cols}) "
-            f"VALUES ({snap_placeholders})"
-        )
-        snap_values_list = []
+        # Auto-set placed_date for newly placed students (via upload)
+        now_date = datetime.now().strftime("%Y-%m-%d")
         for _, row in df.iterrows():
-            values = (version_id,) + tuple(row[c] for c in DB_COLUMNS)
-            snap_values_list.append(values)
-        cursor.executemany(snap_sql, snap_values_list)
-
+            reg = row["reg_no"]
+            new_status = row.get("status")
+            if new_status == "Placed":
+                old_status = existing_rows.get(reg, {}).get("status") if reg in existing_rows else None
+                if old_status != "Placed":
+                    cursor2 = conn.cursor()
+                    cursor2.execute(
+                        "UPDATE students SET placed_date = %s WHERE reg_no = %s AND placed_date IS NULL",
+                        (now_date, reg),
+                    )
+                    cursor2.close()
+            elif reg in existing_rows and existing_rows[reg].get("status") == "Placed" and new_status != "Placed":
+                # Student was un-placed, clear the date
+                cursor2 = conn.cursor()
+                cursor2.execute(
+                    "UPDATE students SET placed_date = NULL WHERE reg_no = %s",
+                    (reg,),
+                )
+                cursor2.close()
         conn.commit()
+
+        cursor2 = conn.cursor()
+
+        total = inserted + updated
+        has_real_changes = (inserted + updated) > 0
+
+        if has_real_changes:
+            # ── Compute content hash ─────────────────────────────────────
+            sorted_df = df.sort_values("reg_no").reset_index(drop=True)
+            data_hash = hashlib.md5(
+                sorted_df[DB_COLUMNS].to_csv(index=False).encode("utf-8")
+            ).hexdigest()
+
+            # ── Save version snapshot (batch) ────────────────────────────
+            cursor3 = conn.cursor()
+            cursor3.execute(
+                "INSERT INTO upload_versions (filename, uploaded_at, total_records, inserted, updated, content_hash) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (file.filename, datetime.now(), total, inserted, updated, data_hash),
+            )
+            version_id = cursor3.lastrowid
+
+            snap_cols = ", ".join(DB_COLUMNS)
+            snap_placeholders = ", ".join(["%s"] * (len(DB_COLUMNS) + 1))
+            snap_sql = (
+                f"INSERT INTO version_snapshots (version_id, {snap_cols}) "
+                f"VALUES ({snap_placeholders})"
+            )
+            snap_values_list = []
+            for _, row in df.iterrows():
+                values = (version_id,) + tuple(
+                    None if (v is not None and isinstance(v, float) and pd.isna(v)) else v
+                    for c in DB_COLUMNS for v in [row[c]]
+                )
+                snap_values_list.append(values)
+            cursor3.executemany(snap_sql, snap_values_list)
+
+            conn.commit()
+            cursor3.close()
+
+            # Invalidate analytics cache after data change
+            invalidate_analytics_cache()
+
+            flash(
+                f"Upload successful. {total} records processed, "
+                f"{inserted} new, {updated} updated. Version #{version_id} created.",
+                "success",
+            )
+        else:
+            flash(
+                f"No changes detected — uploaded data matches the current database. "
+                f"No new version created.",
+                "info",
+            )
+
         cursor.close()
         conn.close()
 
-        # Invalidate analytics cache after data change
-        invalidate_analytics_cache()
-
-        flash(
-            f"Upload successful. {total} records processed, "
-            f"{inserted} inserted, {updated} updated.",
-            "success",
-        )
     except Error as e:
         flash(f"Database error: {e}", "danger")
 
@@ -802,6 +1164,18 @@ def update_student(reg_no):
             f"UPDATE students SET `{field}` = %s WHERE reg_no = %s",
             (value, reg_no),
         )
+
+        # Auto-set placed_date when status changes to Placed
+        if field == "status" and value == "Placed":
+            cursor.execute(
+                "UPDATE students SET placed_date = CURDATE() WHERE reg_no = %s AND placed_date IS NULL",
+                (reg_no,),
+            )
+        elif field == "status" and value != "Placed":
+            cursor.execute(
+                "UPDATE students SET placed_date = NULL WHERE reg_no = %s",
+                (reg_no,),
+            )
 
         # Log the change
         cursor.execute(
@@ -990,6 +1364,20 @@ def bulk_update_student(reg_no):
                  datetime.now()),
             )
             changes.append(field)
+
+        # Auto-set placed_date if status was changed
+        if "status" in changes:
+            new_status = fields.get("status")
+            if new_status == "Placed":
+                cursor.execute(
+                    "UPDATE students SET placed_date = CURDATE() WHERE reg_no = %s AND placed_date IS NULL",
+                    (reg_no,),
+                )
+            elif new_status != "Placed":
+                cursor.execute(
+                    "UPDATE students SET placed_date = NULL WHERE reg_no = %s",
+                    (reg_no,),
+                )
 
         conn.commit()
         cursor.close()
