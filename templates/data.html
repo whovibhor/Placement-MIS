@@ -21,11 +21,16 @@
                 <div id="globalSearchResults" class="global-search-dropdown"></div>
             </div>
             <div class="navbar-nav">
-                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link active" href="{{ url_for('data_page') }}">Data</a>
                 <a class="nav-link" href="{{ url_for('cdm_page') }}">CDM</a>
-                <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
+                <div class="nav-more-dropdown">
+                    <a class="nav-link">More &#9662;</a>
+                    <div class="nav-more-menu">
+                        <a class="dropdown-item" href="{{ url_for('upload') }}">Upload / Export</a>
+                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Logs &amp; Versions</a>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -37,16 +42,7 @@
         <!-- ── Data Toolbar ────────────────────────────────────── -->
         <div class="data-toolbar mb-3">
             <div class="data-toolbar-left">
-                <button id="btnExport" class="btn btn-sm btn-outline-light" title="Export current view as Excel">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
-                        viewBox="0 0 16 16" class="me-1">
-                        <path
-                            d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                        <path
-                            d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
-                    </svg>Export Excel
-                </button>
-                <div class="dropdown d-inline-block ms-2">
+                <div class="dropdown d-inline-block">
                     <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="colToggleBtn"
                         data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                         Columns
@@ -195,30 +191,6 @@
             </div>
         </div>
 
-        <!-- ── Export Modal (column picker) ────────────────────── -->
-        <div class="modal fade" id="exportModal" tabindex="-1">
-            <div class="modal-dialog modal-sm modal-dialog-centered">
-                <div class="modal-content"
-                    style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
-                    <div class="modal-header border-0 pb-0">
-                        <h6 class="modal-title">Export Columns</h6>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="d-flex gap-2 mb-2">
-                            <button class="btn btn-xs btn-outline-light flex-fill" id="expSelectAll">Select All</button>
-                            <button class="btn btn-xs btn-outline-light flex-fill" id="expDeselectAll">Deselect
-                                All</button>
-                        </div>
-                        <div id="exportColList" style="max-height:300px;overflow-y:auto;"></div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-sm btn-danger" id="btnConfirmExport">Export</button>
-                    </div>
-                </div>
-            </div>
-        </div>
         {% endif %}
 
         <!-- ── Data Table ──────────────────────────────────────── -->
@@ -243,7 +215,6 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
     <script src="{{ url_for('static', filename='filterSystem.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
     <script id="json-data" type="application/json">{{ students_json | tojson }}</script>
 
@@ -478,102 +449,6 @@
                 $(this).addClass('qv-tile--active');
                 filterApi.setPreFilter(FILTER_FUNCTIONS[filterKey]);
                 updateStats();
-            });
-
-            /* ── Export Excel (with column picker modal) ────────── */
-            $('#btnExport').on('click', function () {
-                var data = filterApi.getCurrentData();
-                if (!data || data.length === 0) { alert('No data to export.'); return; }
-                /* Build checkboxes in export modal */
-                var $list = $('#exportColList').empty();
-                DATA_KEYS.forEach(function (k, idx) {
-                    var label = HEADER_MAP[k] || k;
-                    $list.append(
-                        '<div class="form-check mb-1">' +
-                        '<input class="form-check-input exp-col-cb" type="checkbox" checked ' +
-                        'data-key="' + k + '" id="expCol' + idx + '">' +
-                        '<label class="form-check-label small" for="expCol' + idx + '">' + label + '</label>' +
-                        '</div>'
-                    );
-                });
-                new bootstrap.Modal('#exportModal').show();
-            });
-
-            $('#expSelectAll').on('click', function () { $('.exp-col-cb').prop('checked', true); });
-            $('#expDeselectAll').on('click', function () { $('.exp-col-cb').prop('checked', false); });
-
-            $('#btnConfirmExport').on('click', function () {
-                var selectedKeys = [];
-                $('.exp-col-cb:checked').each(function () { selectedKeys.push($(this).data('key')); });
-                if (selectedKeys.length === 0) { alert('Select at least one column.'); return; }
-
-                var data = filterApi.getCurrentData();
-                var hasSrNo = selectedKeys.indexOf('sr_no') !== -1;
-
-                /* Build rows with fresh serial numbers */
-                var headers = selectedKeys.map(function (k) { return HEADER_MAP[k] || k; });
-                var aoa = [headers];
-                data.forEach(function (row, ri) {
-                    var r = [];
-                    selectedKeys.forEach(function (k) {
-                        r.push(k === 'sr_no' ? (ri + 1) : (row[k] || ''));
-                    });
-                    aoa.push(r);
-                });
-
-                var ws = XLSX.utils.aoa_to_sheet(aoa);
-
-                /* ── Styling ─────────────────────────────────── */
-                var range = XLSX.utils.decode_range(ws['!ref']);
-                var headerStyle = {
-                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
-                    fill: { fgColor: { rgb: '1B3A6B' } },
-                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-                    border: {
-                        top: { style: 'thin', color: { rgb: '000000' } },
-                        bottom: { style: 'thin', color: { rgb: '000000' } },
-                        left: { style: 'thin', color: { rgb: '000000' } },
-                        right: { style: 'thin', color: { rgb: '000000' } }
-                    }
-                };
-                var cellStyle = {
-                    alignment: { horizontal: 'center', vertical: 'center' },
-                    border: {
-                        top: { style: 'thin', color: { rgb: '000000' } },
-                        bottom: { style: 'thin', color: { rgb: '000000' } },
-                        left: { style: 'thin', color: { rgb: '000000' } },
-                        right: { style: 'thin', color: { rgb: '000000' } }
-                    }
-                };
-
-                for (var C = range.s.c; C <= range.e.c; C++) {
-                    /* Header row */
-                    var hAddr = XLSX.utils.encode_cell({ r: 0, c: C });
-                    if (ws[hAddr]) ws[hAddr].s = headerStyle;
-                    /* Data rows */
-                    for (var R = 1; R <= range.e.r; R++) {
-                        var addr = XLSX.utils.encode_cell({ r: R, c: C });
-                        if (ws[addr]) ws[addr].s = cellStyle;
-                    }
-                }
-
-                /* Auto-fit column widths */
-                ws['!cols'] = selectedKeys.map(function (k) {
-                    var header = HEADER_MAP[k] || k;
-                    var maxLen = header.length;
-                    data.forEach(function (row) {
-                        var v = String(row[k] || '');
-                        if (v.length > maxLen) maxLen = v.length;
-                    });
-                    return { wch: Math.min(maxLen + 2, 45) };
-                });
-
-                var wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Students');
-                var label = activeFilter === 'all' ? 'all_students' : activeFilter;
-                var fname = 'placement_' + label + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
-                XLSX.writeFile(wb, fname);
-                bootstrap.Modal.getInstance('#exportModal').hide();
             });
 
             /* ── Saved Views ───────────────────────────────────── */

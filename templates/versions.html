@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Version History — Placement MIS</title>
+    <title>Logs &amp; Versions — Placement MIS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -19,11 +19,16 @@
                 <div id="globalSearchResults" class="global-search-dropdown"></div>
             </div>
             <div class="navbar-nav">
-                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
                 <a class="nav-link" href="{{ url_for('cdm_page') }}">CDM</a>
-                <a class="nav-link active" href="{{ url_for('versions') }}">Versions</a>
+                <div class="nav-more-dropdown">
+                    <a class="nav-link active">More &#9662;</a>
+                    <div class="nav-more-menu">
+                        <a class="dropdown-item" href="{{ url_for('upload') }}">Upload / Export</a>
+                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Logs &amp; Versions</a>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -41,21 +46,28 @@
         {% endif %}
         {% endwith %}
 
+        <h3 class="mb-3">Logs &amp; Versions</h3>
+
         <!-- ── Tabs ────────────────────────────────────────── -->
         <ul class="nav nav-tabs mb-3" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#uploadTab" type="button">Upload
-                    Versions</button>
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#uploadVersionsTab"
+                    type="button">Upload Versions</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#changeLogTab" type="button">Change
-                    Log</button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#studentChangeLogTab" type="button">
+                    Student Change Log</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cdmChangeLogTab" type="button">
+                    CDM Change Log</button>
             </li>
         </ul>
 
         <div class="tab-content">
-            <!-- ── Upload Versions Tab ─────────────────────── -->
-            <div class="tab-pane fade show active" id="uploadTab">
+
+            <!-- ═══ UPLOAD VERSIONS TAB ════════════════════════ -->
+            <div class="tab-pane fade show active" id="uploadVersionsTab">
                 <h5 class="mb-3">Upload Version History</h5>
                 {% if versions %}
                 <div class="table-responsive">
@@ -100,27 +112,56 @@
                 {% endif %}
             </div>
 
-            <!-- ── Change Log Tab ──────────────────────────── -->
-            <div class="tab-pane fade" id="changeLogTab">
+            <!-- ═══ STUDENT CHANGE LOG TAB ═════════════════════ -->
+            <div class="tab-pane fade" id="studentChangeLogTab">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">All Field Changes</h5>
+                    <h5 class="mb-0">Student Data Changes</h5>
                     <div class="d-flex gap-2 align-items-center">
-                        <input type="text" id="changeLogSearch" class="form-control form-control-sm"
+                        <input type="text" id="studentLogSearch" class="form-control form-control-sm"
                             placeholder="Filter by Reg No or Name..." style="width:260px;">
-                        <select id="changeLogLimit" class="form-select form-select-sm" style="width:120px;">
-                            <option value="50" selected>50 per page</option>
-                            <option value="100">100 per page</option>
-                            <option value="200">200 per page</option>
+                        <select id="studentLogLimit" class="form-select form-select-sm" style="width:120px;">
+                            <option value="50" selected>50 / page</option>
+                            <option value="100">100 / page</option>
+                            <option value="200">200 / page</option>
                         </select>
-                        <button class="btn btn-sm btn-primary" id="changeLogRefresh">Refresh</button>
+                        <button class="btn btn-sm btn-primary" id="studentLogRefresh">Refresh</button>
                     </div>
                 </div>
-                <div id="changeLogContent">
+                <div id="studentLogContent">
                     <p class="text-muted">Loading...</p>
                 </div>
-                <div id="changeLogPagination" class="d-flex justify-content-between align-items-center mt-2"
+                <div id="studentLogPagination" class="d-flex justify-content-between align-items-center mt-2"
                     style="display:none!important;">
-                    <span id="changeLogInfo" class="text-muted" style="font-size:0.8rem;"></span>
+                    <span id="studentLogInfo" class="text-muted" style="font-size:0.8rem;"></span>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" id="slPrev" disabled>&laquo; Prev</button>
+                        <button class="btn btn-outline-secondary" id="slPageInfo" disabled>1 / 1</button>
+                        <button class="btn btn-outline-secondary" id="slNext" disabled>Next &raquo;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ CDM CHANGE LOG TAB ═════════════════════════ -->
+            <div class="tab-pane fade" id="cdmChangeLogTab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">CDM Data Changes</h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="text" id="cdmLogSearch" class="form-control form-control-sm"
+                            placeholder="Filter by Company..." style="width:260px;">
+                        <select id="cdmLogLimit" class="form-select form-select-sm" style="width:120px;">
+                            <option value="50" selected>50 / page</option>
+                            <option value="100">100 / page</option>
+                            <option value="200">200 / page</option>
+                        </select>
+                        <button class="btn btn-sm btn-primary" id="cdmLogRefresh">Refresh</button>
+                    </div>
+                </div>
+                <div id="cdmLogContent">
+                    <p class="text-muted">Loading...</p>
+                </div>
+                <div id="cdmLogPagination" class="d-flex justify-content-between align-items-center mt-2"
+                    style="display:none!important;">
+                    <span id="cdmLogInfo" class="text-muted" style="font-size:0.8rem;"></span>
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-secondary" id="clPrev" disabled>&laquo; Prev</button>
                         <button class="btn btn-outline-secondary" id="clPageInfo" disabled>1 / 1</button>
@@ -128,6 +169,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -137,56 +179,55 @@
 
     <script>
         $(document).ready(function () {
-            var allLogs = [];
-            var currentPage = 1;
-            var totalPages = 1;
-            var totalCount = 0;
 
-            function loadChangeLog(page) {
-                page = page || 1;
-                var limit = $('#changeLogLimit').val();
-                $.getJSON('/api/edit-log?limit=' + limit + '&page=' + page, function (res) {
-                    allLogs = res.data || [];
-                    currentPage = res.page || 1;
-                    totalPages = res.total_pages || 1;
-                    totalCount = res.total_count || 0;
-                    renderChangeLog();
-                    updatePagination();
+            /* ══════════════════════════════════════════════════════
+               STUDENT CHANGE LOG
+               ══════════════════════════════════════════════════════ */
+            var slData = [], slPage = 1, slTotal = 1, slCount = 0, slLoaded = false;
+
+            function loadStudentLog(page) {
+                slPage = page || 1;
+                var limit = $('#studentLogLimit').val();
+                $.getJSON('/api/edit-log?limit=' + limit + '&page=' + slPage, function (res) {
+                    slData = res.data || [];
+                    slPage = res.page || 1;
+                    slTotal = res.total_pages || 1;
+                    slCount = res.total_count || 0;
+                    renderStudentLog();
+                    updateSlPagination();
                 });
             }
 
-            function updatePagination() {
-                var $wrap = $('#changeLogPagination');
-                if (totalCount > 0) {
+            function updateSlPagination() {
+                var $wrap = $('#studentLogPagination');
+                if (slCount > 0) {
                     $wrap.css('display', '').removeClass('d-none');
-                    var limit = parseInt($('#changeLogLimit').val());
-                    var start = (currentPage - 1) * limit + 1;
-                    var end = Math.min(currentPage * limit, totalCount);
-                    $('#changeLogInfo').text('Showing ' + start + '-' + end + ' of ' + totalCount + ' changes');
-                    $('#clPageInfo').text(currentPage + ' / ' + totalPages);
-                    $('#clPrev').prop('disabled', currentPage <= 1);
-                    $('#clNext').prop('disabled', currentPage >= totalPages);
+                    var limit = parseInt($('#studentLogLimit').val());
+                    var start = (slPage - 1) * limit + 1;
+                    var end = Math.min(slPage * limit, slCount);
+                    $('#studentLogInfo').text('Showing ' + start + '-' + end + ' of ' + slCount + ' changes');
+                    $('#slPageInfo').text(slPage + ' / ' + slTotal);
+                    $('#slPrev').prop('disabled', slPage <= 1);
+                    $('#slNext').prop('disabled', slPage >= slTotal);
                 } else {
                     $wrap.hide();
                 }
             }
 
-            function renderChangeLog() {
-                var search = ($('#changeLogSearch').val() || '').toLowerCase();
-                var filtered = allLogs;
+            function renderStudentLog() {
+                var search = ($('#studentLogSearch').val() || '').toLowerCase();
+                var filtered = slData;
                 if (search) {
-                    filtered = allLogs.filter(function (r) {
+                    filtered = slData.filter(function (r) {
                         return (r.reg_no || '').toLowerCase().indexOf(search) >= 0 ||
                             (r.student_name || '').toLowerCase().indexOf(search) >= 0;
                     });
                 }
-
-                var box = $('#changeLogContent');
+                var box = $('#studentLogContent');
                 if (filtered.length === 0) {
                     box.html('<p class="text-muted">No changes found.</p>');
                     return;
                 }
-
                 var html = '<div class="table-responsive"><table class="table table-striped table-bordered table-hover table-sm" style="font-size:0.82rem;">';
                 html += '<thead><tr><th>Time</th><th>Reg No</th><th>Student Name</th><th>Field Changed</th><th>Old Value</th><th>New Value</th></tr></thead><tbody>';
                 filtered.forEach(function (r) {
@@ -203,22 +244,86 @@
                 box.html(html);
             }
 
-            // Load when change log tab is shown
-            $('button[data-bs-target="#changeLogTab"]').on('shown.bs.tab', function () {
-                if (allLogs.length === 0) loadChangeLog(1);
+            $('button[data-bs-target="#studentChangeLogTab"]').on('shown.bs.tab', function () {
+                if (!slLoaded) { slLoaded = true; loadStudentLog(1); }
             });
+            $('#studentLogRefresh').on('click', function () { loadStudentLog(1); });
+            $('#studentLogLimit').on('change', function () { loadStudentLog(1); });
+            $('#studentLogSearch').on('input', renderStudentLog);
+            $('#slPrev').on('click', function () { if (slPage > 1) loadStudentLog(slPage - 1); });
+            $('#slNext').on('click', function () { if (slPage < slTotal) loadStudentLog(slPage + 1); });
 
-            $('#changeLogRefresh').on('click', function () { loadChangeLog(1); });
-            $('#changeLogLimit').on('change', function () { loadChangeLog(1); });
-            $('#changeLogSearch').on('input', renderChangeLog);
+            /* ══════════════════════════════════════════════════════
+               CDM CHANGE LOG
+               ══════════════════════════════════════════════════════ */
+            var clData = [], clPage = 1, clTotal = 1, clCount = 0, clLoaded = false;
 
-            // Pagination buttons
-            $('#clPrev').on('click', function () {
-                if (currentPage > 1) loadChangeLog(currentPage - 1);
+            function loadCdmLog(page) {
+                clPage = page || 1;
+                var limit = $('#cdmLogLimit').val();
+                $.getJSON('/api/cdm/edit-log?limit=' + limit + '&page=' + clPage, function (res) {
+                    clData = res.data || [];
+                    clPage = res.page || 1;
+                    clTotal = res.total_pages || 1;
+                    clCount = res.total_count || 0;
+                    renderCdmLog();
+                    updateClPagination();
+                });
+            }
+
+            function updateClPagination() {
+                var $wrap = $('#cdmLogPagination');
+                if (clCount > 0) {
+                    $wrap.css('display', '').removeClass('d-none');
+                    var limit = parseInt($('#cdmLogLimit').val());
+                    var start = (clPage - 1) * limit + 1;
+                    var end = Math.min(clPage * limit, clCount);
+                    $('#cdmLogInfo').text('Showing ' + start + '-' + end + ' of ' + clCount + ' changes');
+                    $('#clPageInfo').text(clPage + ' / ' + clTotal);
+                    $('#clPrev').prop('disabled', clPage <= 1);
+                    $('#clNext').prop('disabled', clPage >= clTotal);
+                } else {
+                    $wrap.hide();
+                }
+            }
+
+            function renderCdmLog() {
+                var search = ($('#cdmLogSearch').val() || '').toLowerCase();
+                var filtered = clData;
+                if (search) {
+                    filtered = clData.filter(function (r) {
+                        return (r.company_name || '').toLowerCase().indexOf(search) >= 0;
+                    });
+                }
+                var box = $('#cdmLogContent');
+                if (filtered.length === 0) {
+                    box.html('<p class="text-muted">No CDM changes found.</p>');
+                    return;
+                }
+                var html = '<div class="table-responsive"><table class="table table-striped table-bordered table-hover table-sm" style="font-size:0.82rem;">';
+                html += '<thead><tr><th>Time</th><th>Company</th><th>Drive ID</th><th>Field Changed</th><th>Old Value</th><th>New Value</th></tr></thead><tbody>';
+                filtered.forEach(function (r) {
+                    html += '<tr>';
+                    html += '<td style="white-space:nowrap;">' + (r.changed_at || '') + '</td>';
+                    html += '<td>' + (r.company_name || '—') + '</td>';
+                    html += '<td>' + (r.drive_id || '—') + '</td>';
+                    html += '<td>' + (r.field_name || '').replace(/_/g, ' ') + '</td>';
+                    html += '<td class="text-danger">' + (r.old_value || '—') + '</td>';
+                    html += '<td class="text-success">' + (r.new_value || '—') + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+                box.html(html);
+            }
+
+            $('button[data-bs-target="#cdmChangeLogTab"]').on('shown.bs.tab', function () {
+                if (!clLoaded) { clLoaded = true; loadCdmLog(1); }
             });
-            $('#clNext').on('click', function () {
-                if (currentPage < totalPages) loadChangeLog(currentPage + 1);
-            });
+            $('#cdmLogRefresh').on('click', function () { loadCdmLog(1); });
+            $('#cdmLogLimit').on('change', function () { loadCdmLog(1); });
+            $('#cdmLogSearch').on('input', renderCdmLog);
+            $('#clPrev').on('click', function () { if (clPage > 1) loadCdmLog(clPage - 1); });
+            $('#clNext').on('click', function () { if (clPage < clTotal) loadCdmLog(clPage + 1); });
         });
     </script>
 </body>

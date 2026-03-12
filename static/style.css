@@ -32,6 +32,53 @@ body {
     background: var(--bg-card) !important;
     border-bottom: 2px solid var(--accent-red);
     padding: 0.6rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+/* Hide DataTables built-in search box (global search in header is sufficient) */
+.dataTables_filter {
+    display: none !important;
+}
+
+/* More dropdown in navbar */
+.nav-more-dropdown {
+    position: relative;
+}
+
+.nav-more-dropdown .nav-link {
+    cursor: pointer;
+}
+
+.nav-more-dropdown .nav-more-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 160px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.4rem 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    z-index: 1040;
+}
+
+.nav-more-dropdown:hover .nav-more-menu {
+    display: block;
+}
+
+.nav-more-menu .dropdown-item {
+    color: var(--text-secondary);
+    padding: 0.45rem 1rem;
+    font-size: 0.88rem;
+    transition: all 0.15s;
+}
+
+.nav-more-menu .dropdown-item:hover {
+    color: var(--accent-white);
+    background: var(--accent-red);
 }
 
 .navbar-brand {

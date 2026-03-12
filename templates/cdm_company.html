@@ -19,11 +19,16 @@
                 <div id="globalSearchResults" class="global-search-dropdown"></div>
             </div>
             <div class="navbar-nav">
-                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
                 <a class="nav-link active" href="{{ url_for('cdm_page') }}">CDM</a>
-                <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
+                <div class="nav-more-dropdown">
+                    <a class="nav-link">More &#9662;</a>
+                    <div class="nav-more-menu">
+                        <a class="dropdown-item" href="{{ url_for('upload') }}">Upload / Export</a>
+                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Logs &amp; Versions</a>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>

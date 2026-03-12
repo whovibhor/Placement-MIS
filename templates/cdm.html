@@ -20,11 +20,16 @@
                 <div id="globalSearchResults" class="global-search-dropdown"></div>
             </div>
             <div class="navbar-nav">
-                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
                 <a class="nav-link active" href="{{ url_for('cdm_page') }}">CDM</a>
-                <a class="nav-link" href="{{ url_for('versions') }}">Versions</a>
+                <div class="nav-more-dropdown">
+                    <a class="nav-link">More &#9662;</a>
+                    <div class="nav-more-menu">
+                        <a class="dropdown-item" href="{{ url_for('upload') }}">Upload / Export</a>
+                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Logs &amp; Versions</a>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -39,24 +44,6 @@
                         <path
                             d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                     </svg>Add Company
-                </button>
-                <a href="{{ url_for('cdm_import') }}" class="btn btn-sm btn-danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
-                        viewBox="0 0 16 16" class="me-1">
-                        <path
-                            d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                        <path
-                            d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z" />
-                    </svg>Import Excel
-                </a>
-                <button id="btnExportCDM" class="btn btn-sm btn-outline-light">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
-                        viewBox="0 0 16 16" class="me-1">
-                        <path
-                            d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                        <path
-                            d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
-                    </svg>Export Excel
                 </button>
                 <div class="dropdown d-inline-block">
                     <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="cdmColToggleBtn"
@@ -218,6 +205,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -259,7 +247,6 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="{{ url_for('static', filename='filterSystem.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <script id="cdm-json" type="application/json">{{ drives_json | tojson }}</script>
@@ -538,49 +525,6 @@
                     }
                 });
             }
-
-            /* ── Export Excel ──────────────────────────────────── */
-            $('#btnExportCDM').on('click', function () {
-                var data = filterApi.getCurrentData();
-                if (!data || !data.length) { alert('No data to export.'); return; }
-
-                var headers = DATA_KEYS.map(function (k) { return HEADER_MAP[k] || k; });
-                var aoa = [headers];
-                data.forEach(function (row) {
-                    aoa.push(DATA_KEYS.map(function (k) { return row[k] || ''; }));
-                });
-
-                var ws = XLSX.utils.aoa_to_sheet(aoa);
-                var range = XLSX.utils.decode_range(ws['!ref']);
-                var headerStyle = {
-                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
-                    fill: { fgColor: { rgb: '1B3A6B' } },
-                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-                    border: { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } }
-                };
-                var cellStyle = {
-                    alignment: { horizontal: 'center', vertical: 'center' },
-                    border: { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } }
-                };
-                for (var C = range.s.c; C <= range.e.c; C++) {
-                    var hAddr = XLSX.utils.encode_cell({ r: 0, c: C });
-                    if (ws[hAddr]) ws[hAddr].s = headerStyle;
-                    for (var R = 1; R <= range.e.r; R++) {
-                        var addr = XLSX.utils.encode_cell({ r: R, c: C });
-                        if (ws[addr]) ws[addr].s = cellStyle;
-                    }
-                }
-                ws['!cols'] = DATA_KEYS.map(function (k) {
-                    var hdr = HEADER_MAP[k] || k;
-                    var mx = hdr.length;
-                    data.forEach(function (r) { var v = String(r[k] || ''); if (v.length > mx) mx = v.length; });
-                    return { wch: Math.min(mx + 2, 45) };
-                });
-
-                var wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Drives');
-                XLSX.writeFile(wb, 'cdm_drives_' + new Date().toISOString().slice(0, 10) + '.xlsx');
-            });
 
             /* ══════════════════════════════════════════════════════
                CDM COMPANY SEARCH

@@ -272,6 +272,21 @@ def init_db():
         )
     """)
 
+    # CDM change log table — tracks every field edit on drives
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cdm_edit_log (
+            id             INT AUTO_INCREMENT PRIMARY KEY,
+            drive_id       INT,
+            company_name   VARCHAR(200),
+            field_name     VARCHAR(100),
+            old_value      TEXT,
+            new_value      TEXT,
+            changed_at     DATETIME,
+            INDEX idx_drive (drive_id),
+            INDEX idx_cdm_time (changed_at)
+        )
+    """)
+
     # Analytics cache table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS analytics_cache (
@@ -1586,6 +1601,29 @@ def drop_all():
     return redirect(url_for("upload"))
 
 
+@app.route("/drop-cdm", methods=["POST"])
+def drop_cdm():
+    """Delete all CDM data (companies, drives, HR, courses, rounds, linked students, edit log)."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM drive_students")
+        cursor.execute("DELETE FROM drive_rounds")
+        cursor.execute("DELETE FROM drive_courses")
+        cursor.execute("DELETE FROM company_hr")
+        cursor.execute("DELETE FROM cdm_edit_log")
+        cursor.execute("DELETE FROM company_drives")
+        cursor.execute("DELETE FROM companies")
+        conn.commit()
+        count_companies = cursor.rowcount
+        cursor.close()
+        conn.close()
+        flash(f"All CDM data deleted successfully.", "success")
+    except Error as e:
+        flash(f"Database error: {e}", "danger")
+    return redirect(url_for("upload"))
+
+
 # ── CDM — Company Data Management ───────────────────────────────────────────
 CDM_EXCEL_HEADERS = {
     "Company ID": "company_id",
@@ -1733,7 +1771,7 @@ def api_cdm():
 def cdm_import():
     """Import company drives from Excel."""
     if request.method == "GET":
-        return render_template("cdm_upload.html")
+        return redirect(url_for("upload"))
 
     file = request.files.get("file")
     if not file or file.filename == "":
@@ -1901,7 +1939,7 @@ def cdm_import():
     except Error as e:
         flash(f"Database error: {e}", "danger")
 
-    return redirect(url_for("cdm_page"))
+    return redirect(url_for("upload"))
 
 
 @app.route("/cdm/company/<company_id>")
@@ -2078,10 +2116,30 @@ def cdm_update_drive(drive_id):
         elif isinstance(old_value, (date, datetime)):
             old_value = old_value.strftime("%Y-%m-%d")
 
+        # Get company name for logging
+        cursor.execute(
+            "SELECT c.company_name FROM company_drives d "
+            "JOIN companies c ON d.company_id = c.company_id WHERE d.drive_id = %s",
+            (drive_id,),
+        )
+        company_row = cursor.fetchone()
+        company_name = company_row["company_name"] if company_row else ""
+
         cursor.execute(
             f"UPDATE company_drives SET `{field}` = %s WHERE drive_id = %s",
             (value, drive_id),
         )
+
+        # Log the change in cdm_edit_log
+        cursor.execute(
+            "INSERT INTO cdm_edit_log (drive_id, company_name, field_name, old_value, new_value, changed_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (drive_id, company_name, field,
+             str(old_value) if old_value is not None else None,
+             str(value) if value is not None else None,
+             datetime.now()),
+        )
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -2094,6 +2152,55 @@ def cdm_update_drive(drive_id):
         return jsonify({"ok": True, "drive_id": drive_id, "field": field, "value": display_value})
     except Error as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ── CDM Change Log API ──────────────────────────────────────────────────────
+@app.route("/api/cdm/edit-log")
+def api_cdm_edit_log():
+    """Return CDM edit log entries with pagination support."""
+    limit = request.args.get("limit", 200, type=int)
+    page = request.args.get("page", 1, type=int)
+    drive_id = request.args.get("drive_id", None, type=int)
+    offset = (page - 1) * limit
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Get total count
+        if drive_id:
+            cursor.execute(
+                "SELECT COUNT(*) as cnt FROM cdm_edit_log WHERE drive_id = %s", (drive_id,)
+            )
+        else:
+            cursor.execute("SELECT COUNT(*) as cnt FROM cdm_edit_log")
+        total_count = cursor.fetchone()["cnt"]
+
+        if drive_id:
+            cursor.execute(
+                "SELECT * FROM cdm_edit_log WHERE drive_id = %s ORDER BY changed_at DESC LIMIT %s OFFSET %s",
+                (drive_id, limit, offset),
+            )
+        else:
+            cursor.execute(
+                "SELECT * FROM cdm_edit_log ORDER BY changed_at DESC LIMIT %s OFFSET %s",
+                (limit, offset),
+            )
+        rows = cursor.fetchall()
+        for r in rows:
+            if r.get("changed_at"):
+                r["changed_at"] = r["changed_at"].strftime("%d %b %Y, %I:%M %p")
+        cursor.close()
+        conn.close()
+
+        total_pages = (total_count + limit - 1) // limit if limit > 0 else 1
+        return jsonify({
+            "data": rows,
+            "page": page,
+            "total_pages": total_pages,
+            "total_count": total_count,
+        })
+    except Error as e:
+        return jsonify({"data": [], "error": str(e)}), 500
 
 
 # ── CDM HR Management API ───────────────────────────────────────────────────
@@ -2721,9 +2828,9 @@ def cdm_search_students():
         return jsonify({"results": [], "error": str(e)}), 500
 
 
-@app.route("/versions")
-def versions():
-    """Show all upload versions."""
+@app.route("/logs")
+def logs_page():
+    """Show all upload versions and change logs."""
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
@@ -2793,7 +2900,7 @@ def delete_version(version_id):
         flash(f"Version #{version_id} deleted.", "success")
     except Error as e:
         flash(f"Database error: {e}", "danger")
-    return redirect(url_for("versions"))
+    return redirect(url_for("logs_page"))
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────

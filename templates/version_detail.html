@@ -18,11 +18,16 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="/">Placement MIS</a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
                 <a class="nav-link" href="{{ url_for('cdm_page') }}">CDM</a>
-                <a class="nav-link active" href="{{ url_for('versions') }}">Versions</a>
+                <div class="nav-more-dropdown">
+                    <a class="nav-link active">More &#9662;</a>
+                    <div class="nav-more-menu">
+                        <a class="dropdown-item" href="{{ url_for('upload') }}">Upload / Export</a>
+                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Logs &amp; Versions</a>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -30,7 +35,7 @@
     <div class="container-fluid mt-4 px-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3>Version #{{ version_id }} — Snapshot Data</h3>
-            <a href="{{ url_for('versions') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Versions</a>
+            <a href="{{ url_for('logs_page') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Logs</a>
         </div>
 
         <div class="table-responsive">
