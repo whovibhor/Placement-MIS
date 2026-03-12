@@ -145,8 +145,7 @@
 
                 <!-- Data Table -->
                 <div class="table-section">
-                    <div class="table-section-hint">Click company name to view details &bull; Click any cell to edit
-                    </div>
+                    <div class="table-section-hint">Click company name to view details</div>
                     <div class="table-responsive">
                         <table id="cdmTable" class="table table-striped table-bordered table-hover" style="width:100%">
                             <thead>
@@ -270,15 +269,6 @@
             };
 
             var MINIMAL_COLS = ['company_name', 'role', 'ctc_text', 'status', 'courses', 'process_date', 'process_mode', 'location'];
-
-            var EDITABLE_KEYS = ['role', 'ctc_text', 'status', 'jd_received_date', 'process_date',
-                'process_mode', 'location', 'received_by', 'data_shared', 'notes'];
-
-            var DROPDOWN_FIELDS = {
-                status: ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'],
-                process_mode: ['On-Campus', 'Virtual'],
-                data_shared: ['Yes', 'No']
-            };
 
             var RAW_DATA = JSON.parse(document.getElementById('cdm-json').textContent);
             var COMPANIES_DATA = JSON.parse(document.getElementById('companies-json').textContent);
@@ -409,7 +399,7 @@
             $('#cdmColMinimal').on('click', function () { applyCols(MINIMAL_COLS); });
 
             /* ══════════════════════════════════════════════════════
-               INLINE EDITING
+               COMPANY NAME CLICK → OPEN PROFILE
                ══════════════════════════════════════════════════════ */
             function showToast(msg, type) {
                 var $t = $('#editToast');
@@ -419,112 +409,17 @@
             }
 
             $(document).on('click', '#cdmTable tbody td', function (e) {
-                if ($(this).find('input, select').length) return;
                 var tbl = $('#cdmTable').DataTable();
                 var cell = tbl.cell(this);
                 if (!cell || !cell.data) return;
                 var colIdx = cell.index().column;
                 var key = DATA_KEYS[colIdx];
+                if (key !== 'company_name') return;
                 var rowData = tbl.row(cell.index().row).data();
-
-                if (key === 'company_name') {
-                    if (rowData && rowData.company_id) {
-                        window.open('/cdm/company/' + encodeURIComponent(rowData.company_id), '_blank');
-                    }
-                    return;
-                }
-
-                if (key === 'courses') return;
-                if (EDITABLE_KEYS.indexOf(key) === -1) return;
-
-                var currentVal = rowData[key] || '';
-                var $td = $(this);
-                var originalHtml = $td.html();
-
-                if (key === 'status') {
-                    currentVal = $td.find('.badge').text() || currentVal;
-                }
-
-                if (DROPDOWN_FIELDS[key]) {
-                    var opts = DROPDOWN_FIELDS[key].map(function (o) {
-                        return '<option value="' + o + '"' + (o === currentVal ? ' selected' : '') + '>' + o + '</option>';
-                    }).join('');
-                    var $sel = $('<select class="form-select form-select-sm edit-inline-input">' + opts + '</select>');
-                    $td.empty().append($sel);
-                    $sel.focus();
-
-                    var saved = false;
-                    $sel.on('change', function () {
-                        if (!saved) { saved = true; saveEdit(rowData.drive_id, key, $sel.val(), $td, originalHtml, rowData, colIdx); }
-                    });
-                    $sel.on('blur', function () {
-                        if (!saved) $td.html(originalHtml);
-                    });
-                } else {
-                    var inputType = (key === 'jd_received_date' || key === 'process_date') ? 'date' : 'text';
-                    var $inp = $('<input type="' + inputType + '" class="form-control form-control-sm edit-inline-input" value="' +
-                        $('<i>').text(currentVal).html() + '">');
-                    $td.empty().append($inp);
-                    $inp.focus().select();
-
-                    $inp.on('keydown', function (ev) {
-                        if (ev.key === 'Enter') {
-                            saveEdit(rowData.drive_id, key, $inp.val(), $td, originalHtml, rowData, colIdx);
-                        } else if (ev.key === 'Escape') {
-                            $td.html(originalHtml);
-                        }
-                    });
-                    $inp.on('blur', function () {
-                        var newVal = $inp.val();
-                        if (newVal !== currentVal) {
-                            saveEdit(rowData.drive_id, key, newVal, $td, originalHtml, rowData, colIdx);
-                        } else {
-                            $td.html(originalHtml);
-                        }
-                    });
+                if (rowData && rowData.company_id) {
+                    window.open('/cdm/company/' + encodeURIComponent(rowData.company_id), '_blank');
                 }
             });
-
-            function saveEdit(driveId, field, value, $td, originalHtml, rowData, colIdx) {
-                $.ajax({
-                    url: '/api/cdm/drive/' + driveId,
-                    method: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ field: field, value: value }),
-                    success: function (res) {
-                        if (res.ok) {
-                            var displayVal = res.value != null ? res.value : '';
-                            rowData[field] = displayVal;
-                            for (var i = 0; i < RAW_DATA.length; i++) {
-                                if (RAW_DATA[i].drive_id == driveId) {
-                                    RAW_DATA[i][field] = String(displayVal);
-                                    break;
-                                }
-                            }
-                            if (field === 'status') {
-                                var st = displayVal.toLowerCase();
-                                var badgeCls = st === 'completed' ? 'bg-success' :
-                                    st === 'ongoing' ? 'bg-warning text-dark' :
-                                        st === 'cancelled' ? 'bg-danger' : 'bg-info';
-                                $td.html('<span class="badge ' + badgeCls + '">' + displayVal + '</span>');
-                            } else {
-                                $td.text(displayVal);
-                            }
-                            showToast('Saved: ' + (HEADER_MAP[field] || field), 'success');
-                            if (field === 'status' || field === 'process_mode') updateStats();
-                        } else {
-                            $td.html(originalHtml);
-                            showToast('Error: ' + (res.error || 'Unknown'), 'danger');
-                        }
-                    },
-                    error: function (xhr) {
-                        $td.html(originalHtml);
-                        var msg = 'Save failed';
-                        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
-                        showToast(msg, 'danger');
-                    }
-                });
-            }
 
             /* ══════════════════════════════════════════════════════
                CDM COMPANY SEARCH
