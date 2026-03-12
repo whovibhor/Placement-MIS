@@ -210,7 +210,7 @@
 
     <!-- ── Add Company Modal ──────────────────────────── -->
     <div class="modal fade" id="addCompanyModal" tabindex="-1">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content"
                 style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
                 <div class="modal-header border-0 pb-0">
@@ -218,14 +218,92 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="text" id="newCompanyName" class="form-control form-control-sm mb-2"
-                        placeholder="Company name *"
-                        style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                    <div id="addCompanyError" class="text-danger small d-none"></div>
+                    <div class="row g-3">
+                        <!-- Company Name -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Company Name *</label>
+                            <input type="text" id="newCompanyName" class="form-control form-control-sm"
+                                placeholder="Enter company name"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
+                        <!-- Departments -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Departments</label>
+                            <div class="d-flex gap-2 mb-2">
+                                <button type="button" class="btn btn-xs btn-outline-light" id="deptSelectAll">Select
+                                    All</button>
+                                <button type="button" class="btn btn-xs btn-outline-light"
+                                    id="deptClearAll">Clear</button>
+                            </div>
+                            <div id="deptCheckboxes" class="d-flex flex-wrap gap-2"
+                                style="max-height:120px;overflow-y:auto;padding:6px;background:var(--bg-surface);border:1px solid var(--border-color);border-radius:6px;">
+                                <span class="text-muted small">Loading departments…</span>
+                            </div>
+                        </div>
+                        <!-- Courses with per-course drive type -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Courses &amp; Drive Type</label>
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <button type="button" class="btn btn-xs btn-outline-light" id="courseSelectAll">Select
+                                    All</button>
+                                <button type="button" class="btn btn-xs btn-outline-light"
+                                    id="courseClearAll">Clear</button>
+                                <span class="text-muted small mx-1">|</span>
+                                <label class="small me-1" style="color:var(--text-secondary);">Bulk type:</label>
+                                <select id="bulkDriveType" class="form-select form-select-sm"
+                                    style="width:auto;min-width:110px;font-size:0.75rem;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);padding:2px 6px;">
+                                    <option value="">—</option>
+                                    <option value="Mandatory">Mandatory</option>
+                                    <option value="Interest Based">Interest Based</option>
+                                    <option value="Core">Core</option>
+                                </select>
+                                <button type="button" class="btn btn-xs btn-outline-light" id="applyBulkDriveType">Apply
+                                    to checked</button>
+                                <span class="text-muted small mx-1">|</span>
+                                <span class="small fw-bold" style="color:var(--text-secondary);">Presets:</span>
+                                <div id="presetButtons" class="d-flex flex-wrap gap-1"></div>
+                                <button type="button" class="btn btn-xs btn-outline-warning" id="btnManagePresets"
+                                    title="Create / delete presets">⚙ Manage</button>
+                            </div>
+                            <div id="courseCheckboxes"
+                                style="max-height:220px;overflow-y:auto;padding:6px;background:var(--bg-surface);border:1px solid var(--border-color);border-radius:6px;">
+                                <span class="text-muted small">Loading courses…</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="addCompanyError" class="text-danger small d-none mt-2"></div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-sm btn-danger" id="btnConfirmAddCompany">Add</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="btnConfirmAddCompany">Add Company</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Manage Presets Modal ──────────────────────── -->
+    <div class="modal fade" id="presetsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title">Course Presets</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="presetsList" class="mb-3"></div>
+                    <hr style="border-color:var(--border-color);">
+                    <div class="fw-bold small mb-2">Create New Preset</div>
+                    <input type="text" id="newPresetName" class="form-control form-control-sm mb-2"
+                        placeholder="Preset name (e.g. Engineering, Management)"
+                        style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                    <div class="small mb-1 fw-bold" style="color:var(--text-secondary);">Select courses for this preset:
+                    </div>
+                    <div id="presetCourseCheckboxes" class="d-flex flex-wrap gap-2 mb-2"
+                        style="max-height:160px;overflow-y:auto;padding:6px;background:var(--bg-surface);border:1px solid var(--border-color);border-radius:6px;">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger" id="btnSavePreset">Save Preset</button>
+                    <div id="presetError" class="text-danger small d-none mt-1"></div>
                 </div>
             </div>
         </div>
@@ -302,9 +380,27 @@
                     var badge = c.drive_count > 0
                         ? '<span class="badge bg-secondary ms-1">' + c.drive_count + ' drive' + (c.drive_count > 1 ? 's' : '') + '</span>'
                         : '<span class="badge bg-warning text-dark ms-1">No drives</span>';
+                    // Per-course drive type badges
+                    var dtBadges = '';
+                    if (c.courses && c.courses.length) {
+                        var dtMap = {};
+                        c.courses.forEach(function (co) {
+                            var dt = (co.drive_type || 'Unset');
+                            dtMap[dt] = (dtMap[dt] || 0) + 1;
+                        });
+                        var dtColors = { 'Mandatory': 'bg-danger', 'Core': 'bg-info', 'Interest Based': 'bg-success', 'Unset': 'bg-secondary' };
+                        Object.keys(dtMap).forEach(function (dt) {
+                            dtBadges += '<span class="badge ' + (dtColors[dt] || 'bg-secondary') + ' ms-1" style="font-size:0.55rem;">' + dtMap[dt] + ' ' + dt + '</span>';
+                        });
+                    }
+                    var coursesBadge = '';
+                    if (c.courses && c.courses.length) {
+                        var courseNames = c.courses.map(function (co) { return co.course_name + (co.drive_type ? ' (' + co.drive_type + ')' : ''); });
+                        coursesBadge = '<span class="badge bg-dark ms-1" style="font-size:0.55rem;" title="' + courseNames.join(', ').replace(/"/g, '&quot;') + '">' + c.courses.length + ' course' + (c.courses.length > 1 ? 's' : '') + '</span>';
+                    }
                     $grid.append(
                         '<a href="/cdm/company/' + encodeURIComponent(c.company_id) + '" class="cdm-company-chip">' +
-                        '<span class="cdm-company-chip-name">' + c.company_name + '</span>' + badge + '</a>'
+                        '<span class="cdm-company-chip-name">' + c.company_name + '</span>' + dtBadges + badge + coursesBadge + '</a>'
                     );
                 });
             }
@@ -597,31 +693,249 @@
             });
 
             /* ══════════════════════════════════════════════════════
-               ADD COMPANY
+               ADD COMPANY (with courses, departments, presets, drive type)
                ══════════════════════════════════════════════════════ */
+            var ALL_COURSES = [];
+            var ALL_DEPARTMENTS = [];
+            var ALL_PRESETS = [];
+            var courseDeptLoaded = false;
+
+            function loadCoursesAndDepts(cb) {
+                if (courseDeptLoaded) { if (cb) cb(); return; }
+                $.getJSON('/api/cdm/unique-courses-departments', function (res) {
+                    ALL_COURSES = res.courses || [];
+                    ALL_DEPARTMENTS = res.departments || [];
+                    courseDeptLoaded = true;
+                    renderCourseCheckboxes('#courseCheckboxes', ALL_COURSES, 'addCourse');
+                    renderCourseCheckboxes('#presetCourseCheckboxes', ALL_COURSES, 'presetCourse');
+                    renderDeptCheckboxes();
+                    loadPresets(cb);
+                });
+            }
+
+            function renderCourseCheckboxes(container, courses, prefix) {
+                var $el = $(container).empty();
+                if (!courses.length) { $el.html('<span class="text-muted small">No courses found in student data</span>'); return; }
+                if (prefix === 'addCourse') {
+                    // Full rows with drive type selectors for the Add Company modal
+                    courses.forEach(function (c, i) {
+                        $el.append(
+                            '<div class="d-flex align-items-center mb-1 course-row" style="gap:6px;">' +
+                            '<input class="form-check-input addCourse-cb" type="checkbox" value="' + c.replace(/"/g, '&quot;') + '" id="addCourse' + i + '" style="flex-shrink:0;">' +
+                            '<span class="small flex-grow-1" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c + '</span>' +
+                            '<select class="form-select addCourse-dt" data-course="' + c.replace(/"/g, '&quot;') + '" style="width:130px;flex-shrink:0;font-size:0.7rem;padding:1px 4px;background:var(--bg-dark);border-color:var(--border-color);color:var(--text-secondary);display:none;">' +
+                            '<option value="">— Type —</option><option value="Mandatory">Mandatory</option><option value="Interest Based">Interest Based</option><option value="Core">Core</option></select></div>'
+                        );
+                    });
+                    // Show/hide drive type dropdowns when checkbox toggled
+                    $el.off('change', '.addCourse-cb').on('change', '.addCourse-cb', function () {
+                        var $dt = $(this).closest('.course-row').find('.addCourse-dt');
+                        if ($(this).is(':checked')) {
+                            $dt.show();
+                        } else {
+                            $dt.hide().val('');
+                        }
+                    });
+                } else {
+                    // Simple checkboxes for preset course selection
+                    courses.forEach(function (c, i) {
+                        $el.append(
+                            '<label class="form-check d-inline-flex align-items-center me-2 mb-1" style="min-width:auto;">' +
+                            '<input class="form-check-input ' + prefix + '-cb" type="checkbox" value="' + c.replace(/"/g, '&quot;') + '" id="' + prefix + i + '">' +
+                            '<span class="form-check-label small ms-1">' + c + '</span></label>'
+                        );
+                    });
+                }
+            }
+
+            function renderDeptCheckboxes() {
+                var $el = $('#deptCheckboxes').empty();
+                if (!ALL_DEPARTMENTS.length) { $el.html('<span class="text-muted small">No departments found in student data</span>'); return; }
+                ALL_DEPARTMENTS.forEach(function (d, i) {
+                    $el.append(
+                        '<label class="form-check d-inline-flex align-items-center me-2 mb-1" style="min-width:auto;">' +
+                        '<input class="form-check-input addDept-cb" type="checkbox" value="' + d.replace(/"/g, '&quot;') + '" id="addDept' + i + '">' +
+                        '<span class="form-check-label small ms-1">' + d + '</span></label>'
+                    );
+                });
+            }
+
+            function loadPresets(cb) {
+                $.getJSON('/api/cdm/course-presets', function (res) {
+                    ALL_PRESETS = res.presets || [];
+                    renderPresetButtons();
+                    renderPresetsList();
+                    if (cb) cb();
+                });
+            }
+
+            function renderPresetButtons() {
+                var $el = $('#presetButtons').empty();
+                ALL_PRESETS.forEach(function (p) {
+                    $el.append(
+                        '<button type="button" class="btn btn-xs btn-outline-info preset-apply-btn" data-pid="' + p.preset_id + '" title="' + (p.courses || []).join(', ') + '">' +
+                        p.preset_name + ' <span class="badge bg-dark" style="font-size:0.6rem;">' + (p.courses || []).length + '</span></button>'
+                    );
+                });
+            }
+
+            function renderPresetsList() {
+                var $el = $('#presetsList').empty();
+                if (!ALL_PRESETS.length) { $el.html('<span class="text-muted small">No presets created yet.</span>'); return; }
+                ALL_PRESETS.forEach(function (p) {
+                    $el.append(
+                        '<div class="d-flex align-items-center justify-content-between mb-1 px-2 py-1" style="background:var(--bg-surface);border-radius:4px;">' +
+                        '<div><strong class="small">' + p.preset_name + '</strong> <span class="text-muted" style="font-size:0.7rem;">(' + (p.courses || []).join(', ') + ')</span></div>' +
+                        '<button type="button" class="btn btn-xs btn-outline-danger preset-delete-btn" data-pid="' + p.preset_id + '">✕</button></div>'
+                    );
+                });
+            }
+
+            // Select/Clear all courses (with drive type dropdowns)
+            $('#courseSelectAll').on('click', function () {
+                $('.addCourse-cb').prop('checked', true).each(function () {
+                    $(this).closest('.course-row').find('.addCourse-dt').show();
+                });
+            });
+            $('#courseClearAll').on('click', function () {
+                $('.addCourse-cb').prop('checked', false);
+                $('.addCourse-dt').hide().val('');
+            });
+            $('#deptSelectAll').on('click', function () { $('.addDept-cb').prop('checked', true); });
+            $('#deptClearAll').on('click', function () { $('.addDept-cb').prop('checked', false); });
+
+            // Bulk set drive type for checked courses
+            $('#applyBulkDriveType').on('click', function () {
+                var dt = $('#bulkDriveType').val();
+                if (!dt) { showToast('Select a drive type first', 'warning'); return; }
+                var count = 0;
+                $('.addCourse-cb:checked').each(function () {
+                    $(this).closest('.course-row').find('.addCourse-dt').val(dt);
+                    count++;
+                });
+                showToast('Set ' + count + ' course(s) to "' + dt + '"', 'success');
+            });
+
+            // Apply preset
+            $(document).on('click', '.preset-apply-btn', function () {
+                var pid = $(this).data('pid');
+                var preset = ALL_PRESETS.find(function (p) { return p.preset_id === pid; });
+                if (!preset) return;
+                $('.addCourse-cb').prop('checked', false);
+                $('.addCourse-dt').hide().val('');
+                (preset.courses || []).forEach(function (c) {
+                    $('.addCourse-cb').filter(function () { return $(this).val() === c; }).prop('checked', true)
+                        .each(function () { $(this).closest('.course-row').find('.addCourse-dt').show(); });
+                });
+                showToast('Preset "' + preset.preset_name + '" applied (' + (preset.courses || []).length + ' courses)', 'success');
+            });
+
+            // Manage presets button
+            $('#btnManagePresets').on('click', function () {
+                renderCourseCheckboxes('#presetCourseCheckboxes', ALL_COURSES, 'presetCourse');
+                $('#newPresetName').val('');
+                $('#presetError').addClass('d-none');
+                new bootstrap.Modal('#presetsModal').show();
+            });
+
+            // Save preset
+            $('#btnSavePreset').on('click', function () {
+                var name = $('#newPresetName').val().trim();
+                var courses = [];
+                $('.presetCourse-cb:checked').each(function () { courses.push($(this).val()); });
+                if (!name) { $('#presetError').text('Preset name is required.').removeClass('d-none'); return; }
+                if (!courses.length) { $('#presetError').text('Select at least one course.').removeClass('d-none'); return; }
+                $.ajax({
+                    url: '/api/cdm/course-presets', method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ preset_name: name, courses: courses }),
+                    success: function (res) {
+                        if (res.ok) {
+                            ALL_PRESETS.push({ preset_id: res.preset_id, preset_name: res.preset_name, courses: res.courses });
+                            renderPresetButtons();
+                            renderPresetsList();
+                            $('#newPresetName').val('');
+                            $('.presetCourse-cb').prop('checked', false);
+                            showToast('Preset "' + name + '" created', 'success');
+                        } else {
+                            $('#presetError').text(res.error || 'Error').removeClass('d-none');
+                        }
+                    },
+                    error: function (xhr) {
+                        var msg = 'Save failed';
+                        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
+                        $('#presetError').text(msg).removeClass('d-none');
+                    }
+                });
+            });
+
+            // Delete preset
+            $(document).on('click', '.preset-delete-btn', function () {
+                var pid = $(this).data('pid');
+                if (!confirm('Delete this preset?')) return;
+                $.ajax({
+                    url: '/api/cdm/course-presets/' + pid, method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            ALL_PRESETS = ALL_PRESETS.filter(function (p) { return p.preset_id !== pid; });
+                            renderPresetButtons();
+                            renderPresetsList();
+                            showToast('Preset deleted', 'success');
+                        }
+                    }
+                });
+            });
+
+            // Open Add Company modal
             $('#btnAddCompany').on('click', function () {
                 $('#newCompanyName').val('').removeClass('is-invalid');
                 $('#addCompanyError').addClass('d-none');
-                new bootstrap.Modal('#addCompanyModal').show();
-                setTimeout(function () { $('#newCompanyName').focus(); }, 300);
+                loadCoursesAndDepts(function () {
+                    $('.addCourse-cb').prop('checked', false);
+                    $('.addCourse-dt').hide().val('');
+                    $('.addDept-cb').prop('checked', false);
+                    $('#bulkDriveType').val('');
+                    new bootstrap.Modal('#addCompanyModal').show();
+                    setTimeout(function () { $('#newCompanyName').focus(); }, 300);
+                });
             });
 
+            // Confirm add company
             $('#btnConfirmAddCompany').on('click', function () {
                 var name = $('#newCompanyName').val().trim();
                 if (!name) {
                     $('#newCompanyName').addClass('is-invalid').focus();
                     return;
                 }
+                var courses = [];
+                var departments = [];
+                $('.addCourse-cb:checked').each(function () {
+                    var cname = $(this).val();
+                    var cdt = $(this).closest('.course-row').find('.addCourse-dt').val() || null;
+                    courses.push({ course_name: cname, drive_type: cdt });
+                });
+                $('.addDept-cb:checked').each(function () { departments.push($(this).val()); });
+
                 $.ajax({
                     url: '/api/cdm/company',
                     method: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ company_name: name }),
+                    data: JSON.stringify({
+                        company_name: name,
+                        courses: courses,
+                        departments: departments
+                    }),
                     success: function (res) {
                         if (res.ok) {
                             bootstrap.Modal.getInstance('#addCompanyModal').hide();
                             showToast('Company "' + res.company_name + '" created', 'success');
-                            COMPANIES_DATA.push({ company_id: res.company_id, company_name: res.company_name, drive_count: 0 });
+                            COMPANIES_DATA.unshift({
+                                company_id: res.company_id,
+                                company_name: res.company_name,
+                                drive_count: 0,
+                                courses: res.courses || [],
+                                departments: res.departments || []
+                            });
                             renderCompanies();
                             $('#companiesListWrap').slideDown(200);
                             $('#toggleCompaniesText').text('Hide');

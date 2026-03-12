@@ -1002,6 +1002,44 @@ table.dataTable thead .sorting_desc::after {
     color: #90caf9;
 }
 
+/* ── Modal Dark Theme (global) ───────────────────────── */
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.modal-header {
+    border-bottom-color: var(--border-color);
+}
+
+.modal-footer {
+    border-top-color: var(--border-color);
+}
+
+.modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.modal .form-check-label {
+    color: var(--text-primary);
+}
+
+.modal .form-check-input {
+    background-color: var(--bg-surface);
+    border-color: var(--border-color);
+}
+
+.modal .form-check-input:checked {
+    background-color: var(--accent-red);
+    border-color: var(--accent-red);
+}
+
+.modal .border {
+    border-color: var(--border-color) !important;
+    background: var(--bg-surface);
+}
+
 /* ── Edit Modal Dark Theme ──────────────────────────── */
 #editModal .modal-content {
     background: var(--bg-card);

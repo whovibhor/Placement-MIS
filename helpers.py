@@ -460,6 +460,52 @@ def init_db():
     except Error:
         pass
 
+    # ── Add drive_type to companies (idempotent) ─────────────────
+    try:
+        cursor.execute("ALTER TABLE companies ADD COLUMN drive_type VARCHAR(50) DEFAULT NULL")
+    except Error:
+        pass
+
+    # ── Company-level course and department linking ──────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS company_courses (
+            company_id  VARCHAR(10),
+            course_name VARCHAR(100),
+            drive_type  VARCHAR(50) DEFAULT NULL,
+            PRIMARY KEY (company_id, course_name),
+            FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE CASCADE
+        )
+    """)
+    # Migration: add drive_type column if table already exists without it
+    try:
+        cursor.execute("ALTER TABLE company_courses ADD COLUMN drive_type VARCHAR(50) DEFAULT NULL")
+    except Error:
+        pass
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS company_departments (
+            company_id      VARCHAR(10),
+            department_name VARCHAR(100),
+            PRIMARY KEY (company_id, department_name),
+            FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE CASCADE
+        )
+    """)
+
+    # ── Course presets for quick selection ────────────────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS course_presets (
+            preset_id   INT AUTO_INCREMENT PRIMARY KEY,
+            preset_name VARCHAR(100) NOT NULL UNIQUE
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS course_preset_items (
+            preset_id   INT,
+            course_name VARCHAR(100),
+            PRIMARY KEY (preset_id, course_name),
+            FOREIGN KEY (preset_id) REFERENCES course_presets(preset_id) ON DELETE CASCADE
+        )
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()

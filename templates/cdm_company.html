@@ -43,6 +43,32 @@
                 Company</button>
         </div>
 
+        <!-- Company Info: Courses & Departments -->
+        {% if company.courses or company.departments %}
+        <div class="mb-3 d-flex flex-wrap align-items-center gap-3" style="font-size:0.85rem;">
+            {% if company.courses %}
+            <div><strong class="text-muted me-1">Courses:</strong>
+                {% for c in company.courses %}<span class="badge bg-dark me-1">{{ c.course_name }}{% if c.drive_type %}
+                    <span
+                        class="badge {{ 'bg-danger' if c.drive_type == 'Mandatory' else 'bg-info' if c.drive_type == 'Core' else 'bg-success' }}"
+                        style="font-size:0.65rem;">{{ c.drive_type }}</span>{% endif %}</span>{% endfor %}
+            </div>
+            {% endif %}
+            {% if company.departments %}
+            <div><strong class="text-muted me-1">Departments:</strong>
+                {% for d in company.departments %}<span class="badge bg-dark me-1">{{ d }}</span>{% endfor %}
+            </div>
+            {% endif %}
+            <button class="btn btn-xs btn-outline-light" id="btnEditCompanyInfo" title="Edit courses & departments">Edit
+                Info</button>
+        </div>
+        {% else %}
+        <div class="mb-3">
+            <button class="btn btn-xs btn-outline-light" id="btnEditCompanyInfo" title="Set courses & departments">+ Set
+                Courses/Departments</button>
+        </div>
+        {% endif %}
+
         <!-- Stat Cards -->
         <div class="stat-cards-row mb-4">
             <div class="stat-card">
@@ -405,6 +431,60 @@
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-sm btn-danger" id="btnConfirmAddDrive">Add Drive</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Edit Company Info Modal ══ -->
+    <div class="modal fade" id="editCompanyInfoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title">Edit Company Info</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none small" id="editInfoError"></div>
+                    <div class="mb-3">
+                        <label class="form-label small d-flex justify-content-between">
+                            <span>Departments</span>
+                            <span>
+                                <button type="button" class="btn btn-xs btn-outline-light"
+                                    id="editDeptSelectAll">All</button>
+                                <button type="button" class="btn btn-xs btn-outline-light"
+                                    id="editDeptClearAll">Clear</button>
+                            </span>
+                        </label>
+                        <div id="editDeptCheckboxes" class="border rounded p-2"
+                            style="max-height:120px;overflow-y:auto;"></div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small d-flex justify-content-between">
+                            <span>Courses</span>
+                            <span>
+                                <select class="form-select form-select-sm d-inline-block" id="editBulkDriveType"
+                                    style="width:auto;font-size:0.75rem;">
+                                    <option value="">Bulk type...</option>
+                                    <option value="Mandatory">Mandatory</option>
+                                    <option value="Interest Based">Interest Based</option>
+                                    <option value="Core">Core</option>
+                                </select>
+                                <button type="button" class="btn btn-xs btn-outline-warning"
+                                    id="editApplyBulkDriveType">Apply to checked</button>
+                                <button type="button" class="btn btn-xs btn-outline-light"
+                                    id="editCourseSelectAll">All</button>
+                                <button type="button" class="btn btn-xs btn-outline-light"
+                                    id="editCourseClearAll">Clear</button>
+                            </span>
+                        </label>
+                        <div id="editCourseCheckboxes" class="border rounded p-2"
+                            style="max-height:250px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="btnSaveCompanyInfo">Save</button>
                 </div>
             </div>
         </div>
@@ -971,6 +1051,123 @@
                     }
                 });
             });
+
+            /* ══════════════════════════════════════════════════════
+               EDIT COMPANY INFO (drive type, courses, departments)
+               ══════════════════════════════════════════════════════ */
+            var COMPANY_ID = {{ company.company_id | tojson
+        }};
+        var EDIT_COURSES = [];
+        var EDIT_DEPTS = [];
+
+        $('#btnEditCompanyInfo').on('click', function () {
+            $('#editInfoError').addClass('d-none');
+            $.getJSON('/api/cdm/unique-courses-departments', function (res) {
+                EDIT_COURSES = res.courses || [];
+                EDIT_DEPTS = res.departments || [];
+                renderEditCheckboxes();
+                $.getJSON('/api/cdm/company/' + COMPANY_ID + '/details', function (det) {
+                    // Build lookup: course_name -> drive_type
+                    var dtMap = {};
+                    (det.courses || []).forEach(function (c) {
+                        var cname = (typeof c === 'object') ? c.course_name : c;
+                        var cdt = (typeof c === 'object') ? (c.drive_type || '') : '';
+                        dtMap[cname] = cdt;
+                    });
+                    // Check courses and set drive types
+                    $('.editCourse-cb').each(function () {
+                        var cname = $(this).val();
+                        if (dtMap.hasOwnProperty(cname)) {
+                            $(this).prop('checked', true);
+                            var $row = $(this).closest('.edit-course-row');
+                            $row.find('.editCourse-dt').val(dtMap[cname]).show();
+                        }
+                    });
+                    (det.departments || []).forEach(function (d) {
+                        $('.editDept-cb').filter(function () { return $(this).val() === d; }).prop('checked', true);
+                    });
+                    new bootstrap.Modal('#editCompanyInfoModal').show();
+                });
+            });
+        });
+
+        function renderEditCheckboxes() {
+            var $cc = $('#editCourseCheckboxes').empty();
+            EDIT_COURSES.forEach(function (c) {
+                var safe = c.replace(/"/g, '&quot;');
+                $cc.append(
+                    '<div class="edit-course-row d-flex align-items-center mb-1">' +
+                    '<label class="form-check d-inline-flex align-items-center me-2 mb-0" style="min-width:120px;">' +
+                    '<input class="form-check-input editCourse-cb" type="checkbox" value="' + safe + '">' +
+                    '<span class="form-check-label small ms-1">' + c + '</span></label>' +
+                    '<select class="form-select form-select-sm editCourse-dt" style="width:130px;font-size:0.75rem;display:none;">' +
+                    '<option value="">— Type —</option>' +
+                    '<option value="Mandatory">Mandatory</option>' +
+                    '<option value="Interest Based">Interest Based</option>' +
+                    '<option value="Core">Core</option></select></div>'
+                );
+            });
+            // Show/hide drive type when checkbox toggled
+            $cc.off('change', '.editCourse-cb').on('change', '.editCourse-cb', function () {
+                var $dt = $(this).closest('.edit-course-row').find('.editCourse-dt');
+                if ($(this).is(':checked')) $dt.show(); else $dt.hide().val('');
+            });
+            var $dc = $('#editDeptCheckboxes').empty();
+            EDIT_DEPTS.forEach(function (d) {
+                $dc.append('<label class="form-check d-inline-flex align-items-center me-2 mb-1"><input class="form-check-input editDept-cb" type="checkbox" value="' + d.replace(/"/g, '&quot;') + '"><span class="form-check-label small ms-1">' + d + '</span></label>');
+            });
+        }
+
+        $('#editCourseSelectAll').on('click', function () {
+            $('.editCourse-cb').prop('checked', true);
+            $('.editCourse-dt').show();
+        });
+        $('#editCourseClearAll').on('click', function () {
+            $('.editCourse-cb').prop('checked', false);
+            $('.editCourse-dt').hide().val('');
+        });
+        $('#editDeptSelectAll').on('click', function () { $('.editDept-cb').prop('checked', true); });
+        $('#editDeptClearAll').on('click', function () { $('.editDept-cb').prop('checked', false); });
+
+        // Bulk apply drive type to checked courses
+        $('#editApplyBulkDriveType').on('click', function () {
+            var bulkVal = $('#editBulkDriveType').val();
+            if (!bulkVal) return;
+            $('.editCourse-cb:checked').each(function () {
+                $(this).closest('.edit-course-row').find('.editCourse-dt').val(bulkVal);
+            });
+        });
+
+        $('#btnSaveCompanyInfo').on('click', function () {
+            var courses = [];
+            var departments = [];
+            $('.editCourse-cb:checked').each(function () {
+                var cname = $(this).val();
+                var cdt = $(this).closest('.edit-course-row').find('.editCourse-dt').val() || null;
+                courses.push({ course_name: cname, drive_type: cdt });
+            });
+            $('.editDept-cb:checked').each(function () { departments.push($(this).val()); });
+            $.ajax({
+                url: '/api/cdm/company/' + COMPANY_ID,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({ courses: courses, departments: departments }),
+                success: function (res) {
+                    if (res.ok) {
+                        bootstrap.Modal.getInstance('#editCompanyInfoModal').hide();
+                        showToast('Company info updated');
+                        location.reload();
+                    } else {
+                        $('#editInfoError').text(res.error || 'Error').removeClass('d-none');
+                    }
+                },
+                error: function (xhr) {
+                    var msg = 'Update failed';
+                    try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
+                    $('#editInfoError').text(msg).removeClass('d-none');
+                }
+            });
+        });
 
         });
     </script>

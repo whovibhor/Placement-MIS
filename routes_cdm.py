@@ -127,9 +127,33 @@ def register_cdm_routes(app):
                 FROM companies c
                 LEFT JOIN company_drives d ON c.company_id = d.company_id
                 GROUP BY c.company_id, c.company_name
-                ORDER BY c.company_name
+                ORDER BY c.company_id DESC
             """)
             companies = cursor.fetchall()
+
+            # Fetch company-level courses (with per-course drive_type) and departments
+            comp_ids = [c["company_id"] for c in companies]
+            comp_courses_map = {}
+            comp_depts_map = {}
+            if comp_ids:
+                fmt = ",".join(["%s"] * len(comp_ids))
+                cursor.execute(
+                    f"SELECT company_id, course_name, drive_type FROM company_courses WHERE company_id IN ({fmt})",
+                    tuple(comp_ids),
+                )
+                for row in cursor.fetchall():
+                    comp_courses_map.setdefault(row["company_id"], []).append(
+                        {"course_name": row["course_name"], "drive_type": row["drive_type"]}
+                    )
+                cursor.execute(
+                    f"SELECT company_id, department_name FROM company_departments WHERE company_id IN ({fmt})",
+                    tuple(comp_ids),
+                )
+                for row in cursor.fetchall():
+                    comp_depts_map.setdefault(row["company_id"], []).append(row["department_name"])
+            for c in companies:
+                c["courses"] = comp_courses_map.get(c["company_id"], [])
+                c["departments"] = comp_depts_map.get(c["company_id"], [])
 
             cursor.close()
             conn.close()
@@ -351,6 +375,21 @@ def register_cdm_routes(app):
             if not company:
                 flash("Company not found.", "danger")
                 return redirect(url_for("cdm_page"))
+
+            # Fetch company-level courses (with per-course drive_type) and departments
+            cursor.execute(
+                "SELECT course_name, drive_type FROM company_courses WHERE company_id=%s",
+                (company_id,),
+            )
+            company["courses"] = [
+                {"course_name": r["course_name"], "drive_type": r["drive_type"]}
+                for r in cursor.fetchall()
+            ]
+            cursor.execute(
+                "SELECT department_name FROM company_departments WHERE company_id=%s",
+                (company_id,),
+            )
+            company["departments"] = [r["department_name"] for r in cursor.fetchall()]
 
             cursor.execute(
                 "SELECT * FROM company_drives WHERE company_id=%s ORDER BY drive_id DESC",
@@ -684,6 +723,26 @@ def register_cdm_routes(app):
         name = (data.get("company_name") or "").strip()
         if not name:
             return jsonify({"ok": False, "error": "Company name is required."}), 400
+        VALID_DRIVE_TYPES = {"Mandatory", "Interest Based", "Core"}
+        courses = data.get("courses") or []
+        departments = data.get("departments") or []
+        if not isinstance(courses, list):
+            courses = []
+        if not isinstance(departments, list):
+            departments = []
+        # Normalize courses: accept [{course_name, drive_type}, ...]
+        normalized_courses = []
+        for c in courses:
+            if isinstance(c, dict):
+                cname = str(c.get("course_name") or "").strip()
+                cdt = (c.get("drive_type") or "").strip() or None
+            else:
+                cname = str(c).strip()
+                cdt = None
+            if cname:
+                if cdt and cdt not in VALID_DRIVE_TYPES:
+                    cdt = None
+                normalized_courses.append({"course_name": cname, "drive_type": cdt})
         try:
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -700,10 +759,25 @@ def register_cdm_routes(app):
                 "INSERT INTO companies (company_id, company_name) VALUES (%s, %s)",
                 (cid, name),
             )
+            for c in normalized_courses:
+                cursor.execute(
+                    "INSERT IGNORE INTO company_courses (company_id, course_name, drive_type) VALUES (%s, %s, %s)",
+                    (cid, c["course_name"], c["drive_type"]),
+                )
+            for d in departments:
+                d = str(d).strip()
+                if d:
+                    cursor.execute(
+                        "INSERT IGNORE INTO company_departments (company_id, department_name) VALUES (%s, %s)",
+                        (cid, d),
+                    )
             conn.commit()
             cursor.close()
             conn.close()
-            return jsonify({"ok": True, "company_id": cid, "company_name": name})
+            return jsonify({
+                "ok": True, "company_id": cid, "company_name": name,
+                "courses": normalized_courses, "departments": departments,
+            })
         except Error as e:
             return jsonify({"ok": False, "error": str(e)}), 500
 
@@ -711,22 +785,51 @@ def register_cdm_routes(app):
     def cdm_update_company(company_id):
         data = request.get_json(silent=True) or {}
         name = (data.get("company_name") or "").strip()
-        if not name:
-            return jsonify({"ok": False, "error": "Company name is required."}), 400
+        VALID_DRIVE_TYPES = {"Mandatory", "Interest Based", "Core"}
+        courses = data.get("courses")
+        departments = data.get("departments")
         try:
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT 1 FROM companies WHERE company_id=%s", (company_id,)
+                "SELECT company_name FROM companies WHERE company_id=%s", (company_id,)
             )
-            if not cursor.fetchone():
+            existing = cursor.fetchone()
+            if not existing:
                 cursor.close()
                 conn.close()
                 return jsonify({"ok": False, "error": "Company not found."}), 404
+            if not name:
+                name = existing["company_name"]
             cursor.execute(
                 "UPDATE companies SET company_name=%s WHERE company_id=%s",
                 (name, company_id),
             )
+            if isinstance(courses, list):
+                cursor.execute("DELETE FROM company_courses WHERE company_id=%s", (company_id,))
+                for c in courses:
+                    if isinstance(c, dict):
+                        cname = str(c.get("course_name") or "").strip()
+                        cdt = (c.get("drive_type") or "").strip() or None
+                    else:
+                        cname = str(c).strip()
+                        cdt = None
+                    if cname:
+                        if cdt and cdt not in VALID_DRIVE_TYPES:
+                            cdt = None
+                        cursor.execute(
+                            "INSERT IGNORE INTO company_courses (company_id, course_name, drive_type) VALUES (%s, %s, %s)",
+                            (company_id, cname, cdt),
+                        )
+            if isinstance(departments, list):
+                cursor.execute("DELETE FROM company_departments WHERE company_id=%s", (company_id,))
+                for d in departments:
+                    d = str(d).strip()
+                    if d:
+                        cursor.execute(
+                            "INSERT IGNORE INTO company_departments (company_id, department_name) VALUES (%s, %s)",
+                            (company_id, d),
+                        )
             conn.commit()
             cursor.close()
             conn.close()
@@ -1207,6 +1310,124 @@ def register_cdm_routes(app):
             return jsonify({"sources": rows})
         except Error as e:
             return jsonify({"sources": [], "error": str(e)}), 500
+
+    # ── Unique courses & departments from students table ────────────────
+    @app.route("/api/cdm/unique-courses-departments")
+    def cdm_unique_courses_departments():
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT DISTINCT course FROM students WHERE course IS NOT NULL AND course != '' ORDER BY course"
+            )
+            courses = [r[0] for r in cursor.fetchall()]
+            cursor.execute(
+                "SELECT DISTINCT department FROM students WHERE department IS NOT NULL AND department != '' ORDER BY department"
+            )
+            departments = [r[0] for r in cursor.fetchall()]
+            cursor.close()
+            conn.close()
+            return jsonify({"courses": courses, "departments": departments})
+        except Error as e:
+            return jsonify({"courses": [], "departments": [], "error": str(e)}), 500
+
+    # ── Course presets CRUD ─────────────────────────────────────────────
+    @app.route("/api/cdm/course-presets")
+    def cdm_list_presets():
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM course_presets ORDER BY preset_name")
+            presets = cursor.fetchall()
+            preset_ids = [p["preset_id"] for p in presets]
+            items_map = {}
+            if preset_ids:
+                fmt = ",".join(["%s"] * len(preset_ids))
+                cursor.execute(
+                    f"SELECT preset_id, course_name FROM course_preset_items WHERE preset_id IN ({fmt})",
+                    tuple(preset_ids),
+                )
+                for row in cursor.fetchall():
+                    items_map.setdefault(row["preset_id"], []).append(row["course_name"])
+            for p in presets:
+                p["courses"] = items_map.get(p["preset_id"], [])
+            cursor.close()
+            conn.close()
+            return jsonify({"presets": presets})
+        except Error as e:
+            return jsonify({"presets": [], "error": str(e)}), 500
+
+    @app.route("/api/cdm/course-presets", methods=["POST"])
+    def cdm_create_preset():
+        data = request.get_json(silent=True) or {}
+        name = (data.get("preset_name") or "").strip()
+        courses = data.get("courses") or []
+        if not name:
+            return jsonify({"ok": False, "error": "Preset name is required."}), 400
+        if not isinstance(courses, list) or not courses:
+            return jsonify({"ok": False, "error": "At least one course is required."}), 400
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO course_presets (preset_name) VALUES (%s)", (name,)
+            )
+            pid = cursor.lastrowid
+            for c in courses:
+                c = str(c).strip()
+                if c:
+                    cursor.execute(
+                        "INSERT IGNORE INTO course_preset_items (preset_id, course_name) VALUES (%s, %s)",
+                        (pid, c),
+                    )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({"ok": True, "preset_id": pid, "preset_name": name, "courses": courses})
+        except Error as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    @app.route("/api/cdm/course-presets/<int:preset_id>", methods=["DELETE"])
+    def cdm_delete_preset(preset_id):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM course_presets WHERE preset_id=%s", (preset_id,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({"ok": True})
+        except Error as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    # ── Company courses/departments fetch ────────────────────────────────
+    @app.route("/api/cdm/company/<company_id>/details")
+    def cdm_company_details_api(company_id):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM companies WHERE company_id=%s", (company_id,))
+            company = cursor.fetchone()
+            if not company:
+                cursor.close()
+                conn.close()
+                return jsonify({"error": "Company not found."}), 404
+            cursor.execute(
+                "SELECT course_name, drive_type FROM company_courses WHERE company_id=%s", (company_id,)
+            )
+            company["courses"] = [
+                {"course_name": r["course_name"], "drive_type": r["drive_type"]}
+                for r in cursor.fetchall()
+            ]
+            cursor.execute(
+                "SELECT department_name FROM company_departments WHERE company_id=%s", (company_id,)
+            )
+            company["departments"] = [r["department_name"] for r in cursor.fetchall()]
+            cursor.close()
+            conn.close()
+            return jsonify(company)
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
 
     # ── Student Search (for linking UI) ──────────────────────────────────
     @app.route("/api/cdm/search-students")
