@@ -36,8 +36,58 @@ CDM_EXCEL_HEADERS = {
 
 CDM_EDITABLE_FIELDS = {
     "role", "ctc_text", "jd_received_date", "process_date", "data_shared",
-    "process_mode", "location", "received_by", "notes", "status",
+    "process_mode", "location", "received_by", "notes", "status", "courses",
 }
+
+VALID_DRIVE_TYPES = {"Mandatory", "Interest Based", "Core"}
+
+
+def parse_courses_value(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        raw_items = value
+    else:
+        raw_items = str(value).split(",")
+    cleaned = []
+    seen = set()
+    for item in raw_items:
+        course = str(item).strip()
+        if course and course.lower() != "nan" and course.lower() not in seen:
+            cleaned.append(course)
+            seen.add(course.lower())
+    return cleaned
+
+
+def parse_drive_courses(value):
+    entries = []
+    seen = set()
+    if value is None:
+        return entries
+    raw_items = value if isinstance(value, list) else str(value).split(",")
+    for item in raw_items:
+        if isinstance(item, dict):
+            course = str(item.get("course_name") or "").strip()
+            drive_type = (item.get("drive_type") or "").strip() or None
+        else:
+            course = str(item).strip()
+            drive_type = None
+        if not course or course.lower() == "nan":
+            continue
+        if drive_type and drive_type not in VALID_DRIVE_TYPES:
+            drive_type = None
+        key = course.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        entries.append({"course_name": course, "drive_type": drive_type})
+    return entries
+
+
+def format_course_label(course_name, drive_type):
+    if drive_type:
+        return f"{course_name} ({drive_type})"
+    return course_name
 
 
 # ── CDM helpers ──────────────────────────────────────────────────────────────
@@ -112,24 +162,30 @@ def register_cdm_routes(app):
             if drive_ids:
                 format_ids = ",".join(["%s"] * len(drive_ids))
                 cursor.execute(
-                    f"SELECT drive_id, course_name FROM drive_courses WHERE drive_id IN ({format_ids})",
+                    f"SELECT drive_id, course_name, drive_type FROM drive_courses WHERE drive_id IN ({format_ids})",
                     tuple(drive_ids),
                 )
                 for row in cursor.fetchall():
-                    course_map.setdefault(row["drive_id"], []).append(row["course_name"])
+                    course_map.setdefault(row["drive_id"], []).append(
+                        format_course_label(row["course_name"], row.get("drive_type"))
+                    )
             for d in drives:
                 d["courses"] = ", ".join(course_map.get(d["drive_id"], []))
                 d["data_shared"] = "Yes" if d.get("data_shared") else "No"
 
             cursor.execute("""
                 SELECT c.company_id, c.company_name,
-                       COUNT(d.drive_id) AS drive_count
+                       COUNT(DISTINCT d.drive_id) AS drive_count,
+                       MAX(d.process_date) AS latest_process_date,
+                       COUNT(DISTINCT ds.reg_no) AS participants_count
                 FROM companies c
                 LEFT JOIN company_drives d ON c.company_id = d.company_id
+                LEFT JOIN drive_students ds ON d.drive_id = ds.drive_id
                 GROUP BY c.company_id, c.company_name
-                ORDER BY c.company_id DESC
+                ORDER BY latest_process_date DESC, c.company_id DESC
             """)
             companies = cursor.fetchall()
+            normalize_rows(companies)
 
             # Fetch company-level courses (with per-course drive_type) and departments
             comp_ids = [c["company_id"] for c in companies]
@@ -184,11 +240,13 @@ def register_cdm_routes(app):
             if drive_ids:
                 format_ids = ",".join(["%s"] * len(drive_ids))
                 cursor.execute(
-                    f"SELECT drive_id, course_name FROM drive_courses WHERE drive_id IN ({format_ids})",
+                    f"SELECT drive_id, course_name, drive_type FROM drive_courses WHERE drive_id IN ({format_ids})",
                     tuple(drive_ids),
                 )
                 for row in cursor.fetchall():
-                    course_map.setdefault(row["drive_id"], []).append(row["course_name"])
+                    course_map.setdefault(row["drive_id"], []).append(
+                        format_course_label(row["course_name"], row.get("drive_type"))
+                    )
             for d in drives:
                 d["courses"] = ", ".join(course_map.get(d["drive_id"], []))
                 d["data_shared"] = "Yes" if d.get("data_shared") else "No"
@@ -400,10 +458,12 @@ def register_cdm_routes(app):
 
             for d in drives:
                 cursor.execute(
-                    "SELECT course_name FROM drive_courses WHERE drive_id=%s",
+                    "SELECT course_name, drive_type FROM drive_courses WHERE drive_id=%s",
                     (d["drive_id"],),
                 )
-                d["courses"] = ", ".join([r["course_name"] for r in cursor.fetchall()])
+                d["courses"] = ", ".join([
+                    format_course_label(r["course_name"], r.get("drive_type")) for r in cursor.fetchall()
+                ])
                 d["data_shared"] = "Yes" if d.get("data_shared") else "No"
                 cursor.execute(
                     "SELECT COUNT(*) AS cnt FROM drive_students WHERE drive_id=%s",
@@ -482,6 +542,14 @@ def register_cdm_routes(app):
                 ),
             )
             drive_id = cursor.lastrowid
+
+            courses = parse_drive_courses(data.get("courses"))
+            if courses:
+                cursor.executemany(
+                    "INSERT IGNORE INTO drive_courses (drive_id, course_name, drive_type) VALUES (%s, %s, %s)",
+                    [(drive_id, c["course_name"], c.get("drive_type")) for c in courses],
+                )
+
             conn.commit()
             cursor.close()
             conn.close()
@@ -520,6 +588,29 @@ def register_cdm_routes(app):
         try:
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
+
+            if field == "courses":
+                courses = parse_drive_courses(value)
+                cursor.execute("SELECT 1 FROM company_drives WHERE drive_id=%s", (drive_id,))
+                if not cursor.fetchone():
+                    cursor.close()
+                    conn.close()
+                    return jsonify({"error": "Drive not found"}), 404
+                cursor.execute("DELETE FROM drive_courses WHERE drive_id=%s", (drive_id,))
+                if courses:
+                    cursor.executemany(
+                        "INSERT IGNORE INTO drive_courses (drive_id, course_name, drive_type) VALUES (%s, %s, %s)",
+                        [(drive_id, c["course_name"], c.get("drive_type")) for c in courses],
+                    )
+                conn.commit()
+                cursor.close()
+                conn.close()
+                return jsonify({
+                    "ok": True,
+                    "drive_id": drive_id,
+                    "field": "courses",
+                    "value": ", ".join([format_course_label(c["course_name"], c.get("drive_type")) for c in courses]),
+                })
 
             cursor.execute("SELECT * FROM company_drives WHERE drive_id=%s", (drive_id,))
             row = cursor.fetchone()
@@ -723,26 +814,11 @@ def register_cdm_routes(app):
         name = (data.get("company_name") or "").strip()
         if not name:
             return jsonify({"ok": False, "error": "Company name is required."}), 400
-        VALID_DRIVE_TYPES = {"Mandatory", "Interest Based", "Core"}
-        courses = data.get("courses") or []
-        departments = data.get("departments") or []
-        if not isinstance(courses, list):
-            courses = []
-        if not isinstance(departments, list):
-            departments = []
-        # Normalize courses: accept [{course_name, drive_type}, ...]
-        normalized_courses = []
-        for c in courses:
-            if isinstance(c, dict):
-                cname = str(c.get("course_name") or "").strip()
-                cdt = (c.get("drive_type") or "").strip() or None
-            else:
-                cname = str(c).strip()
-                cdt = None
-            if cname:
-                if cdt and cdt not in VALID_DRIVE_TYPES:
-                    cdt = None
-                normalized_courses.append({"course_name": cname, "drive_type": cdt})
+        process_date = parse_date_field(data.get("process_date")) if data.get("process_date") else None
+        process_mode = (data.get("process_mode") or "").strip() or None
+        location = (data.get("location") or "").strip() or None
+        received_by = (data.get("received_by") or "").strip() or None
+        notes = (data.get("notes") or "").strip() or None
         try:
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -756,27 +832,20 @@ def register_cdm_routes(app):
                 return jsonify({"ok": False, "error": "Company already exists.", "company_id": existing["company_id"]}), 409
             cid = generate_company_id(name, cursor)
             cursor.execute(
-                "INSERT INTO companies (company_id, company_name) VALUES (%s, %s)",
-                (cid, name),
+                "INSERT INTO companies (company_id, company_name, process_date, process_mode, location, received_by, notes) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (cid, name, process_date, process_mode, location, received_by, notes),
             )
-            for c in normalized_courses:
-                cursor.execute(
-                    "INSERT IGNORE INTO company_courses (company_id, course_name, drive_type) VALUES (%s, %s, %s)",
-                    (cid, c["course_name"], c["drive_type"]),
-                )
-            for d in departments:
-                d = str(d).strip()
-                if d:
-                    cursor.execute(
-                        "INSERT IGNORE INTO company_departments (company_id, department_name) VALUES (%s, %s)",
-                        (cid, d),
-                    )
             conn.commit()
             cursor.close()
             conn.close()
             return jsonify({
                 "ok": True, "company_id": cid, "company_name": name,
-                "courses": normalized_courses, "departments": departments,
+                "process_date": process_date,
+                "process_mode": process_mode,
+                "location": location,
+                "received_by": received_by,
+                "notes": notes,
             })
         except Error as e:
             return jsonify({"ok": False, "error": str(e)}), 500
@@ -785,14 +854,15 @@ def register_cdm_routes(app):
     def cdm_update_company(company_id):
         data = request.get_json(silent=True) or {}
         name = (data.get("company_name") or "").strip()
-        VALID_DRIVE_TYPES = {"Mandatory", "Interest Based", "Core"}
         courses = data.get("courses")
         departments = data.get("departments")
         try:
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT company_name FROM companies WHERE company_id=%s", (company_id,)
+                "SELECT company_name, process_date, process_mode, location, received_by, notes "
+                "FROM companies WHERE company_id=%s",
+                (company_id,),
             )
             existing = cursor.fetchone()
             if not existing:
@@ -801,9 +871,30 @@ def register_cdm_routes(app):
                 return jsonify({"ok": False, "error": "Company not found."}), 404
             if not name:
                 name = existing["company_name"]
+            if "process_date" in data:
+                process_date = parse_date_field(data.get("process_date")) if data.get("process_date") else None
+            else:
+                process_date = existing.get("process_date")
+            if "process_mode" in data:
+                process_mode = (data.get("process_mode") or "").strip() or None
+            else:
+                process_mode = existing.get("process_mode")
+            if "location" in data:
+                location = (data.get("location") or "").strip() or None
+            else:
+                location = existing.get("location")
+            if "received_by" in data:
+                received_by = (data.get("received_by") or "").strip() or None
+            else:
+                received_by = existing.get("received_by")
+            if "notes" in data:
+                notes = (data.get("notes") or "").strip() or None
+            else:
+                notes = existing.get("notes")
             cursor.execute(
-                "UPDATE companies SET company_name=%s WHERE company_id=%s",
-                (name, company_id),
+                "UPDATE companies SET company_name=%s, process_date=%s, process_mode=%s, location=%s, received_by=%s, notes=%s "
+                "WHERE company_id=%s",
+                (name, process_date, process_mode, location, received_by, notes, company_id),
             )
             if isinstance(courses, list):
                 cursor.execute("DELETE FROM company_courses WHERE company_id=%s", (company_id,))

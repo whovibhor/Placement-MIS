@@ -380,7 +380,12 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS companies (
             company_id   VARCHAR(10) PRIMARY KEY,
-            company_name VARCHAR(200) NOT NULL
+            company_name VARCHAR(200) NOT NULL,
+            process_date DATE NULL,
+            process_mode VARCHAR(50) NULL,
+            location VARCHAR(200) NULL,
+            received_by VARCHAR(200) NULL,
+            notes TEXT NULL
         )
     """)
     cursor.execute("""
@@ -403,6 +408,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS drive_courses (
             drive_id    INT,
             course_name VARCHAR(100),
+            drive_type  VARCHAR(50) DEFAULT NULL,
             PRIMARY KEY (drive_id, course_name),
             FOREIGN KEY (drive_id) REFERENCES company_drives(drive_id) ON DELETE CASCADE
         )
@@ -463,6 +469,34 @@ def init_db():
     # ── Add drive_type to companies (idempotent) ─────────────────
     try:
         cursor.execute("ALTER TABLE companies ADD COLUMN drive_type VARCHAR(50) DEFAULT NULL")
+    except Error:
+        pass
+
+    # ── Add company metadata columns (idempotent) ────────────────
+    try:
+        cursor.execute("ALTER TABLE companies ADD COLUMN process_date DATE NULL")
+    except Error:
+        pass
+    try:
+        cursor.execute("ALTER TABLE companies ADD COLUMN process_mode VARCHAR(50) NULL")
+    except Error:
+        pass
+    try:
+        cursor.execute("ALTER TABLE companies ADD COLUMN location VARCHAR(200) NULL")
+    except Error:
+        pass
+    try:
+        cursor.execute("ALTER TABLE companies ADD COLUMN received_by VARCHAR(200) NULL")
+    except Error:
+        pass
+    try:
+        cursor.execute("ALTER TABLE companies ADD COLUMN notes TEXT NULL")
+    except Error:
+        pass
+
+    # ── Add drive_type to drive_courses (idempotent) ─────────────
+    try:
+        cursor.execute("ALTER TABLE drive_courses ADD COLUMN drive_type VARCHAR(50) DEFAULT NULL")
     except Error:
         pass
 

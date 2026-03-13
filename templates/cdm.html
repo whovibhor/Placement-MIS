@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CDM — Placement MIS</title>
+    <title>CDM — Placenest</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -13,7 +13,7 @@
 <body>
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">Placement MIS</a>
+            <a class="navbar-brand" href="/">Placenest</a>
             <div class="global-search-wrap ms-auto me-3">
                 <input type="text" id="globalSearch" class="form-control form-control-sm"
                     placeholder="Search companies..." autocomplete="off">
@@ -143,8 +143,20 @@
                     </div>
                 </div>
 
-                <!-- Data Table -->
-                <div class="table-section">
+                <!-- Company Tile View (Primary) -->
+                <div class="mb-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="table-section-hint mb-0">Company tiles (Latest to oldest by process date)</div>
+                        <button class="btn btn-xs btn-outline-light" id="toggleSheetView"
+                            title="Toggle sheet/table view">Show Sheet View</button>
+                    </div>
+                    <div id="companyTilesGrid" class="row g-3"></div>
+                    <div id="companyTilesEmpty" class="text-muted small d-none">No companies found for selected filter.
+                    </div>
+                </div>
+
+                <!-- Data Table (kept for compatibility, hidden by default) -->
+                <div class="table-section" id="sheetViewSection" style="display:none;">
                     <div class="table-section-hint">Click company name to view details</div>
                     <div class="table-responsive">
                         <table id="cdmTable" class="table table-striped table-bordered table-hover" style="width:100%">
@@ -226,49 +238,36 @@
                                 placeholder="Enter company name"
                                 style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                         </div>
-                        <!-- Departments -->
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Departments</label>
-                            <div class="d-flex gap-2 mb-2">
-                                <button type="button" class="btn btn-xs btn-outline-light" id="deptSelectAll">Select
-                                    All</button>
-                                <button type="button" class="btn btn-xs btn-outline-light"
-                                    id="deptClearAll">Clear</button>
-                            </div>
-                            <div id="deptCheckboxes" class="d-flex flex-wrap gap-2"
-                                style="max-height:120px;overflow-y:auto;padding:6px;background:var(--bg-surface);border:1px solid var(--border-color);border-radius:6px;">
-                                <span class="text-muted small">Loading departments…</span>
-                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Process Date</label>
+                            <input type="date" id="newCompanyProcessDate" class="form-control form-control-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                         </div>
-                        <!-- Courses with per-course drive type -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Mode</label>
+                            <select id="newCompanyMode" class="form-select form-select-sm"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <option value="">—</option>
+                                <option>On-Campus</option>
+                                <option>Virtual</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Location</label>
+                            <input type="text" id="newCompanyLocation" class="form-control form-control-sm"
+                                placeholder="Enter location"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Received By</label>
+                            <input type="text" id="newCompanyReceivedBy" class="form-control form-control-sm"
+                                placeholder="Owner / SPOC"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
                         <div class="col-12">
-                            <label class="form-label small fw-bold">Courses &amp; Drive Type</label>
-                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                                <button type="button" class="btn btn-xs btn-outline-light" id="courseSelectAll">Select
-                                    All</button>
-                                <button type="button" class="btn btn-xs btn-outline-light"
-                                    id="courseClearAll">Clear</button>
-                                <span class="text-muted small mx-1">|</span>
-                                <label class="small me-1" style="color:var(--text-secondary);">Bulk type:</label>
-                                <select id="bulkDriveType" class="form-select form-select-sm"
-                                    style="width:auto;min-width:110px;font-size:0.75rem;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);padding:2px 6px;">
-                                    <option value="">—</option>
-                                    <option value="Mandatory">Mandatory</option>
-                                    <option value="Interest Based">Interest Based</option>
-                                    <option value="Core">Core</option>
-                                </select>
-                                <button type="button" class="btn btn-xs btn-outline-light" id="applyBulkDriveType">Apply
-                                    to checked</button>
-                                <span class="text-muted small mx-1">|</span>
-                                <span class="small fw-bold" style="color:var(--text-secondary);">Presets:</span>
-                                <div id="presetButtons" class="d-flex flex-wrap gap-1"></div>
-                                <button type="button" class="btn btn-xs btn-outline-warning" id="btnManagePresets"
-                                    title="Create / delete presets">⚙ Manage</button>
-                            </div>
-                            <div id="courseCheckboxes"
-                                style="max-height:220px;overflow-y:auto;padding:6px;background:var(--bg-surface);border:1px solid var(--border-color);border-radius:6px;">
-                                <span class="text-muted small">Loading courses…</span>
-                            </div>
+                            <label class="form-label small fw-bold">Notes</label>
+                            <textarea id="newCompanyNotes" class="form-control form-control-sm" rows="2"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);"></textarea>
                         </div>
                     </div>
                     <div id="addCompanyError" class="text-danger small d-none mt-2"></div>
@@ -351,6 +350,107 @@
             var RAW_DATA = JSON.parse(document.getElementById('cdm-json').textContent);
             var COMPANIES_DATA = JSON.parse(document.getElementById('companies-json').textContent);
 
+            function formatDateForUi(v) {
+                if (!v) return '—';
+                var dt = new Date(v);
+                if (isNaN(dt.getTime())) return v;
+                return dt.toLocaleDateString('en-GB');
+            }
+
+            function getCompanyDriveMap(filterKey) {
+                var predicate = null;
+                if (filterKey === 'upcoming') predicate = function (r) { return (r.status || 'Upcoming') === 'Upcoming'; };
+                else if (filterKey === 'ongoing') predicate = function (r) { return r.status === 'Ongoing'; };
+                else if (filterKey === 'completed') predicate = function (r) { return r.status === 'Completed'; };
+                else if (filterKey === 'cancelled') predicate = function (r) { return r.status === 'Cancelled'; };
+                else if (filterKey === 'oncampus') predicate = function (r) { return r.process_mode === 'On-Campus'; };
+                else if (filterKey === 'virtual') predicate = function (r) { return r.process_mode === 'Virtual'; };
+
+                var rows = predicate ? RAW_DATA.filter(predicate) : RAW_DATA.slice();
+                var map = {};
+                rows.forEach(function (d) {
+                    if (!map[d.company_id]) map[d.company_id] = [];
+                    map[d.company_id].push(d);
+                });
+                return map;
+            }
+
+            function renderCompanyTiles(filterKey) {
+                var companyIndex = {};
+                COMPANIES_DATA.forEach(function (c) { companyIndex[c.company_id] = c; });
+
+                var driveMap = getCompanyDriveMap(filterKey || 'all');
+                var tiles = [];
+                var candidateIds = (filterKey === 'all')
+                    ? COMPANIES_DATA.map(function (c) { return c.company_id; })
+                    : Object.keys(driveMap);
+
+                candidateIds.forEach(function (companyId) {
+                    var drives = driveMap[companyId] || [];
+
+                    drives.sort(function (a, b) {
+                        var da = a.process_date ? new Date(a.process_date).getTime() : 0;
+                        var db = b.process_date ? new Date(b.process_date).getTime() : 0;
+                        return db - da;
+                    });
+
+                    var latest = drives[0] || {};
+                    var meta = companyIndex[companyId] || {};
+                    tiles.push({
+                        company_id: companyId,
+                        company_name: latest.company_name || meta.company_name || companyId,
+                        latest_process_date: latest.process_date || meta.latest_process_date || null,
+                        participants_count: meta.participants_count || 0,
+                        drives: drives,
+                        courses: meta.courses || []
+                    });
+                });
+
+                tiles.sort(function (a, b) {
+                    var da = a.latest_process_date ? new Date(a.latest_process_date).getTime() : 0;
+                    var db = b.latest_process_date ? new Date(b.latest_process_date).getTime() : 0;
+                    return db - da;
+                });
+
+                var $grid = $('#companyTilesGrid').empty();
+                $('#companyTilesEmpty').toggleClass('d-none', tiles.length > 0);
+
+                tiles.forEach(function (tile) {
+                    var courseMeta = '';
+                    if (tile.courses && tile.courses.length) {
+                        var dtMap = {};
+                        tile.courses.forEach(function (co) {
+                            var dt = co.drive_type || 'Unset';
+                            dtMap[dt] = (dtMap[dt] || 0) + 1;
+                        });
+                        Object.keys(dtMap).forEach(function (dt) {
+                            var ccls = dt === 'Mandatory' ? 'bg-danger' : dt === 'Core' ? 'bg-info' : dt === 'Interest Based' ? 'bg-success' : 'bg-secondary';
+                            courseMeta += '<span class="badge ' + ccls + ' me-1">' + dtMap[dt] + ' ' + dt + '</span>';
+                        });
+                    }
+
+                    $grid.append(
+                        '<div class="col-12 col-md-6 col-xl-4">' +
+                        '<div class="card h-100" style="background:var(--bg-card);border:1px solid var(--border-color);">' +
+                        '<div class="card-body">' +
+                        '<div class="d-flex align-items-start justify-content-between">' +
+                        '<div>' +
+                        '<h6 class="mb-1" style="color:var(--text-primary);">' + tile.company_name + '</h6>' +
+                        '<div class="small text-muted">' + tile.company_id + '</div></div>' +
+                        '<span class="badge bg-secondary">' + tile.drives.length + ' drive' + (tile.drives.length > 1 ? 's' : '') + '</span></div>' +
+                        '<div class="mt-2 small" style="color:var(--text-secondary);">' +
+                        '<div><strong>Latest Process:</strong> ' + formatDateForUi(tile.latest_process_date) + '</div>' +
+                        '<div><strong>Participants:</strong> ' + (tile.participants_count || 0) + '</div>' +
+                        '<div class="mt-1">' + courseMeta + '</div>' +
+                        '</div>' +
+                        '<div class="mt-2 d-flex gap-2">' +
+                        '<a class="btn btn-xs btn-danger flex-fill" href="/cdm/company/' + encodeURIComponent(tile.company_id) + '">Open Company</a>' +
+                        '</div>' +
+                        '</div></div></div>'
+                    );
+                });
+            }
+
             /* ── Stats ────────────────────────────────────────── */
             function updateStats() {
                 var modes = {};
@@ -405,6 +505,7 @@
                 });
             }
             renderCompanies();
+            renderCompanyTiles('all');
 
             $('#toggleCompanies').on('click', function () {
                 var $wrap = $('#companiesListWrap');
@@ -461,6 +562,14 @@
                 $('.cdm-summary-filter').removeClass('cdm-summary-filter--active');
                 $(this).addClass('cdm-summary-filter--active');
                 filterApi.setPreFilter(FILTER_FUNCTIONS[filterKey]);
+                renderCompanyTiles(filterKey);
+            });
+
+            $('#toggleSheetView').on('click', function () {
+                var $sheet = $('#sheetViewSection');
+                var isVisible = $sheet.is(':visible');
+                $sheet.slideToggle(200);
+                $(this).text(isVisible ? 'Show Sheet View' : 'Hide Sheet View');
             });
 
             /* ── Column Visibility Toggle ─────────────────────── */
@@ -889,15 +998,14 @@
             // Open Add Company modal
             $('#btnAddCompany').on('click', function () {
                 $('#newCompanyName').val('').removeClass('is-invalid');
+                $('#newCompanyProcessDate').val('');
+                $('#newCompanyMode').val('');
+                $('#newCompanyLocation').val('');
+                $('#newCompanyReceivedBy').val('');
+                $('#newCompanyNotes').val('');
                 $('#addCompanyError').addClass('d-none');
-                loadCoursesAndDepts(function () {
-                    $('.addCourse-cb').prop('checked', false);
-                    $('.addCourse-dt').hide().val('');
-                    $('.addDept-cb').prop('checked', false);
-                    $('#bulkDriveType').val('');
-                    new bootstrap.Modal('#addCompanyModal').show();
-                    setTimeout(function () { $('#newCompanyName').focus(); }, 300);
-                });
+                new bootstrap.Modal('#addCompanyModal').show();
+                setTimeout(function () { $('#newCompanyName').focus(); }, 300);
             });
 
             // Confirm add company
@@ -907,14 +1015,6 @@
                     $('#newCompanyName').addClass('is-invalid').focus();
                     return;
                 }
-                var courses = [];
-                var departments = [];
-                $('.addCourse-cb:checked').each(function () {
-                    var cname = $(this).val();
-                    var cdt = $(this).closest('.course-row').find('.addCourse-dt').val() || null;
-                    courses.push({ course_name: cname, drive_type: cdt });
-                });
-                $('.addDept-cb:checked').each(function () { departments.push($(this).val()); });
 
                 $.ajax({
                     url: '/api/cdm/company',
@@ -922,8 +1022,11 @@
                     contentType: 'application/json',
                     data: JSON.stringify({
                         company_name: name,
-                        courses: courses,
-                        departments: departments
+                        process_date: $('#newCompanyProcessDate').val() || null,
+                        process_mode: $('#newCompanyMode').val() || null,
+                        location: $('#newCompanyLocation').val().trim() || null,
+                        received_by: $('#newCompanyReceivedBy').val().trim() || null,
+                        notes: $('#newCompanyNotes').val().trim() || null
                     }),
                     success: function (res) {
                         if (res.ok) {
@@ -933,10 +1036,13 @@
                                 company_id: res.company_id,
                                 company_name: res.company_name,
                                 drive_count: 0,
-                                courses: res.courses || [],
-                                departments: res.departments || []
+                                latest_process_date: null,
+                                participants_count: 0,
+                                courses: [],
+                                departments: []
                             });
                             renderCompanies();
+                            renderCompanyTiles(activeFilter);
                             $('#companiesListWrap').slideDown(200);
                             $('#toggleCompaniesText').text('Hide');
                             window.open('/cdm/company/' + encodeURIComponent(res.company_id), '_blank');
