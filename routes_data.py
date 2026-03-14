@@ -23,7 +23,7 @@ def register_data_routes(app):
     """Register all student-data routes on the Flask app."""
 
     # ── Data page ────────────────────────────────────────────────────────
-    @app.route("/data")
+    @app.route("/students")
     def data_page():
         try:
             conn = get_connection()
@@ -40,7 +40,11 @@ def register_data_routes(app):
         except Error:
             rows = []
             analytics = {}
-        return render_template("data.html", students_json=rows, analytics=analytics)
+        return render_template("students.html", students_json=rows, analytics=analytics)
+
+    @app.route("/data")
+    def data_page_legacy_redirect():
+        return redirect(url_for("data_page"), code=301)
 
     # ── Inline Editing API ───────────────────────────────────────────────
     @app.route("/api/student/<reg_no>", methods=["PUT"])

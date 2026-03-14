@@ -34,10 +34,10 @@ def index():
     return redirect(url_for("dashboard"))
 
 
-@app.route("/upload", methods=["GET", "POST"])
+@app.route("/data-hub", methods=["GET", "POST"])
 def upload():
     if request.method == "GET":
-        return render_template("upload.html")
+        return render_template("data_hub.html")
 
     # ── POST: process uploaded file ──────────────────────────────────────
     file = request.files.get("file")
@@ -264,6 +264,11 @@ def upload():
     return redirect(url_for("upload"))
 
 
+@app.route("/upload")
+def upload_legacy_redirect():
+    return redirect(url_for("upload"), code=301)
+
+
 @app.route("/download-template/student")
 def download_student_template():
     import openpyxl
@@ -312,7 +317,7 @@ def download_cdm_template():
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "CDM Import Template"
+    ws.title = "Recruitment Import Template"
     ws.append(cdm_headers)
     ws.append([None for _ in cdm_headers])
 
@@ -382,14 +387,14 @@ def drop_cdm():
         count_companies = cursor.rowcount
         cursor.close()
         conn.close()
-        flash(f"All CDM data deleted successfully.", "success")
+        flash(f"All recruitment data deleted successfully.", "success")
     except Error as e:
         flash(f"Database error: {e}", "danger")
     return redirect(url_for("upload"))
 
 
 # ── Logs / Version routes ────────────────────────────────────────────────────
-@app.route("/logs")
+@app.route("/audit")
 def logs_page():
     """Show all upload versions and change logs."""
     try:
@@ -399,13 +404,13 @@ def logs_page():
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
-        return render_template("versions.html", versions=rows)
+        return render_template("audit.html", versions=rows)
     except Error as e:
         flash(f"Database error: {e}", "danger")
-        return render_template("versions.html", versions=[])
+        return render_template("audit.html", versions=[])
 
 
-@app.route("/versions/<int:version_id>")
+@app.route("/audit/version/<int:version_id>")
 def version_detail(version_id):
     """Show data from a specific upload version."""
     try:
@@ -420,7 +425,17 @@ def version_detail(version_id):
         conn.close()
     except Error:
         rows = []
-    return render_template("version_detail.html", version_id=version_id, snap_json=rows)
+    return render_template("audit_version.html", version_id=version_id, snap_json=rows)
+
+
+@app.route("/logs")
+def logs_page_legacy_redirect():
+    return redirect(url_for("logs_page"), code=301)
+
+
+@app.route("/versions/<int:version_id>")
+def version_detail_legacy_redirect(version_id):
+    return redirect(url_for("version_detail", version_id=version_id), code=301)
 
 
 @app.route("/api/version/<int:version_id>")

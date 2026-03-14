@@ -20,13 +20,13 @@
             </div>
             <div class="navbar-nav">
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
-                <a class="nav-link" href="{{ url_for('cdm_page') }}">CDM</a>
+                <a class="nav-link" href="{{ url_for('data_page') }}">Students</a>
+                <a class="nav-link" href="{{ url_for('cdm_page') }}">Recruitment</a>
                 <div class="nav-more-dropdown">
                     <a class="nav-link">More &#9662;</a>
                     <div class="nav-more-menu">
-                        <a class="dropdown-item" href="{{ url_for('upload') }}">Upload / Export</a>
-                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Logs &amp; Versions</a>
+                        <a class="dropdown-item" href="{{ url_for('upload') }}">Data Hub</a>
+                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Audit &amp; History</a>
                     </div>
                 </div>
             </div>
@@ -183,11 +183,11 @@
                 <div class="placement-details-banner">Placement Details</div>
                 <div class="profile-grid">
                     <div class="profile-field" data-field="company_name">
-                        <div class="profile-field-label">Company Name</div>
+                        <div class="profile-field-label">Recruiter</div>
                         <div class="profile-field-value editable-field">{{ student.company_name or '—' }}</div>
                     </div>
                     <div class="profile-field" data-field="designation">
-                        <div class="profile-field-label">Designation</div>
+                        <div class="profile-field-label">Role</div>
                         <div class="profile-field-value editable-field">{{ student.designation or '—' }}</div>
                     </div>
                     <div class="profile-field" data-field="ctc">
@@ -273,7 +273,7 @@
         </div>
 
         <div class="text-center my-4">
-            <a href="{{ url_for('data_page') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Data</a>
+            <a href="{{ url_for('data_page') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Students</a>
         </div>
     </div>
 

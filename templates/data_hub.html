@@ -214,7 +214,7 @@
 
                     <div class="upload-danger-zone">
                         <form method="POST" action="{{ url_for('drop_cdm') }}"
-                            onsubmit="return confirm('Are you sure you want to delete ALL CDM data (companies, drives, HR contacts, rounds, linked students, and change logs)? This cannot be undone.')">
+                            onsubmit="return confirm('Are you sure you want to delete ALL recruitment data (recruiters, processes, HR contacts, rounds, linked students, and change logs)? This cannot be undone.')">
                             <button type="submit" class="btn btn-outline-danger btn-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
                                     viewBox="0 0 16 16" class="me-1">
@@ -426,7 +426,7 @@
                     'seeking_placement', 'status', 'company_name', 'designation', 'ctc', 'graduation_ogpa',
                     'percent_10', 'percent_12', 'backlogs', 'hometown', 'address', 'reason'];
                 var headers = ['Sr No', 'Reg No', 'Student Name', 'Gender', 'Course', 'Department', 'Mobile', 'Email',
-                    'Seeking Placement', 'Status', 'Company Name', 'Designation', 'CTC', 'OGPA',
+                    'Seeking Placement', 'Status', 'Recruiter', 'Role', 'CTC', 'OGPA',
                     '10%', '12%', 'Backlogs', 'Hometown', 'Address', 'Reason'];
                 var rows = data.map(function (r, i) {
                     return keys.map(function (k) { return k === 'sr_no' ? (i + 1) : (r[k] || ''); });
@@ -444,7 +444,7 @@
                 var data = res.data || [];
                 var keys = ['company_name', 'role', 'ctc_text', 'status', 'courses', 'jd_received_date', 'process_date',
                     'process_mode', 'location', 'received_by', 'data_shared', 'notes'];
-                var headers = ['Company', 'Position', 'CTC', 'Status', 'Courses', 'JD Received', 'Process Date',
+                var headers = ['Recruiter', 'Role', 'CTC', 'Status', 'Courses', 'JD Received', 'Drive Date',
                     'Mode', 'Location', 'Coordinator', 'Data Shared', 'Notes'];
                 var rows = data.map(function (r) {
                     return keys.map(function (k) { return r[k] || ''; });

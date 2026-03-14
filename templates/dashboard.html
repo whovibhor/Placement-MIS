@@ -20,13 +20,13 @@
             </div>
             <div class="navbar-nav">
                 <a class="nav-link active" href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a class="nav-link" href="{{ url_for('data_page') }}">Data</a>
-                <a class="nav-link" href="{{ url_for('cdm_page') }}">CDM</a>
+                <a class="nav-link" href="{{ url_for('data_page') }}">Students</a>
+                <a class="nav-link" href="{{ url_for('cdm_page') }}">Recruitment</a>
                 <div class="nav-more-dropdown">
                     <a class="nav-link">More &#9662;</a>
                     <div class="nav-more-menu">
-                        <a class="dropdown-item" href="{{ url_for('upload') }}">Upload / Export</a>
-                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Logs &amp; Versions</a>
+                        <a class="dropdown-item" href="{{ url_for('upload') }}">Data Hub</a>
+                        <a class="dropdown-item" href="{{ url_for('logs_page') }}">Audit &amp; History</a>
                     </div>
                 </div>
             </div>
@@ -72,21 +72,21 @@
                         </div>
                     </div>
                 </div>
-                <!-- CDM Column -->
+                <!-- Recruitment Column -->
                 <div class="hero-col">
                     <div class="hero-col-header">
                         <span class="hero-col-icon">&#x1F3E2;</span>
-                        <span class="hero-col-title">Company Drives</span>
+                        <span class="hero-col-title">Recruitment Pipeline</span>
                     </div>
                     <div class="hero-stats" id="heroCdmStats">
                         <div class="hero-stat"><span class="hero-stat-value">--</span><span
-                                class="hero-stat-label">Companies</span></div>
+                                class="hero-stat-label">Recruiters</span></div>
                         <div class="hero-stat"><span class="hero-stat-value">--</span><span
-                                class="hero-stat-label">Drives</span></div>
+                                class="hero-stat-label">Processes</span></div>
                         <div class="hero-stat hero-stat--accent"><span class="hero-stat-value">--</span><span
                                 class="hero-stat-label">Completed</span></div>
                         <div class="hero-stat"><span class="hero-stat-value">--</span><span
-                                class="hero-stat-label">Ongoing</span></div>
+                                class="hero-stat-label">Active</span></div>
                         <div class="hero-stat"><span class="hero-stat-value">--</span><span class="hero-stat-label">Mean
                                 CTC</span></div>
                         <div class="hero-stat"><span class="hero-stat-value">--</span><span class="hero-stat-label">Top
@@ -99,7 +99,7 @@
         <!-- ── View Tabs ───────────────────────────────────────── -->
         <div class="dash-view-tabs mb-3">
             <button class="dash-tab active" data-view="charts">Placement Charts</button>
-            <button class="dash-tab" data-view="cdmCharts">CDM Analytics</button>
+            <button class="dash-tab" data-view="cdmCharts">Recruitment Analytics</button>
             <button class="dash-tab" data-view="trends">Placement Trends</button>
             <button class="dash-tab" data-view="courseSummary">Course Summary</button>
             <button class="dash-tab" data-view="deptSummary">Department Summary</button>
@@ -160,7 +160,7 @@
 
         </div><!-- /view-charts -->
 
-        <!-- ═══ CDM ANALYTICS VIEW ═══════════════════════════════ -->
+        <!-- ═══ RECRUITMENT ANALYTICS VIEW ═══════════════════════ -->
         <div id="view-cdmCharts" class="dash-view" style="display:none;">
             <div class="stat-cards-row mb-3" id="cdmDashStats"></div>
 
@@ -173,9 +173,9 @@
                         <thead>
                             <tr style="border-color:var(--border-color);">
                                 <th>Team Member</th>
-                                <th class="text-center">Companies Brought</th>
-                                <th class="text-center">Total Drives</th>
-                                <th class="text-center">Selections</th>
+                                <th class="text-center">Recruiters Onboarded</th>
+                                <th class="text-center">Total Processes</th>
+                                <th class="text-center">Offers Made</th>
                                 <th class="text-center">Avg CTC (LPA)</th>
                                 <th class="text-center">Highest CTC (LPA)</th>
                             </tr>
@@ -187,21 +187,21 @@
 
             <div class="charts-row">
                 <div class="chart-box">
-                    <div class="chart-title">Team — Companies Brought</div>
+                    <div class="chart-title">Team — Recruiters Onboarded</div>
                     <canvas id="dashCdmTeamCompanies" style="max-height:300px;"></canvas>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-title">Team — Selections</div>
+                    <div class="chart-title">Team — Offers Made</div>
                     <canvas id="dashCdmTeamSelections" style="max-height:300px;"></canvas>
                 </div>
             </div>
             <div class="charts-row">
                 <div class="chart-box">
-                    <div class="chart-title">Companies — Most Selections</div>
+                    <div class="chart-title">Recruiters — Most Offers</div>
                     <canvas id="dashCdmTopPlaced" style="max-height:300px;"></canvas>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-title">Companies — Highest CTC</div>
+                    <div class="chart-title">Recruiters — Highest CTC</div>
                     <canvas id="dashCdmHighestCtc" style="max-height:300px;"></canvas>
                 </div>
             </div>
@@ -808,10 +808,10 @@
                     data.team_performance.forEach(function (t) { totalSelections += (t.selections || 0); });
                 }
                 var heroHtml = '';
-                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + data.total_companies + '</span><span class="hero-stat-label">Companies</span></div>';
-                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + data.total_drives + '</span><span class="hero-stat-label">Drives</span></div>';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + data.total_companies + '</span><span class="hero-stat-label">Recruiters</span></div>';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + data.total_drives + '</span><span class="hero-stat-label">Processes</span></div>';
                 heroHtml += '<div class="hero-stat hero-stat--accent"><span class="hero-stat-value">' + completed + '</span><span class="hero-stat-label">Completed</span></div>';
-                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + totalSelections + '</span><span class="hero-stat-label">Selections</span></div>';
+                heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + totalSelections + '</span><span class="hero-stat-label">Offers</span></div>';
                 heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + (ctc.mean || '—') + '</span><span class="hero-stat-label">Avg CTC</span></div>';
                 heroHtml += '<div class="hero-stat"><span class="hero-stat-value">' + (ctc.highest || '—') + '</span><span class="hero-stat-label">Top CTC</span></div>';
                 $('#heroCdmStats').html(heroHtml);
@@ -823,15 +823,15 @@
 
                 var ctc = data.ctc_stats || {};
                 var statsHtml = '';
-                statsHtml += '<div class="stat-card"><div class="stat-label">Total Drives</div><div class="stat-value">' + data.total_drives + '</div></div>';
-                statsHtml += '<div class="stat-card stat-card--accent"><div class="stat-label">Companies</div><div class="stat-value">' + data.total_companies + '</div></div>';
+                statsHtml += '<div class="stat-card"><div class="stat-label">Total Processes</div><div class="stat-value">' + data.total_drives + '</div></div>';
+                statsHtml += '<div class="stat-card stat-card--accent"><div class="stat-label">Recruiters</div><div class="stat-value">' + data.total_companies + '</div></div>';
                 if (ctc.mean) statsHtml += '<div class="stat-card"><div class="stat-label">Avg CTC</div><div class="stat-value">' + ctc.mean + ' LPA</div></div>';
                 if (ctc.highest) statsHtml += '<div class="stat-card"><div class="stat-label">Highest CTC</div><div class="stat-value">' + ctc.highest + ' LPA</div></div>';
                 if (ctc.lowest) statsHtml += '<div class="stat-card"><div class="stat-label">Lowest CTC</div><div class="stat-value">' + ctc.lowest + ' LPA</div></div>';
 
                 var totalSel = 0;
                 if (data.team_performance) data.team_performance.forEach(function (t) { totalSel += (t.selections || 0); });
-                statsHtml += '<div class="stat-card"><div class="stat-label">Total Selections</div><div class="stat-value">' + totalSel + '</div></div>';
+                statsHtml += '<div class="stat-card"><div class="stat-label">Total Offers</div><div class="stat-value">' + totalSel + '</div></div>';
                 $('#cdmDashStats').html(statsHtml);
 
                 // ── Team Performance Table ──────────────────────────
@@ -858,7 +858,7 @@
                         data: {
                             labels: tp.map(function (t) { return t.name.split(' ')[0]; }),
                             datasets: [{
-                                label: 'Companies',
+                                label: 'Recruiters',
                                 data: tp.map(function (t) { return t.companies_brought; }),
                                 backgroundColor: CC.slice(0, tp.length),
                                 borderRadius: 4
@@ -887,7 +887,7 @@
                         data: {
                             labels: tp2.map(function (t) { return t.name.split(' ')[0]; }),
                             datasets: [{
-                                label: 'Selections',
+                                label: 'Offers',
                                 data: tp2.map(function (t) { return t.selections; }),
                                 backgroundColor: '#42a5f5',
                                 borderRadius: 4
@@ -915,7 +915,7 @@
                         data: {
                             labels: data.top_placed_companies.map(function (c) { return c.company_name; }),
                             datasets: [{
-                                label: 'Selections',
+                                label: 'Offers',
                                 data: data.top_placed_companies.map(function (c) { return c.selected_count; }),
                                 backgroundColor: '#66bb6a',
                                 borderRadius: 3

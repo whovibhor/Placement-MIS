@@ -199,7 +199,7 @@ def register_cdm_routes(app):
     """Register all CDM routes on the Flask app."""
 
     # ── CDM main page ────────────────────────────────────────────────────
-    @app.route("/cdm")
+    @app.route("/recruitment")
     def cdm_page():
         try:
             conn = get_connection()
@@ -254,7 +254,11 @@ def register_cdm_routes(app):
             drives = []
             companies = []
             flash(f"Database error: {e}", "danger")
-        return render_template("cdm.html", drives_json=drives, companies_json=companies)
+        return render_template("recruitment.html", drives_json=drives, companies_json=companies)
+
+    @app.route("/cdm")
+    def cdm_page_legacy_redirect():
+        return redirect(url_for("cdm_page"), code=301)
 
     # ── CDM JSON endpoint ────────────────────────────────────────────────
     @app.route("/api/cdm")
@@ -297,7 +301,7 @@ def register_cdm_routes(app):
             return jsonify({"data": [], "error": str(e)}), 500
 
     # ── CDM Import ───────────────────────────────────────────────────────
-    @app.route("/cdm/import", methods=["GET", "POST"])
+    @app.route("/recruitment/import", methods=["GET", "POST"])
     def cdm_import():
         if request.method == "GET":
             return redirect(url_for("upload"))
@@ -449,8 +453,8 @@ def register_cdm_routes(app):
             cursor.close()
             conn.close()
             flash(
-                f"CDM import successful — {companies_added} companies, "
-                f"{drives_added} drives, {hr_added} HR contacts added.",
+                f"Recruitment import successful — {companies_added} recruiters, "
+                f"{drives_added} processes, {hr_added} HR contacts added.",
                 "success",
             )
         except Error as e:
@@ -458,8 +462,12 @@ def register_cdm_routes(app):
 
         return redirect(url_for("upload"))
 
+    @app.route("/cdm/import")
+    def cdm_import_legacy_redirect():
+        return redirect(url_for("cdm_import"), code=301)
+
     # ── Company detail page ──────────────────────────────────────────────
-    @app.route("/cdm/company/<company_id>")
+    @app.route("/recruitment/recruiter/<company_id>")
     def cdm_company_detail(company_id):
         try:
             conn = get_connection()
@@ -467,7 +475,7 @@ def register_cdm_routes(app):
             cursor.execute("SELECT * FROM companies WHERE company_id=%s", (company_id,))
             company = cursor.fetchone()
             if not company:
-                flash("Company not found.", "danger")
+                flash("Recruiter not found.", "danger")
                 return redirect(url_for("cdm_page"))
 
             cursor.execute(
@@ -510,11 +518,15 @@ def register_cdm_routes(app):
             return redirect(url_for("cdm_page"))
 
         return render_template(
-            "cdm_company.html",
+            "recruitment_recruiter.html",
             company=company,
             drives=drives,
             hr_contacts=hr_contacts,
         )
+
+    @app.route("/cdm/company/<company_id>")
+    def cdm_company_detail_legacy_redirect(company_id):
+        return redirect(url_for("cdm_company_detail", company_id=company_id), code=301)
 
     # ── Drive CRUD ───────────────────────────────────────────────────────
     @app.route("/api/cdm/delete-drive/<int:drive_id>", methods=["POST"])
@@ -539,7 +551,7 @@ def register_cdm_routes(app):
         company_id = (data.get("company_id") or "").strip()
         role = (data.get("role") or "").strip()
         if not company_id or not role:
-            return jsonify({"ok": False, "error": "Company ID and role are required."}), 400
+            return jsonify({"ok": False, "error": "Recruiter ID and role are required."}), 400
         try:
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -547,7 +559,7 @@ def register_cdm_routes(app):
             if not cursor.fetchone():
                 cursor.close()
                 conn.close()
-                return jsonify({"ok": False, "error": "Company not found."}), 404
+                return jsonify({"ok": False, "error": "Recruiter not found."}), 404
             cursor.execute(
                 "INSERT INTO company_drives (company_id, role, ctc_text, process_date, jd_received_date, "
                 "data_shared, location, status, notes, jd_briefing_done, jd_briefing_date, jd_briefing_conducted_by) "
@@ -621,7 +633,7 @@ def register_cdm_routes(app):
                 if not cursor.fetchone():
                     cursor.close()
                     conn.close()
-                    return jsonify({"error": "Drive not found"}), 404
+                    return jsonify({"error": "Process not found"}), 404
                 cursor.execute("DELETE FROM drive_courses WHERE drive_id=%s", (drive_id,))
                 if courses:
                     cursor.executemany(
@@ -643,7 +655,7 @@ def register_cdm_routes(app):
             if not row:
                 cursor.close()
                 conn.close()
-                return jsonify({"error": "Drive not found"}), 404
+                return jsonify({"error": "Process not found"}), 404
 
             old_value = row.get(field)
             if isinstance(old_value, Decimal):
@@ -839,7 +851,7 @@ def register_cdm_routes(app):
         data = request.get_json(silent=True) or {}
         name = (data.get("company_name") or "").strip()
         if not name:
-            return jsonify({"ok": False, "error": "Company name is required."}), 400
+            return jsonify({"ok": False, "error": "Recruiter name is required."}), 400
         received_by = (data.get("received_by") or "").strip() or None
         notes = (data.get("notes") or "").strip() or None
         try:
@@ -852,7 +864,7 @@ def register_cdm_routes(app):
             if existing:
                 cursor.close()
                 conn.close()
-                return jsonify({"ok": False, "error": "Company already exists.", "company_id": existing["company_id"]}), 409
+                return jsonify({"ok": False, "error": "Recruiter already exists.", "company_id": existing["company_id"]}), 409
             cid = generate_company_id(name, cursor)
             cursor.execute(
                 "INSERT INTO companies (company_id, company_name, received_by, notes) "
@@ -886,7 +898,7 @@ def register_cdm_routes(app):
             if not existing:
                 cursor.close()
                 conn.close()
-                return jsonify({"ok": False, "error": "Company not found."}), 404
+                return jsonify({"ok": False, "error": "Recruiter not found."}), 404
             if not name:
                 name = existing["company_name"]
             if "received_by" in data:
@@ -1501,7 +1513,7 @@ def register_cdm_routes(app):
             if not drive:
                 cursor.close()
                 conn.close()
-                return jsonify({"error": "Drive not found"}), 404
+                return jsonify({"error": "Process not found"}), 404
 
             cursor.execute(
                 "SELECT round_order, round_name, round_date "
@@ -1525,19 +1537,19 @@ def register_cdm_routes(app):
 
             wb = openpyxl.Workbook()
             ws_info = wb.active
-            ws_info.title = "Drive Overview"
+            ws_info.title = "Process Overview"
             ws_info.append(["Field", "Value"])
             info_rows = [
-                ("Drive ID", drive.get("drive_id")),
-                ("Company", drive.get("company_name")),
+                ("Process ID", drive.get("drive_id")),
+                ("Recruiter", drive.get("company_name")),
                 ("Role", drive.get("role")),
                 ("CTC", drive.get("ctc_text")),
-                ("Process Date", drive.get("process_date")),
+                ("Drive Date", drive.get("process_date")),
                 ("Venue", drive.get("location")),
                 ("Status", drive.get("status")),
                 ("JD Received", drive.get("jd_received_date")),
                 ("Data Shared", "Yes" if drive.get("data_shared") else "No"),
-                ("Received By", drive.get("received_by")),
+                ("Coordinator", drive.get("received_by")),
             ]
             for key, value in info_rows:
                 ws_info.append([key, value if value is not None else ""])
@@ -1581,7 +1593,7 @@ def register_cdm_routes(app):
                 buf,
                 mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 as_attachment=True,
-                download_name=f"drive_{drive_id}_progress.xlsx",
+                download_name=f"process_{drive_id}_progress.xlsx",
             )
         except Error as e:
             return jsonify({"error": str(e)}), 500
@@ -1607,7 +1619,7 @@ def register_cdm_routes(app):
             if not drive:
                 cursor.close()
                 conn.close()
-                return jsonify({"error": "Drive not found"}), 404
+                return jsonify({"error": "Process not found"}), 404
 
             cursor.execute(
                 "SELECT round_order, round_name FROM drive_rounds WHERE drive_id=%s ORDER BY round_order",
@@ -1638,12 +1650,12 @@ def register_cdm_routes(app):
                 pdf.drawString(36, y, str(text))
                 y -= step
 
-            write_line(f"Drive Progress Report - #{drive_id}", 18)
-            write_line(f"Company: {drive.get('company_name')}")
+            write_line(f"Process Progress Report - #{drive_id}", 18)
+            write_line(f"Recruiter: {drive.get('company_name')}")
             write_line(f"Role: {drive.get('role') or '—'}")
             write_line(f"CTC: {drive.get('ctc_text') or '—'}")
             write_line(f"Status: {drive.get('status') or 'Upcoming'}")
-            write_line(f"Process Date: {drive.get('process_date') or '—'}")
+            write_line(f"Drive Date: {drive.get('process_date') or '—'}")
             write_line("", 8)
 
             write_line("Rounds:", 16)
@@ -1670,7 +1682,7 @@ def register_cdm_routes(app):
                 buf,
                 mimetype="application/pdf",
                 as_attachment=True,
-                download_name=f"drive_{drive_id}_progress.pdf",
+                download_name=f"process_{drive_id}_progress.pdf",
             )
         except Error as e:
             return jsonify({"error": str(e)}), 500
@@ -2049,7 +2061,7 @@ def register_cdm_routes(app):
             if not company:
                 cursor.close()
                 conn.close()
-                return jsonify({"error": "Company not found."}), 404
+                return jsonify({"error": "Recruiter not found."}), 404
             company["courses"] = []
             company["departments"] = []
             cursor.close()
