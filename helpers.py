@@ -381,9 +381,6 @@ def init_db():
         CREATE TABLE IF NOT EXISTS companies (
             company_id   VARCHAR(10) PRIMARY KEY,
             company_name VARCHAR(200) NOT NULL,
-            process_date DATE NULL,
-            process_mode VARCHAR(50) NULL,
-            location VARCHAR(200) NULL,
             received_by VARCHAR(200) NULL,
             notes TEXT NULL
         )
@@ -397,9 +394,10 @@ def init_db():
             jd_received_date  DATE,
             process_date      DATE,
             data_shared       BOOLEAN,
-            process_mode      VARCHAR(50),
             location          VARCHAR(200),
-            received_by       VARCHAR(200),
+            jd_briefing_done  BOOLEAN DEFAULT FALSE,
+            jd_briefing_date  DATE,
+            jd_briefing_conducted_by VARCHAR(200),
             notes             TEXT,
             FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE CASCADE
         )
@@ -466,25 +464,7 @@ def init_db():
     except Error:
         pass
 
-    # ── Add drive_type to companies (idempotent) ─────────────────
-    try:
-        cursor.execute("ALTER TABLE companies ADD COLUMN drive_type VARCHAR(50) DEFAULT NULL")
-    except Error:
-        pass
-
-    # ── Add company metadata columns (idempotent) ────────────────
-    try:
-        cursor.execute("ALTER TABLE companies ADD COLUMN process_date DATE NULL")
-    except Error:
-        pass
-    try:
-        cursor.execute("ALTER TABLE companies ADD COLUMN process_mode VARCHAR(50) NULL")
-    except Error:
-        pass
-    try:
-        cursor.execute("ALTER TABLE companies ADD COLUMN location VARCHAR(200) NULL")
-    except Error:
-        pass
+    # ── Ensure company-level owner/notes columns (idempotent) ────
     try:
         cursor.execute("ALTER TABLE companies ADD COLUMN received_by VARCHAR(200) NULL")
     except Error:
@@ -500,29 +480,43 @@ def init_db():
     except Error:
         pass
 
-    # ── Company-level course and department linking ──────────────
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS company_courses (
-            company_id  VARCHAR(10),
-            course_name VARCHAR(100),
-            drive_type  VARCHAR(50) DEFAULT NULL,
-            PRIMARY KEY (company_id, course_name),
-            FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE CASCADE
-        )
-    """)
-    # Migration: add drive_type column if table already exists without it
+    # ── Drive-level JD briefing fields (idempotent) ──────────────
     try:
-        cursor.execute("ALTER TABLE company_courses ADD COLUMN drive_type VARCHAR(50) DEFAULT NULL")
+        cursor.execute("ALTER TABLE company_drives ADD COLUMN jd_briefing_done BOOLEAN DEFAULT FALSE")
     except Error:
         pass
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS company_departments (
-            company_id      VARCHAR(10),
-            department_name VARCHAR(100),
-            PRIMARY KEY (company_id, department_name),
-            FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE CASCADE
-        )
-    """)
+    try:
+        cursor.execute("ALTER TABLE company_drives ADD COLUMN jd_briefing_date DATE")
+    except Error:
+        pass
+    try:
+        cursor.execute("ALTER TABLE company_drives ADD COLUMN jd_briefing_conducted_by VARCHAR(200)")
+    except Error:
+        pass
+
+    # ── Remove duplicated/legacy CDM columns (idempotent) ────────
+    for stmt in [
+        "ALTER TABLE companies DROP COLUMN process_date",
+        "ALTER TABLE companies DROP COLUMN process_mode",
+        "ALTER TABLE companies DROP COLUMN location",
+        "ALTER TABLE companies DROP COLUMN drive_type",
+        "ALTER TABLE company_drives DROP COLUMN process_mode",
+        "ALTER TABLE company_drives DROP COLUMN received_by",
+    ]:
+        try:
+            cursor.execute(stmt)
+        except Error:
+            pass
+
+    # ── Remove legacy company-level course/department tables ──────
+    for stmt in [
+        "DROP TABLE IF EXISTS company_courses",
+        "DROP TABLE IF EXISTS company_departments",
+    ]:
+        try:
+            cursor.execute(stmt)
+        except Error:
+            pass
 
     # ── Course presets for quick selection ────────────────────────
     cursor.execute("""

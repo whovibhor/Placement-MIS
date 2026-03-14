@@ -150,13 +150,12 @@
 
                                 <div class="small drive-meta-grid" style="color:var(--text-secondary);">
                                     <div><strong>Process Date:</strong> {{ d.process_date or '—' }}</div>
-                                    <div><strong>Mode:</strong> {{ d.process_mode or company.process_mode or '—' }}
-                                    </div>
                                     <div><strong>CTC:</strong> {{ d.ctc_text or '—' }}</div>
-                                    <div><strong>Venue:</strong> {{ d.location or company.location or '—' }}</div>
+                                    <div><strong>Venue:</strong> {{ d.location or '—' }}</div>
                                     <div><strong>Courses:</strong> {{ d.courses or '—' }}</div>
                                     <div><strong>Participants:</strong> {{ d.student_count }}</div>
                                     <div><strong>Rounds:</strong> {{ d.round_count }}</div>
+                                    <div><strong>JD Briefing:</strong> {{ 'Yes' if d.jd_briefing_done else 'No' }}</div>
                                 </div>
 
                                 <div class="mt-2 d-flex flex-wrap gap-1">
@@ -165,8 +164,14 @@
                                     <span
                                         class="badge {{ 'bg-success' if d.data_shared == 'Yes' else 'bg-secondary' }} drive-chip">Data
                                         Shared: {{ d.data_shared }}</span>
-                                    {% if d.received_by %}<span class="badge bg-info text-dark drive-chip">By: {{
-                                        d.received_by }}</span>{% endif %}
+                                    {% if company.received_by %}<span class="badge bg-info text-dark drive-chip">By: {{
+                                        company.received_by }}</span>{% endif %}
+                                    {% if d.jd_briefing_date %}<span class="badge bg-dark drive-chip">JD Briefing Date:
+                                        {{
+                                        d.jd_briefing_date }}</span>{% endif %}
+                                    {% if d.jd_briefing_conducted_by %}<span
+                                        class="badge bg-secondary drive-chip">Conducted By: {{
+                                        d.jd_briefing_conducted_by }}</span>{% endif %}
                                 </div>
 
                                 <div class="small mt-2" style="color:var(--text-secondary);">
@@ -185,9 +190,10 @@
                                         data-ctc="{{ (d.ctc_text or '')|e }}" data-courses="{{ (d.courses or '')|e }}"
                                         data-jd-received-date="{{ (d.jd_received_date or '')|e }}"
                                         data-process-date="{{ (d.process_date or '')|e }}"
-                                        data-mode="{{ (d.process_mode or '')|e }}"
                                         data-location="{{ (d.location or '')|e }}"
-                                        data-received-by="{{ (d.received_by or '')|e }}"
+                                        data-jd-briefing-done="{{ ('Yes' if d.jd_briefing_done else 'No')|e }}"
+                                        data-jd-briefing-date="{{ (d.jd_briefing_date or '')|e }}"
+                                        data-jd-briefing-conducted-by="{{ (d.jd_briefing_conducted_by or '')|e }}"
                                         data-data-shared="{{ (d.data_shared or 'No')|e }}"
                                         data-status="{{ (d.status or 'Upcoming')|e }}"
                                         data-notes="{{ (d.notes or '')|e }}" title="Edit drive">Edit</button>
@@ -210,10 +216,12 @@
                                 <th>Courses</th>
                                 <th>JD Received</th>
                                 <th>Process Date</th>
-                                <th>Mode</th>
                                 <th>Venue</th>
                                 <th>Received By</th>
                                 <th>Data Shared</th>
+                                <th>JD Briefing</th>
+                                <th>JD Briefing Date</th>
+                                <th>Conducted By</th>
                                 <th>Notes</th>
                                 <th>Students</th>
                                 <th>Rounds</th>
@@ -236,13 +244,15 @@
                                 <td class="editable-drive" data-field="jd_received_date">{{ d.jd_received_date or '—' }}
                                 </td>
                                 <td class="editable-drive" data-field="process_date">{{ d.process_date or '—' }}</td>
-                                <td class="editable-drive" data-field="process_mode">{{ d.process_mode or
-                                    company.process_mode or '—' }}</td>
-                                <td class="editable-drive" data-field="location">{{ d.location or company.location or
-                                    '—' }}</td>
-                                <td class="editable-drive" data-field="received_by">{{ d.received_by or
-                                    company.received_by or '—' }}</td>
+                                <td class="editable-drive" data-field="location">{{ d.location or '—' }}</td>
+                                <td>{{ company.received_by or '—' }}</td>
                                 <td class="editable-drive" data-field="data_shared">{{ d.data_shared }}</td>
+                                <td class="editable-drive" data-field="jd_briefing_done">{{ 'Yes' if d.jd_briefing_done
+                                    else 'No' }}</td>
+                                <td class="editable-drive" data-field="jd_briefing_date">{{ d.jd_briefing_date or '—' }}
+                                </td>
+                                <td class="editable-drive" data-field="jd_briefing_conducted_by">{{
+                                    d.jd_briefing_conducted_by or '—' }}</td>
                                 <td class="editable-drive" data-field="notes">{{ d.notes or '—' }}</td>
                                 <td><button class="btn btn-xs btn-outline-info btn-students" data-id="{{ d.drive_id }}"
                                         title="Manage students">{{ d.student_count }}</button></td>
@@ -253,9 +263,10 @@
                                         data-ctc="{{ (d.ctc_text or '')|e }}" data-courses="{{ (d.courses or '')|e }}"
                                         data-jd-received-date="{{ (d.jd_received_date or '')|e }}"
                                         data-process-date="{{ (d.process_date or '')|e }}"
-                                        data-mode="{{ (d.process_mode or '')|e }}"
                                         data-location="{{ (d.location or '')|e }}"
-                                        data-received-by="{{ (d.received_by or '')|e }}"
+                                        data-jd-briefing-done="{{ ('Yes' if d.jd_briefing_done else 'No')|e }}"
+                                        data-jd-briefing-date="{{ (d.jd_briefing_date or '')|e }}"
+                                        data-jd-briefing-conducted-by="{{ (d.jd_briefing_conducted_by or '')|e }}"
                                         data-data-shared="{{ (d.data_shared or 'No')|e }}"
                                         data-status="{{ (d.status or 'Upcoming')|e }}"
                                         data-notes="{{ (d.notes or '')|e }}" title="Edit drive">Edit</button></td>
@@ -494,6 +505,51 @@
                                     style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label small text-muted">Venue</label>
+                                <input type="text" id="driveVenueInput" class="form-control form-control-sm"
+                                    list="driveVenueOptions" placeholder="Select or type venue"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <datalist id="driveVenueOptions">
+                                    <option value="SH 401"></option>
+                                    <option value="RTH"></option>
+                                    <option value="APJ"></option>
+                                    <option value="CDC Room"></option>
+                                    <option value="Reception Area"></option>
+                                </datalist>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">JD Received Date</label>
+                                <input type="date" id="driveJdDateInput" class="form-control form-control-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Data Shared</label>
+                                <select id="driveDataSharedInput" class="form-select form-select-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                    <option>Yes</option>
+                                    <option>No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">JD Briefing Session Done</label>
+                                <select id="driveJdBriefingDoneInput" class="form-select form-select-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                    <option>No</option>
+                                    <option>Yes</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">JD Briefing Session Date</label>
+                                <input type="date" id="driveJdBriefingDateInput" class="form-control form-control-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">JD Briefing Conducted By</label>
+                                <input type="text" id="driveJdBriefingConductedByInput"
+                                    class="form-control form-control-sm" placeholder="Name"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label small text-muted">Status</label>
                                 <select id="driveStatusInput" class="form-select form-select-sm"
                                     style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
@@ -557,12 +613,38 @@
                                     style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label small text-muted">Venue</label>
+                                <input type="text" id="editDriveVenueInput" class="form-control form-control-sm"
+                                    list="driveVenueOptions" placeholder="Select or type venue"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label small text-muted">Data Shared</label>
                                 <select id="editDriveDataSharedInput" class="form-select form-select-sm"
                                     style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                                     <option>Yes</option>
                                     <option>No</option>
                                 </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">JD Briefing Session Done</label>
+                                <select id="editDriveJdBriefingDoneInput" class="form-select form-select-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                    <option>No</option>
+                                    <option>Yes</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">JD Briefing Session Date</label>
+                                <input type="date" id="editDriveJdBriefingDateInput"
+                                    class="form-control form-control-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">JD Briefing Conducted By</label>
+                                <input type="text" id="editDriveJdBriefingConductedByInput"
+                                    class="form-control form-control-sm" placeholder="Name"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small text-muted">Status</label>
@@ -723,7 +805,11 @@
                         courses: JSON.stringify(originalCourses),
                         jd_received_date: normalizeDash($btn.data('jd-received-date')),
                         process_date: normalizeDash($btn.data('process-date')),
+                        location: normalizeDash($btn.data('location')),
                         data_shared: normalizeDash($btn.data('data-shared')) || 'No',
+                        jd_briefing_done: normalizeDash($btn.data('jd-briefing-done')) || 'No',
+                        jd_briefing_date: normalizeDash($btn.data('jd-briefing-date')),
+                        jd_briefing_conducted_by: normalizeDash($btn.data('jd-briefing-conducted-by')),
                         status: normalizeDash($btn.data('status')) || 'Upcoming',
                         notes: normalizeDash($btn.data('notes'))
                     };
@@ -733,7 +819,11 @@
                     $('#editDriveCtcInput').val(EDITING_DRIVE_ORIGINAL.ctc_text);
                     $('#editDriveJdDateInput').val(EDITING_DRIVE_ORIGINAL.jd_received_date);
                     $('#editDriveDateInput').val(EDITING_DRIVE_ORIGINAL.process_date);
+                    $('#editDriveVenueInput').val(EDITING_DRIVE_ORIGINAL.location);
                     $('#editDriveDataSharedInput').val(EDITING_DRIVE_ORIGINAL.data_shared || 'No');
+                    $('#editDriveJdBriefingDoneInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_done || 'No');
+                    $('#editDriveJdBriefingDateInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_date);
+                    $('#editDriveJdBriefingConductedByInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_conducted_by);
                     $('#editDriveStatusInput').val(EDITING_DRIVE_ORIGINAL.status || 'Upcoming');
                     $('#editDriveNotesInput').val(EDITING_DRIVE_ORIGINAL.notes);
                     $('#editDriveError').addClass('d-none').text('');
@@ -752,7 +842,11 @@
                         courses: collectDriveCourses('edit-drive'),
                         jd_received_date: $('#editDriveJdDateInput').val(),
                         process_date: $('#editDriveDateInput').val(),
+                        location: $('#editDriveVenueInput').val().trim(),
                         data_shared: $('#editDriveDataSharedInput').val(),
+                        jd_briefing_done: $('#editDriveJdBriefingDoneInput').val(),
+                        jd_briefing_date: $('#editDriveJdBriefingDateInput').val(),
+                        jd_briefing_conducted_by: $('#editDriveJdBriefingConductedByInput').val().trim(),
                         status: $('#editDriveStatusInput').val(),
                         notes: $('#editDriveNotesInput').val().trim()
                     };
@@ -1242,7 +1336,9 @@
 
                 /* ══════════════ ADD DRIVE ══════════════ */
                 $('#btnAddDrive').on('click', function () {
-                    $('#driveRoleInput, #driveCtcInput, #driveDateInput, #driveNotesInput').val('');
+                    $('#driveRoleInput, #driveCtcInput, #driveDateInput, #driveVenueInput, #driveJdDateInput, #driveJdBriefingDateInput, #driveJdBriefingConductedByInput, #driveNotesInput').val('');
+                    $('#driveDataSharedInput').val('No');
+                    $('#driveJdBriefingDoneInput').val('No');
                     $('#driveStatusInput').val('Upcoming');
                     $('#addDriveError').addClass('d-none');
                     loadDriveCourseOptions(function () {
@@ -1268,7 +1364,13 @@
                             role: role,
                             ctc_text: $('#driveCtcInput').val().trim() || null,
                             courses: courses,
+                            jd_received_date: $('#driveJdDateInput').val() || null,
                             process_date: $('#driveDateInput').val() || null,
+                            location: $('#driveVenueInput').val().trim() || null,
+                            data_shared: $('#driveDataSharedInput').val() || 'No',
+                            jd_briefing_done: $('#driveJdBriefingDoneInput').val() || 'No',
+                            jd_briefing_date: $('#driveJdBriefingDateInput').val() || null,
+                            jd_briefing_conducted_by: $('#driveJdBriefingConductedByInput').val().trim() || null,
                             status: $('#driveStatusInput').val() || 'Upcoming',
                             notes: $('#driveNotesInput').val().trim() || null
                         }),
