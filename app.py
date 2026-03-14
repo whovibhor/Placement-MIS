@@ -1,10 +1,11 @@
 # app.py — Main Flask application (modularised)
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 import pandas as pd
 import hashlib
 import re as _re
 from datetime import datetime
 from decimal import Decimal
+from io import BytesIO
 from mysql.connector import Error
 
 import config
@@ -261,6 +262,69 @@ def upload():
         flash(f"Database error: {e}", "danger")
 
     return redirect(url_for("upload"))
+
+
+@app.route("/download-template/student")
+def download_student_template():
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Student MIS Template"
+    ws.append(EXPECTED_HEADERS)
+
+    # Optional sample row (blank values under exact headers)
+    ws.append([None for _ in EXPECTED_HEADERS])
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="student_mis_import_template.xlsx",
+    )
+
+
+@app.route("/download-template/cdm")
+def download_cdm_template():
+    import openpyxl
+
+    cdm_headers = [
+        "Company ID",
+        "Company Name",
+        "Date JD Received",
+        "Data Shared(Y/N)",
+        "Process Date",
+        "Recieved By",
+        "Course",
+        "Position Offered",
+        "CTC",
+        "HR POC Name",
+        "HR POC Designation",
+        "HR POC Email",
+        "HR POC Phone",
+        "Process Mode(On-Campus / Virtual)",
+        "Location",
+        "Notes",
+    ]
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "CDM Import Template"
+    ws.append(cdm_headers)
+    ws.append([None for _ in cdm_headers])
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="cdm_import_template.xlsx",
+    )
 
 
 @app.route("/dashboard")

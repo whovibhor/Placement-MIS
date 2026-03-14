@@ -347,7 +347,7 @@ def register_cdm_routes(app):
                     "INSERT INTO company_drives "
                     "(company_id, role, ctc_text, jd_received_date, process_date, "
                     "data_shared, location, notes, status, jd_briefing_done, jd_briefing_date, jd_briefing_conducted_by) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (company_id, role, ctc_text, jd_date, proc_date,
                      data_shared, location, notes, "Upcoming", False, None, None),
                 )
@@ -1038,7 +1038,7 @@ def register_cdm_routes(app):
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT ds.reg_no, ds.status, ds.current_round, s.student_name, s.course, s.department "
+                "SELECT ds.reg_no, ds.status, ds.current_round, s.student_name, s.course, s.department, s.email, s.mobile_number "
                 "FROM drive_students ds "
                 "JOIN students s ON ds.reg_no = s.reg_no "
                 "WHERE ds.drive_id = %s ORDER BY s.student_name",

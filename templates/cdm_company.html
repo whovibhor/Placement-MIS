@@ -9,7 +9,114 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .company-content-zone {
-            margin-top: 32px;
+            margin-top: 12px;
+        }
+
+        .company-hero,
+        .data-panel {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-card);
+            padding: 14px;
+            transition: border-color .2s ease, transform .2s ease;
+        }
+
+        .company-hero:hover,
+        .data-panel:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+        .hero-subcard {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-surface);
+            padding: 12px;
+        }
+
+        .hero-metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .hero-metric-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-card);
+            padding: 8px 10px;
+        }
+
+        .hero-metric-label {
+            font-size: .72rem;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+
+        .hero-metric-value {
+            font-size: .9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .hero-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 14px;
+        }
+
+        .hero-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.07);
+            padding-bottom: 3px;
+            min-width: 0;
+        }
+
+        .hero-detail-row span {
+            color: var(--text-secondary);
+            font-size: .78rem;
+            white-space: nowrap;
+        }
+
+        .hero-detail-row strong {
+            color: var(--text-primary);
+            font-size: .78rem;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+
+        .hero-notes-row {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .round-row {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px;
+            background: var(--bg-surface);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+            transition: border-color .2s ease;
+        }
+
+        .round-row:hover {
+            border-color: var(--accent-color);
+        }
+
+        .funnel-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: .78rem;
+            color: var(--text-secondary);
+            padding: 3px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.07);
         }
 
         .drives-toolbar {
@@ -62,6 +169,12 @@
             border-radius: 8px;
             background: var(--bg-card);
             padding: 12px;
+            transition: border-color .2s ease, transform .2s ease;
+        }
+
+        .hr-contact-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
         }
 
         #companySheetViewSection thead th {
@@ -112,183 +225,184 @@
                 Company</button>
         </div>
 
-        <div class="row g-4 company-content-zone">
-            <div class="col-12 col-xl-9">
-                <div class="drives-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="dash-section-title mb-0">Drives</div>
-                        <span class="badge bg-secondary">{{ drives|length }}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 ms-auto">
-                        <button class="btn btn-sm btn-danger" id="btnAddDrive">Add Drive</button>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Drive View Toggle">
-                            <button type="button" class="btn btn-outline-light active" id="driveViewCard">Card
-                                View</button>
-                            <button type="button" class="btn btn-outline-light" id="toggleCompanySheetView">Table
-                                View</button>
-                        </div>
-                    </div>
-                </div>
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <div class="small text-muted">Company Workspace</div>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-danger" id="btnAddDrive">Add Drive</button>
+                <button class="btn btn-sm btn-outline-light" id="btnAddHR">Add HR</button>
+                <button class="btn btn-sm btn-outline-info" id="btnEditSelectedDrive">Edit Selected Drive</button>
+            </div>
+        </div>
 
-                {% if drives %}
-                <div class="row drives-grid" id="companyCardViewSection">
-                    {% for d in drives %}
-                    <div class="col-12 col-md-6 col-xl-6">
-                        <div class="card h-100 drive-card">
-                            <div class="card-body" style="padding:18px;">
-                                <div class="d-flex align-items-start justify-content-between mb-2">
-                                    <div class="pe-2">
-                                        <h6 class="mb-1" style="font-size:1.02rem;line-height:1.3;">{{ d.role or '—' }}
-                                        </h6>
-                                        <div class="small text-muted">Drive #{{ d.drive_id }}</div>
-                                    </div>
-                                    {% set st = (d.status or 'Upcoming')|lower %}
-                                    <span
-                                        class="badge {{ 'bg-success' if st == 'completed' else 'bg-warning text-dark' if st == 'ongoing' else 'bg-danger' if st == 'cancelled' else 'bg-info' }}">{{
-                                        d.status or 'Upcoming' }}</span>
-                                </div>
-
-                                <div class="small drive-meta-grid" style="color:var(--text-secondary);">
-                                    <div><strong>Process Date:</strong> {{ d.process_date or '—' }}</div>
-                                    <div><strong>CTC:</strong> {{ d.ctc_text or '—' }}</div>
-                                    <div><strong>Venue:</strong> {{ d.location or '—' }}</div>
-                                    <div><strong>Courses:</strong> {{ d.courses or '—' }}</div>
-                                    <div><strong>Participants:</strong> {{ d.student_count }}</div>
-                                    <div><strong>Rounds:</strong> {{ d.round_count }}</div>
-                                    <div><strong>JD Briefing:</strong> {{ 'Yes' if d.jd_briefing_done else 'No' }}</div>
-                                </div>
-
-                                <div class="mt-2 d-flex flex-wrap gap-1">
-                                    {% if d.jd_received_date %}<span class="badge bg-primary drive-chip">JD: {{
-                                        d.jd_received_date }}</span>{% endif %}
-                                    <span
-                                        class="badge {{ 'bg-success' if d.data_shared == 'Yes' else 'bg-secondary' }} drive-chip">Data
-                                        Shared: {{ d.data_shared }}</span>
-                                    {% if company.received_by %}<span class="badge bg-info text-dark drive-chip">By: {{
-                                        company.received_by }}</span>{% endif %}
-                                    {% if d.jd_briefing_date %}<span class="badge bg-dark drive-chip">JD Briefing Date:
-                                        {{
-                                        d.jd_briefing_date }}</span>{% endif %}
-                                    {% if d.jd_briefing_conducted_by %}<span
-                                        class="badge bg-secondary drive-chip">Conducted By: {{
-                                        d.jd_briefing_conducted_by }}</span>{% endif %}
-                                </div>
-
-                                <div class="small mt-2" style="color:var(--text-secondary);">
-                                    <strong>Notes:</strong>
-                                    <div class="drive-notes-clamp" title="{{ d.notes or '—' }}">{{ d.notes or '—' }}
-                                    </div>
-                                </div>
-
-                                <div class="d-flex align-items-center gap-2 mt-3">
-                                    <button class="btn btn-sm btn-danger btn-students flex-fill"
-                                        data-id="{{ d.drive_id }}" title="Manage students">Students</button>
-                                    <button class="btn btn-sm btn-outline-light btn-rounds flex-fill"
-                                        data-id="{{ d.drive_id }}" title="Manage rounds">Rounds</button>
-                                    <button class="btn btn-sm btn-outline-info btn-edit-drive"
-                                        data-id="{{ d.drive_id }}" data-role="{{ (d.role or '')|e }}"
-                                        data-ctc="{{ (d.ctc_text or '')|e }}" data-courses="{{ (d.courses or '')|e }}"
-                                        data-jd-received-date="{{ (d.jd_received_date or '')|e }}"
-                                        data-process-date="{{ (d.process_date or '')|e }}"
-                                        data-location="{{ (d.location or '')|e }}"
-                                        data-jd-briefing-done="{{ ('Yes' if d.jd_briefing_done else 'No')|e }}"
-                                        data-jd-briefing-date="{{ (d.jd_briefing_date or '')|e }}"
-                                        data-jd-briefing-conducted-by="{{ (d.jd_briefing_conducted_by or '')|e }}"
-                                        data-data-shared="{{ (d.data_shared or 'No')|e }}"
-                                        data-status="{{ (d.status or 'Upcoming')|e }}"
-                                        data-notes="{{ (d.notes or '')|e }}" title="Edit drive">Edit</button>
-                                </div>
+        {% if drives %}
+        <section class="company-hero mb-4" id="companyHeroSection">
+            <div class="row g-3 align-items-stretch">
+                <div class="col-12 col-xl-4">
+                    <div class="hero-subcard h-100">
+                        <label class="form-label small text-muted mb-1">Select Drive</label>
+                        <select id="activeDriveSelect" class="form-select form-select-sm mb-3"
+                            style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);"></select>
+                        <div class="hero-metric-grid">
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">Total Drives</div>
+                                <div class="hero-metric-value">{{ drives|length }}</div>
+                            </div>
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">HR Contacts</div>
+                                <div class="hero-metric-value">{{ hr_contacts|length }}</div>
+                            </div>
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">Selected Drive ID</div>
+                                <div class="hero-metric-value" id="heroDriveId">—</div>
+                            </div>
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">Received By</div>
+                                <div class="hero-metric-value">{{ company.received_by or '—' }}</div>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-
-                <div class="table-responsive" id="companySheetViewSection" style="display:none;">
-                    <table class="table table-striped table-bordered table-hover" style="font-size:0.85rem;"
-                        id="drivesTable">
-                        <thead>
-                            <tr>
-                                <th>Drive #</th>
-                                <th>Position</th>
-                                <th>CTC</th>
-                                <th>Status</th>
-                                <th>Courses</th>
-                                <th>JD Received</th>
-                                <th>Process Date</th>
-                                <th>Venue</th>
-                                <th>Received By</th>
-                                <th>Data Shared</th>
-                                <th>JD Briefing</th>
-                                <th>JD Briefing Date</th>
-                                <th>Conducted By</th>
-                                <th>Notes</th>
-                                <th>Students</th>
-                                <th>Rounds</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for d in drives %}
-                            <tr data-drive-id="{{ d.drive_id }}">
-                                <td>{{ d.drive_id }}</td>
-                                <td class="editable-drive" data-field="role">{{ d.role or '—' }}</td>
-                                <td class="editable-drive" data-field="ctc_text">{{ d.ctc_text or '—' }}</td>
-                                <td class="editable-drive" data-field="status">
-                                    {% set st = (d.status or 'Upcoming')|lower %}
-                                    <span
-                                        class="badge {{ 'bg-success' if st == 'completed' else 'bg-warning text-dark' if st == 'ongoing' else 'bg-danger' if st == 'cancelled' else 'bg-info' }}">{{
-                                        d.status or 'Upcoming' }}</span>
-                                </td>
-                                <td>{{ d.courses or '—' }}</td>
-                                <td class="editable-drive" data-field="jd_received_date">{{ d.jd_received_date or '—' }}
-                                </td>
-                                <td class="editable-drive" data-field="process_date">{{ d.process_date or '—' }}</td>
-                                <td class="editable-drive" data-field="location">{{ d.location or '—' }}</td>
-                                <td>{{ company.received_by or '—' }}</td>
-                                <td class="editable-drive" data-field="data_shared">{{ d.data_shared }}</td>
-                                <td class="editable-drive" data-field="jd_briefing_done">{{ 'Yes' if d.jd_briefing_done
-                                    else 'No' }}</td>
-                                <td class="editable-drive" data-field="jd_briefing_date">{{ d.jd_briefing_date or '—' }}
-                                </td>
-                                <td class="editable-drive" data-field="jd_briefing_conducted_by">{{
-                                    d.jd_briefing_conducted_by or '—' }}</td>
-                                <td class="editable-drive" data-field="notes">{{ d.notes or '—' }}</td>
-                                <td><button class="btn btn-xs btn-outline-info btn-students" data-id="{{ d.drive_id }}"
-                                        title="Manage students">{{ d.student_count }}</button></td>
-                                <td><button class="btn btn-xs btn-outline-warning btn-rounds" data-id="{{ d.drive_id }}"
-                                        title="Manage rounds">{{ d.round_count }}</button></td>
-                                <td><button class="btn btn-xs btn-outline-info btn-edit-drive"
-                                        data-id="{{ d.drive_id }}" data-role="{{ (d.role or '')|e }}"
-                                        data-ctc="{{ (d.ctc_text or '')|e }}" data-courses="{{ (d.courses or '')|e }}"
-                                        data-jd-received-date="{{ (d.jd_received_date or '')|e }}"
-                                        data-process-date="{{ (d.process_date or '')|e }}"
-                                        data-location="{{ (d.location or '')|e }}"
-                                        data-jd-briefing-done="{{ ('Yes' if d.jd_briefing_done else 'No')|e }}"
-                                        data-jd-briefing-date="{{ (d.jd_briefing_date or '')|e }}"
-                                        data-jd-briefing-conducted-by="{{ (d.jd_briefing_conducted_by or '')|e }}"
-                                        data-data-shared="{{ (d.data_shared or 'No')|e }}"
-                                        data-status="{{ (d.status or 'Upcoming')|e }}"
-                                        data-notes="{{ (d.notes or '')|e }}" title="Edit drive">Edit</button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted">No drives recorded for this company.</p>
-                {% endif %}
-            </div>
-
-            <div class="col-12 col-xl-3">
-                <div class="sidebar-panel">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="dash-section-title mb-0" style="font-size:0.95rem;">HR Contacts</div>
-                        <button class="btn btn-xs btn-outline-light" id="btnAddHR">+ Add</button>
+                <div class="col-12 col-xl-8">
+                    <div class="hero-subcard h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="dash-section-title mb-0">Drive Overview</div>
+                            <span id="heroDriveStatusBadge" class="badge bg-info">Upcoming</span>
+                        </div>
+                        <div class="hero-details-grid" id="heroDetailsGrid">
+                            <div class="hero-detail-row"><span>Position</span><strong id="heroRole">—</strong></div>
+                            <div class="hero-detail-row"><span>CTC</span><strong id="heroCtc">—</strong></div>
+                            <div class="hero-detail-row"><span>Process Date</span><strong
+                                    id="heroProcessDate">—</strong></div>
+                            <div class="hero-detail-row"><span>Venue</span><strong id="heroVenue">—</strong></div>
+                            <div class="hero-detail-row"><span>Courses</span><strong id="heroCourses">—</strong></div>
+                            <div class="hero-detail-row"><span>Data Shared</span><strong id="heroDataShared">—</strong>
+                            </div>
+                            <div class="hero-detail-row"><span>JD Received</span><strong id="heroJdReceived">—</strong>
+                            </div>
+                            <div class="hero-detail-row"><span>JD Briefing Done</span><strong
+                                    id="heroJdBriefingDone">—</strong></div>
+                            <div class="hero-detail-row"><span>Briefing Date</span><strong
+                                    id="heroJdBriefingDate">—</strong></div>
+                            <div class="hero-detail-row"><span>Conducted By</span><strong
+                                    id="heroJdConductedBy">—</strong></div>
+                        </div>
+                        <div class="hero-detail-row hero-notes-row mt-2"><span>Notes</span><strong
+                                id="heroNotes">—</strong></div>
                     </div>
-                    {% if hr_contacts %}
-                    <div class="d-flex flex-column" style="gap:12px;" id="hrCardsWrap">
-                        {% for hr in hr_contacts %}
+                </div>
+            </div>
+        </section>
+
+        <section class="company-content-zone">
+            <div class="row g-3">
+                <div class="col-12 col-xl-8">
+                    <div class="data-panel h-100">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                            <div class="dash-section-title mb-0" style="font-size:1rem;">Participants</div>
+                            <div class="small text-muted" id="participantsCountLabel">0 student(s)</div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="studentSearchInput" class="form-control"
+                                    placeholder="Search student by name or reg no..."
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <button class="btn btn-outline-light" id="btnLinkStudent" disabled>Add</button>
+                            </div>
+                            <div id="studentSearchResults" class="cdm-search-dropdown"></div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                            <input type="file" id="bulkStudentFile" accept=".xlsx,.xls"
+                                class="form-control form-control-sm"
+                                style="max-width:280px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            <button class="btn btn-sm btn-outline-info" id="btnBulkImport" disabled>Import</button>
+                            <a href="/api/cdm/student-template" class="btn btn-sm btn-outline-light">Template</a>
+                            <div id="bulkImportResult" class="small text-muted"></div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered table-hover align-middle"
+                                style="font-size:0.82rem;" id="participantsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Reg No</th>
+                                        <th>Name</th>
+                                        <th>Course</th>
+                                        <th>Department</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Qualified Round</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="participantsTableBody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">No students linked</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-4">
+                    <div class="data-panel h-100">
+                        <div class="dash-section-title mb-2" style="font-size:1rem;">Drive Progress & Stats</div>
+
+                        <div class="d-flex gap-2 mb-2">
+                            <input type="text" id="roundNameInput" class="form-control form-control-sm"
+                                placeholder="Round name"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            <input type="date" id="roundDateInput" class="form-control form-control-sm"
+                                style="max-width:140px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            <button class="btn btn-sm btn-danger" id="btnAddRound">Add</button>
+                        </div>
+
+                        <div class="round-list-wrap mb-3" id="roundsListWrap">
+                            <div class="text-muted small">No rounds added</div>
+                        </div>
+
+                        <div class="hero-metric-grid mb-3">
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">Total Rounds</div>
+                                <div class="hero-metric-value" id="statTotalRounds">0</div>
+                            </div>
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">Participants</div>
+                                <div class="hero-metric-value" id="statParticipants">0</div>
+                            </div>
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">Shortlisted</div>
+                                <div class="hero-metric-value" id="statShortlisted">0</div>
+                            </div>
+                            <div class="hero-metric-item">
+                                <div class="hero-metric-label">Placed</div>
+                                <div class="hero-metric-value" id="statPlaced">0</div>
+                            </div>
+                        </div>
+
+                        <div class="small text-muted mb-1">Round Funnel</div>
+                        <div id="roundFunnelWrap" class="mb-3"></div>
+
+                        <div class="small text-muted mb-1">Placed Students</div>
+                        <div id="placedNamesWrap" class="small">—</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-3">
+            <div class="data-panel">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="dash-section-title mb-0" style="font-size:0.98rem;">HR Contacts</div>
+                    <button class="btn btn-xs btn-outline-light" id="btnAddHRInline">+ Add</button>
+                </div>
+                {% if hr_contacts %}
+                <div class="row g-2" id="hrCardsWrap">
+                    {% for hr in hr_contacts %}
+                    <div class="col-12 col-md-6 col-xl-4">
                         <div class="hr-contact-card" data-hr-id="{{ hr.hr_id }}">
                             <div class="d-flex align-items-start justify-content-between">
                                 <div class="editable-hr" data-field="name" style="font-weight:700;cursor:pointer;">{{
@@ -296,26 +410,31 @@
                                 <button class="btn btn-xs btn-outline-danger delete-hr" data-id="{{ hr.hr_id }}"
                                     title="Delete contact">Delete</button>
                             </div>
-                            <div class="small mt-2" style="color:var(--text-secondary);"><strong>Designation:</strong>
-                                <span class="editable-hr" data-field="designation" style="cursor:pointer;">{{
-                                    hr.designation or '—' }}</span>
-                            </div>
-                            <div class="small mt-1" style="color:var(--text-secondary);"><strong>Email:</strong> <span
+                            <div class="small mt-1 d-flex justify-content-between"><span>Designation</span><span
+                                    class="editable-hr" data-field="designation" style="cursor:pointer;">{{
+                                    hr.designation or '—' }}</span></div>
+                            <div class="small mt-1 d-flex justify-content-between"><span>Email</span><span
                                     class="editable-hr" data-field="email" style="cursor:pointer;">{% if hr.email %}<a
                                         href="mailto:{{ hr.email }}" class="text-info">{{ hr.email }}</a>{% else %}—{%
                                     endif %}</span></div>
-                            <div class="small mt-1" style="color:var(--text-secondary);"><strong>Phone:</strong> <span
+                            <div class="small mt-1 d-flex justify-content-between"><span>Phone</span><span
                                     class="editable-hr" data-field="phone" style="cursor:pointer;">{{ hr.phone or '—'
                                     }}</span></div>
                         </div>
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <div id="noHrCards" class="text-muted small">No HR contacts recorded.</div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
+                {% else %}
+                <div id="noHrCards" class="text-muted small">No HR contacts recorded.</div>
+                {% endif %}
             </div>
+        </section>
+        {% else %}
+        <div class="data-panel text-center">
+            <div class="text-muted">No drives recorded for this company. Add a drive to start tracking participants and
+                round progression.</div>
         </div>
+        {% endif %}
 
         <!-- ══════════════ Student Linking Modal ══════════════ -->
         <div class="modal fade" id="studentsModal" tabindex="-1">
@@ -689,734 +808,771 @@
         <script>
             $(function () {
                 var COMPANY_ID = '{{ company.company_id }}';
+                var COMPANY_RECEIVED_BY = '{{ company.received_by or '' }}';
+                var DRIVES = {{ drives| tojson if drives else '[]'
+            }};
+            var selectedDriveId = DRIVES.length ? Number(DRIVES[0].drive_id) : null;
+            var selectedStudent = null;
+            var currentStudents = [];
+            var currentRounds = [];
+            var EDITING_DRIVE_ID = null;
+            var EDITING_DRIVE_ORIGINAL = null;
+            var DRIVE_COURSE_OPTIONS = [];
+            var DRIVE_TYPE_OPTIONS = ['Mandatory', 'Interest Based', 'Core'];
 
-                function showToast(msg, type) {
-                    var $t = $('#editToast');
-                    $t.removeClass('text-bg-success text-bg-danger').addClass('text-bg-' + (type || 'success'));
-                    $('#editToastMsg').text(msg);
-                    bootstrap.Toast.getOrCreateInstance($t[0], { delay: 2000 }).show();
+            function showToast(msg, type) {
+                var $t = $('#editToast');
+                $t.removeClass('text-bg-success text-bg-danger').addClass('text-bg-' + (type || 'success'));
+                $('#editToastMsg').text(msg);
+                bootstrap.Toast.getOrCreateInstance($t[0], { delay: 2000 }).show();
+            }
+
+            function getSelectedDrive() {
+                return DRIVES.find(function (d) { return Number(d.drive_id) === Number(selectedDriveId); }) || null;
+            }
+
+            function normalize(v) {
+                var value = (v === null || v === undefined) ? '' : String(v).trim();
+                return value || '—';
+            }
+
+            function statusBadgeClass(status) {
+                var st = (status || '').toLowerCase();
+                if (st === 'completed') return 'bg-success';
+                if (st === 'ongoing') return 'bg-warning text-dark';
+                if (st === 'cancelled') return 'bg-danger';
+                return 'bg-info';
+            }
+
+            function parseCourseLabels(raw) {
+                var txt = (raw || '').toString().trim();
+                if (!txt) return [];
+                return txt.split(',').map(function (chunk) {
+                    var item = chunk.trim();
+                    if (!item) return null;
+                    var matched = item.match(/^(.*)\((Mandatory|Interest Based|Core)\)$/);
+                    if (matched) return { course_name: matched[1].trim(), drive_type: matched[2] };
+                    return { course_name: item, drive_type: null };
+                }).filter(Boolean);
+            }
+
+            function loadDriveCourseOptions(cb) {
+                if (DRIVE_COURSE_OPTIONS.length) {
+                    if (cb) cb();
+                    return;
                 }
+                $.getJSON('/api/cdm/unique-courses-departments', function (res) {
+                    DRIVE_COURSE_OPTIONS = (res.courses || []).slice();
+                    if (cb) cb();
+                });
+            }
 
-                var EDITING_DRIVE_ID = null;
-                var EDITING_DRIVE_ORIGINAL = null;
-                var DRIVE_COURSE_OPTIONS = [];
-                var DRIVE_TYPE_OPTIONS = ['Mandatory', 'Interest Based', 'Core'];
-
-                function normalizeDash(value) {
-                    return (value || '').toString().trim() === '—' ? '' : (value || '');
-                }
-
-                function updateDriveField(driveId, field, value) {
-                    return $.ajax({
-                        url: '/api/cdm/drive/' + driveId,
-                        method: 'PUT',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ field: field, value: value })
-                    });
-                }
-
-                function parseCourseLabels(raw) {
-                    var txt = (raw || '').toString().trim();
-                    if (!txt) return [];
-                    return txt.split(',').map(function (chunk) {
-                        var item = chunk.trim();
-                        if (!item) return null;
-                        var matched = item.match(/^(.*)\((Mandatory|Interest Based|Core)\)$/);
-                        if (matched) {
-                            return { course_name: matched[1].trim(), drive_type: matched[2] };
-                        }
-                        return { course_name: item, drive_type: null };
-                    }).filter(Boolean);
-                }
-
-                function loadDriveCourseOptions(cb) {
-                    if (DRIVE_COURSE_OPTIONS.length) {
-                        if (cb) cb();
-                        return;
+            function renderDriveCourseRows(containerSel, prefix, selectedEntries) {
+                var $box = $(containerSel).empty();
+                var selectedMap = {};
+                (selectedEntries || []).forEach(function (entry) {
+                    if (entry && entry.course_name) {
+                        selectedMap[entry.course_name] = entry.drive_type || '';
+                        if (DRIVE_COURSE_OPTIONS.indexOf(entry.course_name) === -1) DRIVE_COURSE_OPTIONS.push(entry.course_name);
                     }
-                    $.getJSON('/api/cdm/unique-courses-departments', function (res) {
-                        DRIVE_COURSE_OPTIONS = (res.courses || []).slice();
-                        if (cb) cb();
-                    });
+                });
+                if (!DRIVE_COURSE_OPTIONS.length) {
+                    $box.html('<span class="text-muted small">No courses available</span>');
+                    return;
                 }
-
-                function renderDriveCourseRows(containerSel, prefix, selectedEntries) {
-                    var $box = $(containerSel).empty();
-                    var selectedMap = {};
-                    (selectedEntries || []).forEach(function (entry) {
-                        if (entry && entry.course_name) {
-                            selectedMap[entry.course_name] = entry.drive_type || '';
-                            if (DRIVE_COURSE_OPTIONS.indexOf(entry.course_name) === -1) {
-                                DRIVE_COURSE_OPTIONS.push(entry.course_name);
-                            }
-                        }
+                DRIVE_COURSE_OPTIONS.forEach(function (course, index) {
+                    var id = prefix + 'Course' + index;
+                    var selectedType = selectedMap[course] || '';
+                    var checked = Object.prototype.hasOwnProperty.call(selectedMap, course);
+                    var options = '<option value="">— Type —</option>';
+                    DRIVE_TYPE_OPTIONS.forEach(function (dt) {
+                        options += '<option value="' + dt + '"' + (dt === selectedType ? ' selected' : '') + '>' + dt + '</option>';
                     });
-                    if (!DRIVE_COURSE_OPTIONS.length) {
-                        $box.html('<span class="text-muted small">No courses available</span>');
-                        return;
-                    }
-                    DRIVE_COURSE_OPTIONS.forEach(function (course, index) {
-                        var id = prefix + 'Course' + index;
-                        var selectedType = selectedMap[course] || '';
-                        var checked = Object.prototype.hasOwnProperty.call(selectedMap, course);
-                        var options = '<option value="">— Type —</option>';
-                        DRIVE_TYPE_OPTIONS.forEach(function (dt) {
-                            options += '<option value="' + dt + '"' + (dt === selectedType ? ' selected' : '') + '>' + dt + '</option>';
-                        });
-                        $box.append(
-                            '<div class="d-flex align-items-center gap-2 mb-1 drive-course-row">' +
-                            '<input class="form-check-input ' + prefix + '-course-cb" type="checkbox" id="' + id + '" value="' + course.replace(/"/g, '&quot;') + '"' + (checked ? ' checked' : '') + '>' +
-                            '<label class="small mb-0 flex-grow-1" for="' + id + '">' + course + '</label>' +
-                            '<select class="form-select form-select-sm ' + prefix + '-course-type" style="width:150px;display:' + (checked ? 'block' : 'none') + ';background:var(--bg-dark);border-color:var(--border-color);color:var(--text-secondary);">' + options + '</select>' +
-                            '</div>'
-                        );
-                    });
-                }
+                    $box.append(
+                        '<div class="d-flex align-items-center gap-2 mb-1 drive-course-row">' +
+                        '<input class="form-check-input ' + prefix + '-course-cb" type="checkbox" id="' + id + '" value="' + course.replace(/"/g, '&quot;') + '"' + (checked ? ' checked' : '') + '>' +
+                        '<label class="small mb-0 flex-grow-1" for="' + id + '">' + course + '</label>' +
+                        '<select class="form-select form-select-sm ' + prefix + '-course-type" style="width:150px;display:' + (checked ? 'block' : 'none') + ';background:var(--bg-dark);border-color:var(--border-color);color:var(--text-secondary);">' + options + '</select>' +
+                        '</div>'
+                    );
+                });
+            }
 
-                function collectDriveCourses(prefix) {
-                    var out = [];
-                    $('.' + prefix + '-course-cb:checked').each(function () {
-                        var $row = $(this).closest('.drive-course-row');
-                        out.push({
-                            course_name: $(this).val(),
-                            drive_type: $row.find('.' + prefix + '-course-type').val() || null
-                        });
-                    });
-                    return out;
-                }
-
-                $(document).on('change', '.drive-course-cb, .edit-drive-course-cb', function () {
+            function collectDriveCourses(prefix) {
+                var out = [];
+                $('.' + prefix + '-course-cb:checked').each(function () {
                     var $row = $(this).closest('.drive-course-row');
-                    var $type = $row.find('select');
-                    if ($(this).is(':checked')) {
-                        $type.show();
-                    } else {
-                        $type.hide().val('');
-                    }
-                });
-
-                $(document).on('click', '.btn-edit-drive', function () {
-                    var $btn = $(this);
-                    var originalCourses = parseCourseLabels(normalizeDash($btn.data('courses')));
-                    EDITING_DRIVE_ID = $btn.data('id');
-                    EDITING_DRIVE_ORIGINAL = {
-                        role: normalizeDash($btn.data('role')),
-                        ctc_text: normalizeDash($btn.data('ctc')),
-                        courses: JSON.stringify(originalCourses),
-                        jd_received_date: normalizeDash($btn.data('jd-received-date')),
-                        process_date: normalizeDash($btn.data('process-date')),
-                        location: normalizeDash($btn.data('location')),
-                        data_shared: normalizeDash($btn.data('data-shared')) || 'No',
-                        jd_briefing_done: normalizeDash($btn.data('jd-briefing-done')) || 'No',
-                        jd_briefing_date: normalizeDash($btn.data('jd-briefing-date')),
-                        jd_briefing_conducted_by: normalizeDash($btn.data('jd-briefing-conducted-by')),
-                        status: normalizeDash($btn.data('status')) || 'Upcoming',
-                        notes: normalizeDash($btn.data('notes'))
-                    };
-
-                    $('#editDriveIdLabel').text('#' + EDITING_DRIVE_ID);
-                    $('#editDriveRoleInput').val(EDITING_DRIVE_ORIGINAL.role);
-                    $('#editDriveCtcInput').val(EDITING_DRIVE_ORIGINAL.ctc_text);
-                    $('#editDriveJdDateInput').val(EDITING_DRIVE_ORIGINAL.jd_received_date);
-                    $('#editDriveDateInput').val(EDITING_DRIVE_ORIGINAL.process_date);
-                    $('#editDriveVenueInput').val(EDITING_DRIVE_ORIGINAL.location);
-                    $('#editDriveDataSharedInput').val(EDITING_DRIVE_ORIGINAL.data_shared || 'No');
-                    $('#editDriveJdBriefingDoneInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_done || 'No');
-                    $('#editDriveJdBriefingDateInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_date);
-                    $('#editDriveJdBriefingConductedByInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_conducted_by);
-                    $('#editDriveStatusInput').val(EDITING_DRIVE_ORIGINAL.status || 'Upcoming');
-                    $('#editDriveNotesInput').val(EDITING_DRIVE_ORIGINAL.notes);
-                    $('#editDriveError').addClass('d-none').text('');
-                    loadDriveCourseOptions(function () {
-                        renderDriveCourseRows('#editDriveCourseRows', 'edit-drive', originalCourses);
-                        new bootstrap.Modal('#editDriveModal').show();
+                    out.push({
+                        course_name: $(this).val(),
+                        drive_type: $row.find('.' + prefix + '-course-type').val() || null
                     });
                 });
+                return out;
+            }
 
-                $('#btnSaveDriveEdit').on('click', function () {
-                    if (!EDITING_DRIVE_ID || !EDITING_DRIVE_ORIGINAL) return;
+            function updateDriveField(driveId, field, value) {
+                return $.ajax({
+                    url: '/api/cdm/drive/' + driveId,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ field: field, value: value })
+                });
+            }
 
-                    var updates = {
-                        role: $('#editDriveRoleInput').val().trim(),
-                        ctc_text: $('#editDriveCtcInput').val().trim(),
-                        courses: collectDriveCourses('edit-drive'),
-                        jd_received_date: $('#editDriveJdDateInput').val(),
-                        process_date: $('#editDriveDateInput').val(),
-                        location: $('#editDriveVenueInput').val().trim(),
-                        data_shared: $('#editDriveDataSharedInput').val(),
-                        jd_briefing_done: $('#editDriveJdBriefingDoneInput').val(),
-                        jd_briefing_date: $('#editDriveJdBriefingDateInput').val(),
-                        jd_briefing_conducted_by: $('#editDriveJdBriefingConductedByInput').val().trim(),
-                        status: $('#editDriveStatusInput').val(),
-                        notes: $('#editDriveNotesInput').val().trim()
-                    };
+            function renderDriveSelect() {
+                var $sel = $('#activeDriveSelect').empty();
+                DRIVES.forEach(function (d) {
+                    var label = '#' + d.drive_id + ' · ' + (d.role || '—');
+                    $sel.append('<option value="' + d.drive_id + '">' + label + '</option>');
+                });
+                if (selectedDriveId) $sel.val(String(selectedDriveId));
+            }
 
-                    if (!updates.role) {
-                        $('#editDriveError').removeClass('d-none').text('Position / Role is required.');
-                        return;
-                    }
-                    if (!updates.courses.length) {
-                        $('#editDriveError').removeClass('d-none').text('Select at least one course for this drive.');
-                        return;
-                    }
-                    var missingCourseType = updates.courses.some(function (c) { return !c.drive_type; });
-                    if (missingCourseType) {
-                        $('#editDriveError').removeClass('d-none').text('Select drive type for all selected courses.');
-                        return;
-                    }
+            function renderHero() {
+                var drive = getSelectedDrive();
+                if (!drive) return;
+                $('#heroDriveId').text('#' + drive.drive_id);
+                $('#heroRole').text(normalize(drive.role));
+                $('#heroCtc').text(normalize(drive.ctc_text));
+                $('#heroProcessDate').text(normalize(drive.process_date));
+                $('#heroVenue').text(normalize(drive.location));
+                $('#heroCourses').text(normalize(drive.courses));
+                $('#heroDataShared').text(normalize(drive.data_shared));
+                $('#heroJdReceived').text(normalize(drive.jd_received_date));
+                $('#heroJdBriefingDone').text(drive.jd_briefing_done ? 'Yes' : 'No');
+                $('#heroJdBriefingDate').text(normalize(drive.jd_briefing_date));
+                $('#heroJdConductedBy').text(normalize(drive.jd_briefing_conducted_by));
+                $('#heroNotes').text(normalize(drive.notes));
+                var status = drive.status || 'Upcoming';
+                $('#heroDriveStatusBadge').removeClass('bg-success bg-warning bg-danger bg-info text-dark').addClass(statusBadgeClass(status)).text(status);
+            }
 
-                    var changedFields = Object.keys(updates).filter(function (key) {
-                        if (key === 'courses') {
-                            return JSON.stringify(updates.courses) !== EDITING_DRIVE_ORIGINAL.courses;
+            function loadRounds() {
+                if (!selectedDriveId) return $.Deferred().resolve([]);
+                return $.getJSON('/api/cdm/drive/' + selectedDriveId + '/rounds').then(function (res) {
+                    currentRounds = res.rounds || [];
+                    renderRounds();
+                    return currentRounds;
+                });
+            }
+
+            function loadStudents() {
+                if (!selectedDriveId) return $.Deferred().resolve([]);
+                return $.getJSON('/api/cdm/drive/' + selectedDriveId + '/students').then(function (res) {
+                    currentStudents = res.students || [];
+                    renderParticipants();
+                    renderStats();
+                    return currentStudents;
+                });
+            }
+
+            function renderRounds() {
+                var $wrap = $('#roundsListWrap').empty();
+                if (!currentRounds.length) {
+                    $wrap.html('<div class="text-muted small">No rounds added</div>');
+                    renderParticipants();
+                    renderStats();
+                    return;
+                }
+                currentRounds.forEach(function (r) {
+                    $wrap.append(
+                        '<div class="round-row">' +
+                        '<div><div class="small fw-semibold">R' + r.round_order + ' · ' + (r.round_name || 'Round') + '</div><div class="small text-muted">' + (r.round_date || 'No date') + '</div></div>' +
+                        '<button class="btn btn-xs btn-outline-danger delete-round" data-id="' + r.round_id + '">Delete</button>' +
+                        '</div>'
+                    );
+                });
+            }
+
+            function roundOptions(selected) {
+                var safeSelected = Math.min(Number(selected || 0), currentRounds.length);
+                var options = '<option value="0"' + (safeSelected === 0 ? ' selected' : '') + '>Not Cleared</option>';
+                currentRounds.forEach(function (r) {
+                    options += '<option value="' + r.round_order + '"' + (safeSelected === Number(r.round_order) ? ' selected' : '') + '>R' + r.round_order + ' · ' + r.round_name + '</option>';
+                });
+                return options;
+            }
+
+            function renderParticipants() {
+                var $tbody = $('#participantsTableBody').empty();
+                $('#participantsCountLabel').text(currentStudents.length + ' student(s)');
+                if (!currentStudents.length) {
+                    $tbody.append('<tr><td colspan="9" class="text-center text-muted">No students linked</td></tr>');
+                    return;
+                }
+                currentStudents.forEach(function (s) {
+                    var statusOpts = ['Applied', 'Shortlisted', 'In Process', 'Selected', 'Rejected', 'On Hold'].map(function (o) {
+                        return '<option value="' + o + '"' + (o === s.status ? ' selected' : '') + '>' + o + '</option>';
+                    }).join('');
+                    var profileUrl = '/student/' + encodeURIComponent(s.reg_no);
+                    $tbody.append(
+                        '<tr>' +
+                        '<td>' + s.reg_no + '</td>' +
+                        '<td><a href="' + profileUrl + '" class="text-info fw-semibold">' + (s.student_name || '') + '</a></td>' +
+                        '<td>' + normalize(s.course) + '</td>' +
+                        '<td>' + normalize(s.department) + '</td>' +
+                        '<td>' + (s.email ? '<a class="text-info" href="mailto:' + s.email + '">' + s.email + '</a>' : '—') + '</td>' +
+                        '<td>' + normalize(s.mobile_number) + '</td>' +
+                        '<td><select class="form-select form-select-sm student-round-sel" data-reg="' + s.reg_no + '" style="min-width:140px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">' + roundOptions(s.current_round) + '</select></td>' +
+                        '<td><select class="form-select form-select-sm student-status-sel" data-reg="' + s.reg_no + '" style="min-width:120px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">' + statusOpts + '</select></td>' +
+                        '<td><button class="btn btn-xs btn-outline-danger unlink-student" data-reg="' + s.reg_no + '">&times;</button></td>' +
+                        '</tr>'
+                    );
+                });
+            }
+
+            function renderStats() {
+                var totalRounds = currentRounds.length;
+                var participants = currentStudents.length;
+                var placed = currentStudents.filter(function (s) { return (s.status || '').toLowerCase() === 'selected'; });
+                var shortlisted = currentStudents.filter(function (s) {
+                    var st = (s.status || '').toLowerCase();
+                    return st === 'shortlisted' || st === 'in process' || st === 'selected';
+                }).length;
+
+                $('#statTotalRounds').text(totalRounds);
+                $('#statParticipants').text(participants);
+                $('#statShortlisted').text(shortlisted);
+                $('#statPlaced').text(placed.length);
+
+                var $funnel = $('#roundFunnelWrap').empty();
+                if (!totalRounds) {
+                    $funnel.html('<div class="text-muted small">Add rounds to track progression.</div>');
+                } else {
+                    currentRounds.forEach(function (r) {
+                        var count = currentStudents.filter(function (s) {
+                            return Number(s.current_round || 0) >= Number(r.round_order);
+                        }).length;
+                        $funnel.append('<div class="funnel-row"><span>Qualified for R' + r.round_order + ' · ' + r.round_name + '</span><strong>' + count + '</strong></div>');
+                    });
+                }
+
+                var $placed = $('#placedNamesWrap').empty();
+                if (!placed.length) {
+                    $placed.text('—');
+                } else {
+                    $placed.html(placed.map(function (p) { return '<div>' + p.student_name + ' (' + p.reg_no + ')</div>'; }).join(''));
+                }
+            }
+
+            function refreshSelectedDriveData() {
+                renderHero();
+                $.when(loadRounds(), loadStudents()).fail(function () {
+                    showToast('Failed to load drive data', 'danger');
+                });
+            }
+
+            var stuSearchTimer = null;
+            $('#studentSearchInput').on('input', function () {
+                var q = $(this).val().trim();
+                clearTimeout(stuSearchTimer);
+                selectedStudent = null;
+                $('#btnLinkStudent').prop('disabled', true);
+                if (q.length < 2) {
+                    $('#studentSearchResults').hide().empty();
+                    return;
+                }
+                stuSearchTimer = setTimeout(function () {
+                    $.getJSON('/api/cdm/search-students?q=' + encodeURIComponent(q), function (res) {
+                        var $dd = $('#studentSearchResults').empty();
+                        if (!res.results || !res.results.length) {
+                            $dd.html('<div class="gs-empty">No students found</div>').show();
+                            return;
                         }
-                        return (updates[key] || '') !== (EDITING_DRIVE_ORIGINAL[key] || '');
+                        res.results.forEach(function (s) {
+                            $dd.append(
+                                '<div class="gs-item cdm-stu-pick" data-reg="' + s.reg_no + '" data-name="' + (s.student_name || '') + '">' +
+                                '<div class="gs-name">' + (s.student_name || '') + '</div>' +
+                                '<div class="gs-meta">' + s.reg_no + ' · ' + (s.course || '') + '</div>' +
+                                '</div>'
+                            );
+                        });
+                        $dd.show();
                     });
+                }, 220);
+            });
 
-                    if (!changedFields.length) {
-                        bootstrap.Modal.getInstance(document.getElementById('editDriveModal')).hide();
-                        return;
+            $(document).on('click', '.cdm-stu-pick', function () {
+                selectedStudent = { reg_no: $(this).data('reg'), name: $(this).data('name') };
+                $('#studentSearchInput').val(selectedStudent.name + ' (' + selectedStudent.reg_no + ')');
+                $('#studentSearchResults').hide();
+                $('#btnLinkStudent').prop('disabled', false);
+            });
+
+            $('#btnLinkStudent').on('click', function () {
+                if (!selectedStudent || !selectedDriveId) return;
+                $.ajax({
+                    url: '/api/cdm/drive/' + selectedDriveId + '/students',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ reg_no: selectedStudent.reg_no, status: 'Applied', current_round: 0 }),
+                    success: function (res) {
+                        if (res.ok) {
+                            $('#studentSearchInput').val('');
+                            selectedStudent = null;
+                            $('#btnLinkStudent').prop('disabled', true);
+                            loadStudents();
+                            showToast('Student linked', 'success');
+                        } else showToast(res.error || 'Error', 'danger');
+                    },
+                    error: function () { showToast('Link failed', 'danger'); }
+                });
+            });
+
+            $(document).on('change', '.student-status-sel', function () {
+                var regNo = $(this).data('reg');
+                var newStatus = $(this).val();
+                $.ajax({
+                    url: '/api/cdm/drive/' + selectedDriveId + '/students/' + encodeURIComponent(regNo),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ status: newStatus }),
+                    success: function (res) {
+                        if (res.ok) {
+                            var student = currentStudents.find(function (s) { return s.reg_no === regNo; });
+                            if (student) student.status = newStatus;
+                            renderStats();
+                            showToast('Status updated', 'success');
+                        } else showToast(res.error || 'Error', 'danger');
                     }
+                });
+            });
 
-                    var chain = $.Deferred().resolve();
-                    changedFields.forEach(function (field) {
-                        chain = chain.then(function () {
-                            return updateDriveField(EDITING_DRIVE_ID, field, updates[field]).then(function (res) {
-                                if (!res.ok) {
-                                    return $.Deferred().reject(res.error || 'Update failed');
-                                }
-                            });
+            $(document).on('change', '.student-round-sel', function () {
+                var regNo = $(this).data('reg');
+                var currentRound = Number($(this).val() || 0);
+                $.ajax({
+                    url: '/api/cdm/drive/' + selectedDriveId + '/students/' + encodeURIComponent(regNo),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ current_round: currentRound }),
+                    success: function (res) {
+                        if (res.ok) {
+                            var student = currentStudents.find(function (s) { return s.reg_no === regNo; });
+                            if (student) student.current_round = currentRound;
+                            renderStats();
+                            showToast('Round qualification updated', 'success');
+                        } else showToast(res.error || 'Error', 'danger');
+                    }
+                });
+            });
+
+            $(document).on('click', '.unlink-student', function () {
+                var regNo = $(this).data('reg');
+                if (!confirm('Remove this student from the drive?')) return;
+                $.ajax({
+                    url: '/api/cdm/drive/' + selectedDriveId + '/students/' + encodeURIComponent(regNo),
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            loadStudents();
+                            showToast('Student removed', 'success');
+                        }
+                    }
+                });
+            });
+
+            $('#bulkStudentFile').on('change', function () {
+                $('#btnBulkImport').prop('disabled', !this.files.length);
+            });
+
+            $('#btnBulkImport').on('click', function () {
+                var fileInput = $('#bulkStudentFile')[0];
+                if (!fileInput.files.length || !selectedDriveId) return;
+                var fd = new FormData();
+                fd.append('file', fileInput.files[0]);
+                var $btn = $(this);
+                $btn.prop('disabled', true).text('Importing...');
+                $.ajax({
+                    url: '/api/cdm/drive/' + selectedDriveId + '/students/bulk',
+                    method: 'POST',
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        $btn.prop('disabled', false).text('Import');
+                        if (res.ok) {
+                            $('#bulkImportResult').html('<span class="text-success">Linked: ' + res.linked + '</span>');
+                            fileInput.value = '';
+                            loadStudents();
+                            showToast('Bulk import complete', 'success');
+                        } else {
+                            $('#bulkImportResult').html('<span class="text-danger">' + (res.error || 'Import failed') + '</span>');
+                            showToast(res.error || 'Import failed', 'danger');
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).text('Import');
+                        showToast('Import failed', 'danger');
+                    }
+                });
+            });
+
+            $('#btnAddRound').on('click', function () {
+                if (!selectedDriveId) return;
+                var roundName = $('#roundNameInput').val().trim();
+                if (!roundName) {
+                    $('#roundNameInput').focus();
+                    return;
+                }
+                $.ajax({
+                    url: '/api/cdm/drive/' + selectedDriveId + '/rounds',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ round_name: roundName, round_date: $('#roundDateInput').val() || null }),
+                    success: function (res) {
+                        if (res.ok) {
+                            $('#roundNameInput').val('');
+                            $('#roundDateInput').val('');
+                            loadRounds().then(function () { renderParticipants(); renderStats(); });
+                            showToast('Round added', 'success');
+                        } else showToast(res.error || 'Error', 'danger');
+                    }
+                });
+            });
+
+            $(document).on('click', '.delete-round', function () {
+                var roundId = $(this).data('id');
+                $.ajax({
+                    url: '/api/cdm/round/' + roundId,
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            loadRounds().then(function () { renderParticipants(); renderStats(); });
+                            showToast('Round deleted', 'success');
+                        }
+                    }
+                });
+            });
+
+            $(document).on('change', '.drive-course-cb, .edit-drive-course-cb', function () {
+                var $row = $(this).closest('.drive-course-row');
+                var $type = $row.find('select');
+                if ($(this).is(':checked')) $type.show(); else $type.hide().val('');
+            });
+
+            function openDriveEditModal() {
+                var drive = getSelectedDrive();
+                if (!drive) return;
+                var originalCourses = parseCourseLabels(normalize(drive.courses) === '—' ? '' : drive.courses);
+                EDITING_DRIVE_ID = drive.drive_id;
+                EDITING_DRIVE_ORIGINAL = {
+                    role: drive.role || '',
+                    ctc_text: drive.ctc_text || '',
+                    courses: JSON.stringify(originalCourses),
+                    jd_received_date: drive.jd_received_date || '',
+                    process_date: drive.process_date || '',
+                    location: drive.location || '',
+                    data_shared: drive.data_shared || 'No',
+                    jd_briefing_done: drive.jd_briefing_done ? 'Yes' : 'No',
+                    jd_briefing_date: drive.jd_briefing_date || '',
+                    jd_briefing_conducted_by: drive.jd_briefing_conducted_by || '',
+                    status: drive.status || 'Upcoming',
+                    notes: drive.notes || ''
+                };
+
+                $('#editDriveIdLabel').text('#' + EDITING_DRIVE_ID);
+                $('#editDriveRoleInput').val(EDITING_DRIVE_ORIGINAL.role);
+                $('#editDriveCtcInput').val(EDITING_DRIVE_ORIGINAL.ctc_text);
+                $('#editDriveJdDateInput').val(EDITING_DRIVE_ORIGINAL.jd_received_date);
+                $('#editDriveDateInput').val(EDITING_DRIVE_ORIGINAL.process_date);
+                $('#editDriveVenueInput').val(EDITING_DRIVE_ORIGINAL.location);
+                $('#editDriveDataSharedInput').val(EDITING_DRIVE_ORIGINAL.data_shared);
+                $('#editDriveJdBriefingDoneInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_done);
+                $('#editDriveJdBriefingDateInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_date);
+                $('#editDriveJdBriefingConductedByInput').val(EDITING_DRIVE_ORIGINAL.jd_briefing_conducted_by);
+                $('#editDriveStatusInput').val(EDITING_DRIVE_ORIGINAL.status);
+                $('#editDriveNotesInput').val(EDITING_DRIVE_ORIGINAL.notes);
+                $('#editDriveError').addClass('d-none').text('');
+                loadDriveCourseOptions(function () {
+                    renderDriveCourseRows('#editDriveCourseRows', 'edit-drive', originalCourses);
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('editDriveModal')).show();
+                });
+            }
+
+            $('#btnEditSelectedDrive').on('click', openDriveEditModal);
+
+            $('#btnSaveDriveEdit').on('click', function () {
+                if (!EDITING_DRIVE_ID || !EDITING_DRIVE_ORIGINAL) return;
+                var updates = {
+                    role: $('#editDriveRoleInput').val().trim(),
+                    ctc_text: $('#editDriveCtcInput').val().trim(),
+                    courses: collectDriveCourses('edit-drive'),
+                    jd_received_date: $('#editDriveJdDateInput').val(),
+                    process_date: $('#editDriveDateInput').val(),
+                    location: $('#editDriveVenueInput').val().trim(),
+                    data_shared: $('#editDriveDataSharedInput').val(),
+                    jd_briefing_done: $('#editDriveJdBriefingDoneInput').val(),
+                    jd_briefing_date: $('#editDriveJdBriefingDateInput').val(),
+                    jd_briefing_conducted_by: $('#editDriveJdBriefingConductedByInput').val().trim(),
+                    status: $('#editDriveStatusInput').val(),
+                    notes: $('#editDriveNotesInput').val().trim()
+                };
+                if (!updates.role) {
+                    $('#editDriveError').removeClass('d-none').text('Position / Role is required.');
+                    return;
+                }
+                if (!updates.courses.length) {
+                    $('#editDriveError').removeClass('d-none').text('Select at least one course for this drive.');
+                    return;
+                }
+                if (updates.courses.some(function (c) { return !c.drive_type; })) {
+                    $('#editDriveError').removeClass('d-none').text('Select drive type for all selected courses.');
+                    return;
+                }
+
+                var changedFields = Object.keys(updates).filter(function (key) {
+                    if (key === 'courses') return JSON.stringify(updates.courses) !== EDITING_DRIVE_ORIGINAL.courses;
+                    return (updates[key] || '') !== (EDITING_DRIVE_ORIGINAL[key] || '');
+                });
+                if (!changedFields.length) {
+                    bootstrap.Modal.getInstance(document.getElementById('editDriveModal')).hide();
+                    return;
+                }
+
+                var chain = $.Deferred().resolve();
+                changedFields.forEach(function (field) {
+                    chain = chain.then(function () {
+                        return updateDriveField(EDITING_DRIVE_ID, field, updates[field]).then(function (res) {
+                            if (!res.ok) return $.Deferred().reject(res.error || 'Update failed');
                         });
                     });
+                });
 
-                    chain
-                        .done(function () {
-                            showToast('Drive updated', 'success');
+                chain.done(function () {
+                    showToast('Drive updated', 'success');
+                    location.reload();
+                }).fail(function (err) {
+                    $('#editDriveError').removeClass('d-none').text(err || 'Failed to save changes.');
+                });
+            });
+
+            $('#btnAddDrive').on('click', function () {
+                $('#driveRoleInput, #driveCtcInput, #driveDateInput, #driveVenueInput, #driveJdDateInput, #driveJdBriefingDateInput, #driveJdBriefingConductedByInput, #driveNotesInput').val('');
+                $('#driveDataSharedInput').val('No');
+                $('#driveJdBriefingDoneInput').val('No');
+                $('#driveStatusInput').val('Upcoming');
+                $('#addDriveError').addClass('d-none');
+                loadDriveCourseOptions(function () {
+                    renderDriveCourseRows('#driveCourseRows', 'drive', []);
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('addDriveModal')).show();
+                    setTimeout(function () { $('#driveRoleInput').focus(); }, 250);
+                });
+            });
+
+            $('#btnConfirmAddDrive').on('click', function () {
+                var role = $('#driveRoleInput').val().trim();
+                var courses = collectDriveCourses('drive');
+                if (!role) { $('#driveRoleInput').addClass('is-invalid').focus(); return; }
+                if (!courses.length) { $('#addDriveError').text('Select at least one course for this drive.').removeClass('d-none'); return; }
+                if (courses.some(function (c) { return !c.drive_type; })) { $('#addDriveError').text('Select drive type for all selected courses.').removeClass('d-none'); return; }
+                $.ajax({
+                    url: '/api/cdm/drive',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        company_id: COMPANY_ID,
+                        role: role,
+                        ctc_text: $('#driveCtcInput').val().trim() || null,
+                        courses: courses,
+                        jd_received_date: $('#driveJdDateInput').val() || null,
+                        process_date: $('#driveDateInput').val() || null,
+                        location: $('#driveVenueInput').val().trim() || null,
+                        data_shared: $('#driveDataSharedInput').val() || 'No',
+                        jd_briefing_done: $('#driveJdBriefingDoneInput').val() || 'No',
+                        jd_briefing_date: $('#driveJdBriefingDateInput').val() || null,
+                        jd_briefing_conducted_by: $('#driveJdBriefingConductedByInput').val().trim() || null,
+                        status: $('#driveStatusInput').val() || 'Upcoming',
+                        notes: $('#driveNotesInput').val().trim() || null
+                    }),
+                    success: function (res) {
+                        if (res.ok) {
+                            bootstrap.Modal.getInstance(document.getElementById('addDriveModal')).hide();
+                            showToast('Drive #' + res.drive_id + ' created', 'success');
                             location.reload();
-                        })
-                        .fail(function (err) {
-                            $('#editDriveError').removeClass('d-none').text(err || 'Failed to save changes.');
-                        });
-                });
-
-                /* ══════════════ HR INLINE EDITING ══════════════ */
-                $(document).on('click', '.editable-hr', function () {
-                    var $td = $(this);
-                    if ($td.find('input').length) return;
-                    var hrId = $td.closest('[data-hr-id]').data('hr-id');
-                    var field = $td.data('field');
-                    var currentVal = $td.text().trim();
-                    if (currentVal === '—') currentVal = '';
-                    var originalHtml = $td.html();
-
-                    var $inp = $('<input type="text" class="form-control form-control-sm edit-inline-input" value="' +
-                        $('<i>').text(currentVal).html() + '">');
-                    $td.empty().append($inp);
-                    $inp.focus().select();
-
-                    $inp.on('keydown', function (ev) {
-                        if (ev.key === 'Enter') saveHrField(hrId, field, $inp.val(), $td, originalHtml);
-                        else if (ev.key === 'Escape') $td.html(originalHtml);
-                    });
-                    $inp.on('blur', function () {
-                        if ($inp.val() !== currentVal) saveHrField(hrId, field, $inp.val(), $td, originalHtml);
-                        else $td.html(originalHtml);
-                    });
-                });
-
-                function saveHrField(hrId, field, value, $td, originalHtml) {
-                    $.ajax({
-                        url: '/api/cdm/hr/' + hrId,
-                        method: 'PUT',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ field: field, value: value }),
-                        success: function (res) {
-                            if (res.ok) {
-                                var v = res.value || '';
-                                if (field === 'email' && v) {
-                                    $td.html('<a href="mailto:' + v + '" class="text-info">' + v + '</a>');
-                                } else {
-                                    $td.text(v || '—');
-                                }
-                                showToast('HR updated', 'success');
-                            } else {
-                                $td.html(originalHtml);
-                                showToast(res.error || 'Error', 'danger');
-                            }
-                        },
-                        error: function () { $td.html(originalHtml); showToast('Save failed', 'danger'); }
-                    });
-                }
-
-                /* ══════════════ DELETE HR ══════════════ */
-                $(document).on('click', '.delete-hr', function () {
-                    var $btn = $(this);
-                    var id = $btn.data('id');
-                    if (!confirm('Delete this HR contact?')) return;
-                    $.ajax({
-                        url: '/api/cdm/hr/' + id,
-                        method: 'DELETE',
-                        success: function (res) {
-                            if (res.ok) {
-                                $btn.closest('[data-hr-id]').fadeOut(300, function () {
-                                    $(this).remove();
-                                    if (!$('[data-hr-id]').length) {
-                                        if (!$('#noHrCards').length) {
-                                            $('#hrCardsWrap').after('<div id="noHrCards" class="text-muted small">No HR contacts recorded.</div>');
-                                        }
-                                    }
-                                });
-                                showToast('HR contact deleted', 'success');
-                            } else {
-                                showToast(res.error || 'Error', 'danger');
-                            }
-                        },
-                        error: function () { showToast('Delete failed', 'danger'); }
-                    });
-                });
-
-                /* ══════════════ ADD HR ══════════════ */
-                $('#btnAddHR').on('click', function () {
-                    $('#hrNameInput, #hrDesigInput, #hrEmailInput, #hrPhoneInput').val('');
-                    new bootstrap.Modal('#addHrModal').show();
-                    setTimeout(function () { $('#hrNameInput').focus(); }, 300);
-                });
-
-                $('#btnConfirmAddHR').on('click', function () {
-                    var name = $('#hrNameInput').val().trim();
-                    if (!name) { $('#hrNameInput').addClass('is-invalid').focus(); return; }
-                    $.ajax({
-                        url: '/api/cdm/hr',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            company_id: COMPANY_ID,
-                            name: name,
-                            designation: $('#hrDesigInput').val().trim() || null,
-                            email: $('#hrEmailInput').val().trim() || null,
-                            phone: $('#hrPhoneInput').val().trim() || null
-                        }),
-                        success: function (res) {
-                            if (res.ok) {
-                                bootstrap.Modal.getInstance('#addHrModal').hide();
-                                location.reload();
-                            } else {
-                                showToast(res.error || 'Error', 'danger');
-                            }
-                        },
-                        error: function () { showToast('Add failed', 'danger'); }
-                    });
-                });
-
-                /* ══════════════ STUDENT LINKING MODAL ══════════════ */
-                var currentDriveId = null;
-                var selectedStudent = null;
-
-                $(document).on('click', '.btn-students', function () {
-                    currentDriveId = $(this).data('id');
-                    $('#smDriveId').text('#' + currentDriveId);
-                    loadDriveStudents(currentDriveId);
-                    new bootstrap.Modal('#studentsModal').show();
-                });
-
-                function loadDriveStudents(driveId) {
-                    $.getJSON('/api/cdm/drive/' + driveId + '/students', function (data) {
-                        var $tbody = $('#linkedStudentsTable tbody').empty();
-                        var students = data.students || [];
-                        if (!students.length) {
-                            $tbody.append('<tr id="noStudentsRow"><td colspan="6" class="text-muted text-center">No students linked</td></tr>');
-                            return;
+                        } else {
+                            $('#addDriveError').text(res.error || 'Error').removeClass('d-none');
                         }
-                        students.forEach(function (s) {
-                            var statusOpts = ['Applied', 'Shortlisted', 'In Process', 'Selected', 'Rejected', 'On Hold'].map(function (o) {
-                                return '<option' + (o === s.status ? ' selected' : '') + '>' + o + '</option>';
-                            }).join('');
-                            var profileUrl = '/student/' + encodeURIComponent(s.reg_no);
-                            $tbody.append(
-                                '<tr>' +
-                                '<td>' + s.reg_no + '</td>' +
-                                '<td><a href="' + profileUrl + '" class="text-info fw-semibold">' + (s.student_name || '') + '</a></td>' +
-                                '<td>' + (s.course || '') + '</td>' +
-                                '<td>' + (s.department || '') + '</td>' +
-                                '<td><select class="form-select form-select-sm student-status-sel" data-reg="' + s.reg_no + '" ' +
-                                'style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);width:120px;">' + statusOpts + '</select></td>' +
-                                '<td><button class="btn btn-xs btn-outline-danger unlink-student" data-reg="' + s.reg_no + '" title="Remove">&times;</button></td>' +
-                                '</tr>'
-                            );
-                        });
-                    });
-                }
-
-                // Student search for linking
-                var stuSearchTimer = null;
-                $('#studentSearchInput').on('input', function () {
-                    var q = $(this).val().trim();
-                    clearTimeout(stuSearchTimer);
-                    selectedStudent = null;
-                    $('#btnLinkStudent').prop('disabled', true);
-                    if (q.length < 2) { $('#studentSearchResults').hide().empty(); return; }
-                    stuSearchTimer = setTimeout(function () {
-                        $.getJSON('/api/cdm/search-students?q=' + encodeURIComponent(q), function (res) {
-                            var $dd = $('#studentSearchResults').empty();
-                            if (!res.results || !res.results.length) {
-                                $dd.html('<div class="gs-empty">No students found</div>').show();
-                                return;
-                            }
-                            res.results.forEach(function (s) {
-                                var badge = s.status === 'Placed' ? '<span class="badge bg-success ms-1" style="font-size:0.6rem;">Placed</span>' : '';
-                                $dd.append(
-                                    '<div class="gs-item cdm-stu-pick" data-reg="' + s.reg_no + '" data-name="' + (s.student_name || '') + '">' +
-                                    '<div class="gs-name">' + (s.student_name || '') + badge + '</div>' +
-                                    '<div class="gs-meta">' + s.reg_no + ' &middot; ' + (s.course || '') + '</div>' +
-                                    '</div>'
-                                );
-                            });
-                            $dd.show();
-                        });
-                    }, 250);
-                });
-
-                $(document).on('click', '.cdm-stu-pick', function () {
-                    selectedStudent = { reg_no: $(this).data('reg'), name: $(this).data('name') };
-                    $('#studentSearchInput').val(selectedStudent.name + ' (' + selectedStudent.reg_no + ')');
-                    $('#studentSearchResults').hide();
-                    $('#btnLinkStudent').prop('disabled', false);
-                });
-
-                $('#btnLinkStudent').on('click', function () {
-                    if (!selectedStudent || !currentDriveId) return;
-                    $.ajax({
-                        url: '/api/cdm/drive/' + currentDriveId + '/students',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ reg_no: selectedStudent.reg_no, status: 'Applied' }),
-                        success: function (res) {
-                            if (res.ok) {
-                                loadDriveStudents(currentDriveId);
-                                $('#studentSearchInput').val('');
-                                selectedStudent = null;
-                                $('#btnLinkStudent').prop('disabled', true);
-                                showToast('Student linked', 'success');
-                            } else {
-                                showToast(res.error || 'Error', 'danger');
-                            }
-                        },
-                        error: function () { showToast('Link failed', 'danger'); }
-                    });
-                });
-
-                // Update student status in drive
-                $(document).on('change', '.student-status-sel', function () {
-                    var regNo = $(this).data('reg');
-                    var newStatus = $(this).val();
-                    $.ajax({
-                        url: '/api/cdm/drive/' + currentDriveId + '/students/' + encodeURIComponent(regNo),
-                        method: 'PUT',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ status: newStatus }),
-                        success: function (res) {
-                            if (res.ok) showToast('Status updated', 'success');
-                            else showToast(res.error || 'Error', 'danger');
-                        }
-                    });
-                });
-
-                // Unlink student
-                $(document).on('click', '.unlink-student', function () {
-                    var regNo = $(this).data('reg');
-                    if (!confirm('Remove this student from the drive?')) return;
-                    $.ajax({
-                        url: '/api/cdm/drive/' + currentDriveId + '/students/' + encodeURIComponent(regNo),
-                        method: 'DELETE',
-                        success: function (res) {
-                            if (res.ok) {
-                                loadDriveStudents(currentDriveId);
-                                showToast('Student removed', 'success');
-                            }
-                        }
-                    });
-                });
-
-                /* ══════════════ BULK STUDENT IMPORT ══════════════ */
-                $('#bulkStudentFile').on('change', function () {
-                    $('#btnBulkImport').prop('disabled', !this.files.length);
-                    $('#bulkImportResult').addClass('d-none');
-                });
-
-                $('#btnBulkImport').on('click', function () {
-                    var fileInput = $('#bulkStudentFile')[0];
-                    if (!fileInput.files.length || !currentDriveId) return;
-                    var fd = new FormData();
-                    fd.append('file', fileInput.files[0]);
-                    var $btn = $(this);
-                    $btn.prop('disabled', true).text('Importing...');
-                    $.ajax({
-                        url: '/api/cdm/drive/' + currentDriveId + '/students/bulk',
-                        method: 'POST',
-                        data: fd,
-                        processData: false,
-                        contentType: false,
-                        success: function (res) {
-                            $btn.prop('disabled', false).text('Import');
-                            var $result = $('#bulkImportResult').removeClass('d-none');
-                            if (res.ok) {
-                                var html = '<span class="text-success">' + res.linked + ' student(s) linked.</span>';
-                                if (res.already_linked && res.already_linked.length) {
-                                    html += '<br><span class="text-warning">' + res.already_linked.length + ' already linked.</span>';
-                                }
-                                if (res.not_found && res.not_found.length) {
-                                    html += '<br><span class="text-danger">' + res.not_found.length + ' not found: ' +
-                                        res.not_found.slice(0, 10).join(', ') +
-                                        (res.not_found.length > 10 ? '...' : '') + '</span>';
-                                }
-                                $result.html(html);
-                                loadDriveStudents(currentDriveId);
-                                fileInput.value = '';
-                                showToast(res.linked + ' student(s) imported', 'success');
-                            } else {
-                                $result.html('<span class="text-danger">' + (res.error || 'Import failed') + '</span>');
-                                showToast(res.error || 'Import failed', 'danger');
-                            }
-                        },
-                        error: function (xhr) {
-                            $btn.prop('disabled', false).text('Import');
-                            var msg = 'Import failed';
-                            try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
-                            $('#bulkImportResult').removeClass('d-none').html('<span class="text-danger">' + msg + '</span>');
-                            showToast(msg, 'danger');
-                        }
-                    });
-                });
-
-                // Reset bulk import state when modal opens
-                $('#studentsModal').on('show.bs.modal', function () {
-                    $('#bulkStudentFile').val('');
-                    $('#btnBulkImport').prop('disabled', true).text('Import');
-                    $('#bulkImportResult').addClass('d-none');
-                });
-
-                /* ══════════════ ROUNDS MODAL ══════════════ */
-                var currentRoundsDriveId = null;
-
-                $(document).on('click', '.btn-rounds', function () {
-                    currentRoundsDriveId = $(this).data('id');
-                    $('#rmDriveId').text('#' + currentRoundsDriveId);
-                    loadDriveRounds(currentRoundsDriveId);
-                    new bootstrap.Modal('#roundsModal').show();
-                });
-
-                function loadDriveRounds(driveId) {
-                    $.getJSON('/api/cdm/drive/' + driveId + '/rounds', function (data) {
-                        var $tbody = $('#roundsTable tbody').empty();
-                        var rounds = data.rounds || [];
-                        if (!rounds.length) {
-                            $tbody.append('<tr id="noRoundsRow"><td colspan="4" class="text-muted text-center">No rounds added</td></tr>');
-                            return;
-                        }
-                        rounds.forEach(function (r) {
-                            $tbody.append(
-                                '<tr>' +
-                                '<td>' + r.round_order + '</td>' +
-                                '<td>' + r.round_name + '</td>' +
-                                '<td>' + (r.round_date || '—') + '</td>' +
-                                '<td><button class="btn btn-xs btn-outline-danger delete-round" data-id="' + r.round_id + '">&times;</button></td>' +
-                                '</tr>'
-                            );
-                        });
-                    });
-                }
-
-                $('#btnAddRound').on('click', function () {
-                    var name = $('#roundNameInput').val().trim();
-                    if (!name) { $('#roundNameInput').focus(); return; }
-                    $.ajax({
-                        url: '/api/cdm/drive/' + currentRoundsDriveId + '/rounds',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ round_name: name, round_date: $('#roundDateInput').val() || null }),
-                        success: function (res) {
-                            if (res.ok) {
-                                loadDriveRounds(currentRoundsDriveId);
-                                $('#roundNameInput').val('');
-                                $('#roundDateInput').val('');
-                                showToast('Round added', 'success');
-                            } else {
-                                showToast(res.error || 'Error', 'danger');
-                            }
-                        }
-                    });
-                });
-
-                $(document).on('click', '.delete-round', function () {
-                    var id = $(this).data('id');
-                    $.ajax({
-                        url: '/api/cdm/round/' + id,
-                        method: 'DELETE',
-                        success: function (res) {
-                            if (res.ok) {
-                                loadDriveRounds(currentRoundsDriveId);
-                                showToast('Round deleted', 'success');
-                            }
-                        }
-                    });
-                });
-
-                /* ══════════════ EDIT COMPANY NAME ══════════════ */
-                $(document).on('click', '.editable-company-name', function () {
-                    var $h = $(this);
-                    if ($h.find('input').length) return;
-                    var currentName = $h.text().trim();
-                    var $inp = $('<input type="text" class="form-control form-control-sm d-inline-block" style="width:300px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);font-size:1.5rem;font-weight:700;" value="' +
-                        $('<i>').text(currentName).html() + '">');
-                    $h.empty().append($inp);
-                    $inp.focus().select();
-                    $inp.on('keydown', function (ev) {
-                        if (ev.key === 'Enter') saveCompanyName($inp.val().trim(), $h, currentName);
-                        else if (ev.key === 'Escape') $h.text(currentName);
-                    });
-                    $inp.on('blur', function () {
-                        var v = $inp.val().trim();
-                        if (v && v !== currentName) saveCompanyName(v, $h, currentName);
-                        else $h.text(currentName);
-                    });
-                });
-
-                function saveCompanyName(name, $h, fallback) {
-                    $.ajax({
-                        url: '/api/cdm/company/' + encodeURIComponent(COMPANY_ID),
-                        method: 'PUT',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ company_name: name }),
-                        success: function (res) {
-                            if (res.ok) {
-                                $h.text(res.company_name);
-                                document.title = res.company_name + ' — CDM';
-                                showToast('Company name updated', 'success');
-                            } else {
-                                $h.text(fallback);
-                                showToast(res.error || 'Error', 'danger');
-                            }
-                        },
-                        error: function () { $h.text(fallback); showToast('Save failed', 'danger'); }
-                    });
-                }
-
-                /* ══════════════ DELETE COMPANY ══════════════ */
-                $('#btnDeleteCompany').on('click', function () {
-                    if (!confirm('Delete this company and ALL its drives, HR contacts, rounds, and linked students? This cannot be undone.')) return;
-                    $.ajax({
-                        url: '/api/cdm/company/' + encodeURIComponent(COMPANY_ID),
-                        method: 'DELETE',
-                        success: function (res) {
-                            if (res.ok) {
-                                window.location.href = '/cdm';
-                            } else {
-                                showToast(res.error || 'Delete failed', 'danger');
-                            }
-                        },
-                        error: function () { showToast('Delete failed', 'danger'); }
-                    });
-                });
-
-                $('#toggleCompanySheetView').on('click', function () {
-                    var $sheet = $('#companySheetViewSection');
-                    if (!$sheet.length) return;
-                    $('#companyCardViewSection').hide();
-                    $sheet.show();
-                    $('#driveViewCard').removeClass('active');
-                    $('#toggleCompanySheetView').addClass('active');
-                });
-
-                $('#driveViewCard').on('click', function () {
-                    var $sheet = $('#companySheetViewSection');
-                    $('#companyCardViewSection').show();
-                    $sheet.hide();
-                    $('#driveViewCard').addClass('active');
-                    $('#toggleCompanySheetView').removeClass('active');
-                });
-
-                /* ══════════════ ADD DRIVE ══════════════ */
-                $('#btnAddDrive').on('click', function () {
-                    $('#driveRoleInput, #driveCtcInput, #driveDateInput, #driveVenueInput, #driveJdDateInput, #driveJdBriefingDateInput, #driveJdBriefingConductedByInput, #driveNotesInput').val('');
-                    $('#driveDataSharedInput').val('No');
-                    $('#driveJdBriefingDoneInput').val('No');
-                    $('#driveStatusInput').val('Upcoming');
-                    $('#addDriveError').addClass('d-none');
-                    loadDriveCourseOptions(function () {
-                        renderDriveCourseRows('#driveCourseRows', 'drive', []);
-                        new bootstrap.Modal('#addDriveModal').show();
-                        setTimeout(function () { $('#driveRoleInput').focus(); }, 300);
-                    });
-                });
-
-                $('#btnConfirmAddDrive').on('click', function () {
-                    var role = $('#driveRoleInput').val().trim();
-                    var courses = collectDriveCourses('drive');
-                    if (!role) { $('#driveRoleInput').addClass('is-invalid').focus(); return; }
-                    if (!courses.length) { $('#addDriveError').text('Select at least one course for this drive.').removeClass('d-none'); return; }
-                    var missingCourseType = courses.some(function (c) { return !c.drive_type; });
-                    if (missingCourseType) { $('#addDriveError').text('Select drive type for all selected courses.').removeClass('d-none'); return; }
-                    $.ajax({
-                        url: '/api/cdm/drive',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            company_id: COMPANY_ID,
-                            role: role,
-                            ctc_text: $('#driveCtcInput').val().trim() || null,
-                            courses: courses,
-                            jd_received_date: $('#driveJdDateInput').val() || null,
-                            process_date: $('#driveDateInput').val() || null,
-                            location: $('#driveVenueInput').val().trim() || null,
-                            data_shared: $('#driveDataSharedInput').val() || 'No',
-                            jd_briefing_done: $('#driveJdBriefingDoneInput').val() || 'No',
-                            jd_briefing_date: $('#driveJdBriefingDateInput').val() || null,
-                            jd_briefing_conducted_by: $('#driveJdBriefingConductedByInput').val().trim() || null,
-                            status: $('#driveStatusInput').val() || 'Upcoming',
-                            notes: $('#driveNotesInput').val().trim() || null
-                        }),
-                        success: function (res) {
-                            if (res.ok) {
-                                bootstrap.Modal.getInstance('#addDriveModal').hide();
-                                showToast('Drive #' + res.drive_id + ' created', 'success');
-                                location.reload();
-                            } else {
-                                $('#addDriveError').text(res.error || 'Error').removeClass('d-none');
-                            }
-                        },
-                        error: function (xhr) {
-                            var msg = 'Create failed';
-                            try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
-                            $('#addDriveError').text(msg).removeClass('d-none');
-                        }
-                    });
-                });
-
-                $('#driveCourseSelectAll').on('click', function () {
-                    $('.drive-course-cb').prop('checked', true).trigger('change');
-                });
-
-                $('#driveCourseClearAll').on('click', function () {
-                    $('.drive-course-cb').prop('checked', false).trigger('change');
-                });
-
-                $('#driveApplyBulkType').on('click', function () {
-                    var bulkType = $('#driveBulkType').val();
-                    if (!bulkType) {
-                        $('#addDriveError').text('Select a bulk drive type first.').removeClass('d-none');
-                        return;
+                    },
+                    error: function () {
+                        $('#addDriveError').text('Create failed').removeClass('d-none');
                     }
-                    var count = 0;
-                    $('.drive-course-cb:checked').each(function () {
-                        $(this).closest('.drive-course-row').find('.drive-course-type').val(bulkType);
-                        count += 1;
-                    });
-                    if (!count) {
-                        $('#addDriveError').text('Select at least one course to apply bulk type.').removeClass('d-none');
-                        return;
-                    }
-                    $('#addDriveError').addClass('d-none').text('');
                 });
+            });
 
+            $('#driveCourseSelectAll').on('click', function () { $('.drive-course-cb').prop('checked', true).trigger('change'); });
+            $('#driveCourseClearAll').on('click', function () { $('.drive-course-cb').prop('checked', false).trigger('change'); });
+            $('#driveApplyBulkType').on('click', function () {
+                var bulkType = $('#driveBulkType').val();
+                if (!bulkType) {
+                    $('#addDriveError').text('Select a bulk drive type first.').removeClass('d-none');
+                    return;
+                }
+                var count = 0;
+                $('.drive-course-cb:checked').each(function () {
+                    $(this).closest('.drive-course-row').find('.drive-course-type').val(bulkType);
+                    count += 1;
+                });
+                if (!count) {
+                    $('#addDriveError').text('Select at least one course to apply bulk type.').removeClass('d-none');
+                    return;
+                }
+                $('#addDriveError').addClass('d-none').text('');
+            });
+
+            $(document).on('click', '.editable-company-name', function () {
+                var $h = $(this);
+                if ($h.find('input').length) return;
+                var currentName = $h.text().trim();
+                var $inp = $('<input type="text" class="form-control form-control-sm d-inline-block" style="width:300px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);font-size:1.5rem;font-weight:700;" value="' + $('<i>').text(currentName).html() + '">');
+                $h.empty().append($inp);
+                $inp.focus().select();
+                $inp.on('keydown', function (ev) {
+                    if (ev.key === 'Enter') saveCompanyName($inp.val().trim(), $h, currentName);
+                    else if (ev.key === 'Escape') $h.text(currentName);
+                });
+                $inp.on('blur', function () {
+                    var v = $inp.val().trim();
+                    if (v && v !== currentName) saveCompanyName(v, $h, currentName);
+                    else $h.text(currentName);
+                });
+            });
+
+            function saveCompanyName(name, $h, fallback) {
+                $.ajax({
+                    url: '/api/cdm/company/' + encodeURIComponent(COMPANY_ID),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ company_name: name }),
+                    success: function (res) {
+                        if (res.ok) {
+                            $h.text(res.company_name);
+                            document.title = res.company_name + ' — CDM';
+                            showToast('Company name updated', 'success');
+                        } else {
+                            $h.text(fallback);
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { $h.text(fallback); showToast('Save failed', 'danger'); }
+                });
+            }
+
+            $('#btnDeleteCompany').on('click', function () {
+                if (!confirm('Delete this company and ALL its drives, HR contacts, rounds, and linked students? This cannot be undone.')) return;
+                $.ajax({
+                    url: '/api/cdm/company/' + encodeURIComponent(COMPANY_ID),
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) window.location.href = '/cdm';
+                        else showToast(res.error || 'Delete failed', 'danger');
+                    },
+                    error: function () { showToast('Delete failed', 'danger'); }
+                });
+            });
+
+            function openAddHrModal() {
+                $('#hrNameInput, #hrDesigInput, #hrEmailInput, #hrPhoneInput').val('');
+                $('#hrNameInput').removeClass('is-invalid');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('addHrModal')).show();
+                setTimeout(function () { $('#hrNameInput').focus(); }, 200);
+            }
+
+            $('#btnAddHR, #btnAddHRInline').on('click', openAddHrModal);
+
+            $('#btnConfirmAddHR').on('click', function () {
+                var name = $('#hrNameInput').val().trim();
+                if (!name) {
+                    $('#hrNameInput').addClass('is-invalid').focus();
+                    return;
+                }
+                $.ajax({
+                    url: '/api/cdm/hr',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        company_id: COMPANY_ID,
+                        name: name,
+                        designation: $('#hrDesigInput').val().trim() || null,
+                        email: $('#hrEmailInput').val().trim() || null,
+                        phone: $('#hrPhoneInput').val().trim() || null
+                    }),
+                    success: function (res) {
+                        if (res.ok) {
+                            bootstrap.Modal.getInstance(document.getElementById('addHrModal')).hide();
+                            location.reload();
+                        } else showToast(res.error || 'Error', 'danger');
+                    },
+                    error: function () { showToast('Add failed', 'danger'); }
+                });
+            });
+
+            $(document).on('click', '.editable-hr', function () {
+                var $td = $(this);
+                if ($td.find('input').length) return;
+                var hrId = $td.closest('[data-hr-id]').data('hr-id');
+                var field = $td.data('field');
+                var currentVal = $td.text().trim();
+                if (currentVal === '—') currentVal = '';
+                var originalHtml = $td.html();
+                var $inp = $('<input type="text" class="form-control form-control-sm" value="' + $('<i>').text(currentVal).html() + '">');
+                $td.empty().append($inp);
+                $inp.focus().select();
+                $inp.on('keydown', function (ev) {
+                    if (ev.key === 'Enter') saveHrField(hrId, field, $inp.val(), $td, originalHtml);
+                    else if (ev.key === 'Escape') $td.html(originalHtml);
+                });
+                $inp.on('blur', function () {
+                    if ($inp.val() !== currentVal) saveHrField(hrId, field, $inp.val(), $td, originalHtml);
+                    else $td.html(originalHtml);
+                });
+            });
+
+            function saveHrField(hrId, field, value, $td, originalHtml) {
+                $.ajax({
+                    url: '/api/cdm/hr/' + hrId,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ field: field, value: value }),
+                    success: function (res) {
+                        if (res.ok) {
+                            var v = res.value || '';
+                            if (field === 'email' && v) $td.html('<a href="mailto:' + v + '" class="text-info">' + v + '</a>');
+                            else $td.text(v || '—');
+                            showToast('HR updated', 'success');
+                        } else {
+                            $td.html(originalHtml);
+                            showToast(res.error || 'Error', 'danger');
+                        }
+                    },
+                    error: function () { $td.html(originalHtml); showToast('Save failed', 'danger'); }
+                });
+            }
+
+            $(document).on('click', '.delete-hr', function () {
+                var $btn = $(this);
+                var id = $btn.data('id');
+                if (!confirm('Delete this HR contact?')) return;
+                $.ajax({
+                    url: '/api/cdm/hr/' + id,
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.ok) {
+                            $btn.closest('[data-hr-id]').remove();
+                            showToast('HR contact deleted', 'success');
+                        } else showToast(res.error || 'Error', 'danger');
+                    },
+                    error: function () { showToast('Delete failed', 'danger'); }
+                });
+            });
+
+            $('#activeDriveSelect').on('change', function () {
+                selectedDriveId = Number($(this).val());
+                refreshSelectedDriveData();
+            });
+
+            renderDriveSelect();
+            if (selectedDriveId) refreshSelectedDriveData();
             });
         </script>
 </body>
