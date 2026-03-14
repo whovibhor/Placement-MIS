@@ -112,11 +112,6 @@
                 Company</button>
         </div>
 
-        <div class="mb-3">
-            <button class="btn btn-xs btn-outline-light" id="btnEditCompanyInfo" title="Edit courses & departments">Edit
-                Company Info</button>
-        </div>
-
         <div class="row g-4 company-content-zone">
             <div class="col-12 col-xl-9">
                 <div class="drives-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -155,9 +150,10 @@
 
                                 <div class="small drive-meta-grid" style="color:var(--text-secondary);">
                                     <div><strong>Process Date:</strong> {{ d.process_date or '—' }}</div>
-                                    <div><strong>Mode:</strong> {{ d.process_mode or '—' }}</div>
+                                    <div><strong>Mode:</strong> {{ d.process_mode or company.process_mode or '—' }}
+                                    </div>
                                     <div><strong>CTC:</strong> {{ d.ctc_text or '—' }}</div>
-                                    <div><strong>Location:</strong> {{ d.location or '—' }}</div>
+                                    <div><strong>Venue:</strong> {{ d.location or company.location or '—' }}</div>
                                     <div><strong>Courses:</strong> {{ d.courses or '—' }}</div>
                                     <div><strong>Participants:</strong> {{ d.student_count }}</div>
                                     <div><strong>Rounds:</strong> {{ d.round_count }}</div>
@@ -215,7 +211,7 @@
                                 <th>JD Received</th>
                                 <th>Process Date</th>
                                 <th>Mode</th>
-                                <th>Location</th>
+                                <th>Venue</th>
                                 <th>Received By</th>
                                 <th>Data Shared</th>
                                 <th>Notes</th>
@@ -240,9 +236,12 @@
                                 <td class="editable-drive" data-field="jd_received_date">{{ d.jd_received_date or '—' }}
                                 </td>
                                 <td class="editable-drive" data-field="process_date">{{ d.process_date or '—' }}</td>
-                                <td class="editable-drive" data-field="process_mode">{{ d.process_mode or '—' }}</td>
-                                <td class="editable-drive" data-field="location">{{ d.location or '—' }}</td>
-                                <td class="editable-drive" data-field="received_by">{{ d.received_by or '—' }}</td>
+                                <td class="editable-drive" data-field="process_mode">{{ d.process_mode or
+                                    company.process_mode or '—' }}</td>
+                                <td class="editable-drive" data-field="location">{{ d.location or company.location or
+                                    '—' }}</td>
+                                <td class="editable-drive" data-field="received_by">{{ d.received_by or
+                                    company.received_by or '—' }}</td>
                                 <td class="editable-drive" data-field="data_shared">{{ d.data_shared }}</td>
                                 <td class="editable-drive" data-field="notes">{{ d.notes or '—' }}</td>
                                 <td><button class="btn btn-xs btn-outline-info btn-students" data-id="{{ d.drive_id }}"
@@ -444,7 +443,7 @@
 
         <!-- ── Add Drive Modal ──────────────────────────── -->
         <div class="modal fade" id="addDriveModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content"
                     style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
                     <div class="modal-header border-0 pb-0">
@@ -452,7 +451,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="row g-2">
+                        <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small text-muted">Position
                                     / Role *</label>
@@ -466,6 +465,23 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label small text-muted">Courses &amp; Drive Type</label>
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                    <button type="button" class="btn btn-xs btn-outline-light"
+                                        id="driveCourseSelectAll">Select All</button>
+                                    <button type="button" class="btn btn-xs btn-outline-light"
+                                        id="driveCourseClearAll">Clear</button>
+                                    <span class="text-muted small mx-1">|</span>
+                                    <label class="small me-1" style="color:var(--text-secondary);">Bulk type:</label>
+                                    <select id="driveBulkType" class="form-select form-select-sm"
+                                        style="width:auto;min-width:140px;font-size:0.75rem;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);padding:2px 6px;">
+                                        <option value="">—</option>
+                                        <option value="Mandatory">Mandatory</option>
+                                        <option value="Interest Based">Interest Based</option>
+                                        <option value="Core">Core</option>
+                                    </select>
+                                    <button type="button" class="btn btn-xs btn-outline-warning"
+                                        id="driveApplyBulkType">Apply to checked</button>
+                                </div>
                                 <div id="driveCourseRows" class="p-2 rounded"
                                     style="max-height:180px;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-color);">
                                     <span class="text-muted small">Loading courses...</span>
@@ -475,20 +491,6 @@
                                 <label class="form-label small text-muted">Process
                                     Date</label>
                                 <input type="date" id="driveDateInput" class="form-control form-control-sm"
-                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">Mode</label>
-                                <select id="driveModeInput" class="form-select form-select-sm"
-                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                                    <option value="">—</option>
-                                    <option>On-Campus</option>
-                                    <option>Virtual</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">Location</label>
-                                <input type="text" id="driveLocationInput" class="form-control form-control-sm"
                                     style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                             </div>
                             <div class="col-md-6">
@@ -555,25 +557,6 @@
                                     style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small text-muted">Mode</label>
-                                <select id="editDriveModeInput" class="form-select form-select-sm"
-                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                                    <option value="">—</option>
-                                    <option>On-Campus</option>
-                                    <option>Virtual</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">Location</label>
-                                <input type="text" id="editDriveLocationInput" class="form-control form-control-sm"
-                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">Received By</label>
-                                <input type="text" id="editDriveReceivedByInput" class="form-control form-control-sm"
-                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                            </div>
-                            <div class="col-md-6">
                                 <label class="form-label small text-muted">Data Shared</label>
                                 <select id="editDriveDataSharedInput" class="form-select form-select-sm"
                                     style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
@@ -602,63 +585,6 @@
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-sm btn-danger" id="btnSaveDriveEdit">Save Changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ══ Edit Company Info Modal ══ -->
-        <div class="modal fade" id="editCompanyInfoModal" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header border-0 pb-0">
-                        <h6 class="modal-title">Edit Company Info</h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-danger d-none small" id="editInfoError"></div>
-                        <div class="mb-3">
-                            <label class="form-label small d-flex justify-content-between">
-                                <span>Departments</span>
-                                <span>
-                                    <button type="button" class="btn btn-xs btn-outline-light"
-                                        id="editDeptSelectAll">All</button>
-                                    <button type="button" class="btn btn-xs btn-outline-light"
-                                        id="editDeptClearAll">Clear</button>
-                                </span>
-                            </label>
-                            <div id="editDeptCheckboxes" class="border rounded p-2"
-                                style="max-height:120px;overflow-y:auto;"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small d-flex justify-content-between">
-                                <span>Courses</span>
-                                <span>
-                                    <select class="form-select form-select-sm d-inline-block" id="editBulkDriveType"
-                                        style="width:auto;font-size:0.75rem;">
-                                        <option value="">Bulk type...</option>
-                                        <option value="Mandatory">Mandatory
-                                        </option>
-                                        <option value="Interest Based">Interest
-                                            Based</option>
-                                        <option value="Core">Core</option>
-                                    </select>
-                                    <button type="button" class="btn btn-xs btn-outline-warning"
-                                        id="editApplyBulkDriveType">Apply to
-                                        checked</button>
-                                    <button type="button" class="btn btn-xs btn-outline-light"
-                                        id="editCourseSelectAll">All</button>
-                                    <button type="button" class="btn btn-xs btn-outline-light"
-                                        id="editCourseClearAll">Clear</button>
-                                </span>
-                            </label>
-                            <div id="editCourseCheckboxes" class="border rounded p-2"
-                                style="max-height:250px;overflow-y:auto;"></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-sm btn-danger" id="btnSaveCompanyInfo">Save</button>
                     </div>
                 </div>
             </div>
@@ -797,9 +723,6 @@
                         courses: JSON.stringify(originalCourses),
                         jd_received_date: normalizeDash($btn.data('jd-received-date')),
                         process_date: normalizeDash($btn.data('process-date')),
-                        process_mode: normalizeDash($btn.data('mode')),
-                        location: normalizeDash($btn.data('location')),
-                        received_by: normalizeDash($btn.data('received-by')),
                         data_shared: normalizeDash($btn.data('data-shared')) || 'No',
                         status: normalizeDash($btn.data('status')) || 'Upcoming',
                         notes: normalizeDash($btn.data('notes'))
@@ -810,9 +733,6 @@
                     $('#editDriveCtcInput').val(EDITING_DRIVE_ORIGINAL.ctc_text);
                     $('#editDriveJdDateInput').val(EDITING_DRIVE_ORIGINAL.jd_received_date);
                     $('#editDriveDateInput').val(EDITING_DRIVE_ORIGINAL.process_date);
-                    $('#editDriveModeInput').val(EDITING_DRIVE_ORIGINAL.process_mode);
-                    $('#editDriveLocationInput').val(EDITING_DRIVE_ORIGINAL.location);
-                    $('#editDriveReceivedByInput').val(EDITING_DRIVE_ORIGINAL.received_by);
                     $('#editDriveDataSharedInput').val(EDITING_DRIVE_ORIGINAL.data_shared || 'No');
                     $('#editDriveStatusInput').val(EDITING_DRIVE_ORIGINAL.status || 'Upcoming');
                     $('#editDriveNotesInput').val(EDITING_DRIVE_ORIGINAL.notes);
@@ -832,9 +752,6 @@
                         courses: collectDriveCourses('edit-drive'),
                         jd_received_date: $('#editDriveJdDateInput').val(),
                         process_date: $('#editDriveDateInput').val(),
-                        process_mode: $('#editDriveModeInput').val(),
-                        location: $('#editDriveLocationInput').val().trim(),
-                        received_by: $('#editDriveReceivedByInput').val().trim(),
                         data_shared: $('#editDriveDataSharedInput').val(),
                         status: $('#editDriveStatusInput').val(),
                         notes: $('#editDriveNotesInput').val().trim()
@@ -1325,8 +1242,7 @@
 
                 /* ══════════════ ADD DRIVE ══════════════ */
                 $('#btnAddDrive').on('click', function () {
-                    $('#driveRoleInput, #driveCtcInput, #driveDateInput, #driveLocationInput, #driveNotesInput').val('');
-                    $('#driveModeInput').val('');
+                    $('#driveRoleInput, #driveCtcInput, #driveDateInput, #driveNotesInput').val('');
                     $('#driveStatusInput').val('Upcoming');
                     $('#addDriveError').addClass('d-none');
                     loadDriveCourseOptions(function () {
@@ -1353,8 +1269,6 @@
                             ctc_text: $('#driveCtcInput').val().trim() || null,
                             courses: courses,
                             process_date: $('#driveDateInput').val() || null,
-                            process_mode: $('#driveModeInput').val() || null,
-                            location: $('#driveLocationInput').val().trim() || null,
                             status: $('#driveStatusInput').val() || 'Upcoming',
                             notes: $('#driveNotesInput').val().trim() || null
                         }),
@@ -1375,124 +1289,33 @@
                     });
                 });
 
-                /* ══════════════════════════════════════════════════════
-                   EDIT COMPANY INFO (drive type, courses, departments)
-                   ══════════════════════════════════════════════════════ */
-                var COMPANY_ID = {{ company.company_id | tojson
-            }};
-            var EDIT_COURSES = [];
-            var EDIT_DEPTS = [];
+                $('#driveCourseSelectAll').on('click', function () {
+                    $('.drive-course-cb').prop('checked', true).trigger('change');
+                });
 
-            $('#btnEditCompanyInfo').on('click', function () {
-                $('#editInfoError').addClass('d-none');
-                $.getJSON('/api/cdm/unique-courses-departments', function (res) {
-                    EDIT_COURSES = res.courses || [];
-                    EDIT_DEPTS = res.departments || [];
-                    renderEditCheckboxes();
-                    $.getJSON('/api/cdm/company/' + COMPANY_ID + '/details', function (det) {
-                        // Build lookup: course_name -> drive_type
-                        var dtMap = {};
-                        (det.courses || []).forEach(function (c) {
-                            var cname = (typeof c === 'object') ? c.course_name : c;
-                            var cdt = (typeof c === 'object') ? (c.drive_type || '') : '';
-                            dtMap[cname] = cdt;
-                        });
-                        // Check courses and set drive types
-                        $('.editCourse-cb').each(function () {
-                            var cname = $(this).val();
-                            if (dtMap.hasOwnProperty(cname)) {
-                                $(this).prop('checked', true);
-                                var $row = $(this).closest('.edit-course-row');
-                                $row.find('.editCourse-dt').val(dtMap[cname]).show();
-                            }
-                        });
-                        (det.departments || []).forEach(function (d) {
-                            $('.editDept-cb').filter(function () { return $(this).val() === d; }).prop('checked', true);
-                        });
-                        new bootstrap.Modal('#editCompanyInfoModal').show();
-                    });
+                $('#driveCourseClearAll').on('click', function () {
+                    $('.drive-course-cb').prop('checked', false).trigger('change');
                 });
-            });
 
-            function renderEditCheckboxes() {
-                var $cc = $('#editCourseCheckboxes').empty();
-                EDIT_COURSES.forEach(function (c) {
-                    var safe = c.replace(/"/g, '&quot;');
-                    $cc.append(
-                        '<div class="edit-course-row d-flex align-items-center mb-1">' +
-                        '<label class="form-check d-inline-flex align-items-center me-2 mb-0" style="min-width:120px;">' +
-                        '<input class="form-check-input editCourse-cb" type="checkbox" value="' + safe + '">' +
-                        '<span class="form-check-label small ms-1">' + c + '</span></label>' +
-                        '<select class="form-select form-select-sm editCourse-dt" style="width:130px;font-size:0.75rem;display:none;">' +
-                        '<option value="">— Type —</option>' +
-                        '<option value="Mandatory">Mandatory</option>' +
-                        '<option value="Interest Based">Interest Based</option>' +
-                        '<option value="Core">Core</option></select></div>'
-                    );
-                });
-                // Show/hide drive type when checkbox toggled
-                $cc.off('change', '.editCourse-cb').on('change', '.editCourse-cb', function () {
-                    var $dt = $(this).closest('.edit-course-row').find('.editCourse-dt');
-                    if ($(this).is(':checked')) $dt.show(); else $dt.hide().val('');
-                });
-                var $dc = $('#editDeptCheckboxes').empty();
-                EDIT_DEPTS.forEach(function (d) {
-                    $dc.append('<label class="form-check d-inline-flex align-items-center me-2 mb-1"><input class="form-check-input editDept-cb" type="checkbox" value="' + d.replace(/"/g, '&quot;') + '"><span class="form-check-label small ms-1">' + d + '</span></label>');
-                });
-            }
-
-            $('#editCourseSelectAll').on('click', function () {
-                $('.editCourse-cb').prop('checked', true);
-                $('.editCourse-dt').show();
-            });
-            $('#editCourseClearAll').on('click', function () {
-                $('.editCourse-cb').prop('checked', false);
-                $('.editCourse-dt').hide().val('');
-            });
-            $('#editDeptSelectAll').on('click', function () { $('.editDept-cb').prop('checked', true); });
-            $('#editDeptClearAll').on('click', function () { $('.editDept-cb').prop('checked', false); });
-
-            // Bulk apply drive type to checked courses
-            $('#editApplyBulkDriveType').on('click', function () {
-                var bulkVal = $('#editBulkDriveType').val();
-                if (!bulkVal) return;
-                $('.editCourse-cb:checked').each(function () {
-                    $(this).closest('.edit-course-row').find('.editCourse-dt').val(bulkVal);
-                });
-            });
-
-            $('#btnSaveCompanyInfo').on('click', function () {
-                var courses = [];
-                var departments = [];
-                $('.editCourse-cb:checked').each(function () {
-                    var cname = $(this).val();
-                    var cdt = $(this).closest('.edit-course-row').find('.editCourse-dt').val() || null;
-                    courses.push({ course_name: cname, drive_type: cdt });
-                });
-                $('.editDept-cb:checked').each(function () { departments.push($(this).val()); });
-                $.ajax({
-                    url: '/api/cdm/company/' + COMPANY_ID,
-                    method: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ courses: courses, departments: departments }),
-                    success: function (res) {
-                        if (res.ok) {
-                            bootstrap.Modal.getInstance('#editCompanyInfoModal').hide();
-                            showToast('Company info updated');
-                            location.reload();
-                        } else {
-                            $('#editInfoError').text(res.error || 'Error').removeClass('d-none');
-                        }
-                    },
-                    error: function (xhr) {
-                        var msg = 'Update failed';
-                        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
-                        $('#editInfoError').text(msg).removeClass('d-none');
+                $('#driveApplyBulkType').on('click', function () {
+                    var bulkType = $('#driveBulkType').val();
+                    if (!bulkType) {
+                        $('#addDriveError').text('Select a bulk drive type first.').removeClass('d-none');
+                        return;
                     }
+                    var count = 0;
+                    $('.drive-course-cb:checked').each(function () {
+                        $(this).closest('.drive-course-row').find('.drive-course-type').val(bulkType);
+                        count += 1;
+                    });
+                    if (!count) {
+                        $('#addDriveError').text('Select at least one course to apply bulk type.').removeClass('d-none');
+                        return;
+                    }
+                    $('#addDriveError').addClass('d-none').text('');
                 });
-            });
 
-        });
+            });
         </script>
 </body>
 

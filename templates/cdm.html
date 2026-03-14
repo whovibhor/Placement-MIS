@@ -253,10 +253,17 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">Location</label>
-                            <input type="text" id="newCompanyLocation" class="form-control form-control-sm"
-                                placeholder="Enter location"
+                            <label class="form-label small fw-bold">Venue</label>
+                            <input type="text" id="newCompanyVenue" class="form-control form-control-sm"
+                                list="companyVenueOptions" placeholder="Select or type venue"
                                 style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            <datalist id="companyVenueOptions">
+                                <option value="SH 401"></option>
+                                <option value="RTH"></option>
+                                <option value="APJ"></option>
+                                <option value="CDC Room"></option>
+                                <option value="Reception Area"></option>
+                            </datalist>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Received By</label>
@@ -1000,7 +1007,7 @@
                 $('#newCompanyName').val('').removeClass('is-invalid');
                 $('#newCompanyProcessDate').val('');
                 $('#newCompanyMode').val('');
-                $('#newCompanyLocation').val('');
+                $('#newCompanyVenue').val('');
                 $('#newCompanyReceivedBy').val('');
                 $('#newCompanyNotes').val('');
                 $('#addCompanyError').addClass('d-none');
@@ -1024,7 +1031,7 @@
                         company_name: name,
                         process_date: $('#newCompanyProcessDate').val() || null,
                         process_mode: $('#newCompanyMode').val() || null,
-                        location: $('#newCompanyLocation').val().trim() || null,
+                        location: $('#newCompanyVenue').val().trim() || null,
                         received_by: $('#newCompanyReceivedBy').val().trim() || null,
                         notes: $('#newCompanyNotes').val().trim() || null
                     }),
