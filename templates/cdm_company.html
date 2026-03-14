@@ -199,7 +199,7 @@
 
         .round-board-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 8px;
         }
 
@@ -534,6 +534,9 @@
 
                         <div class="small text-muted mb-1">Placed Students</div>
                         <div id="placedNamesWrap" class="small">—</div>
+
+                        <div class="small text-muted mt-3 mb-1">Round Transition Audit</div>
+                        <div id="transitionLogWrap" class="small text-muted">No transitions recorded.</div>
                     </div>
                 </div>
             </div>
@@ -856,6 +859,7 @@
             var selectedStudent = null;
             var currentStudents = [];
             var currentRounds = [];
+            var transitionLogs = [];
             var EDITING_DRIVE_ID = null;
             var EDITING_DRIVE_ORIGINAL = null;
             var DRIVE_COURSE_OPTIONS = [];
@@ -1043,6 +1047,19 @@
                 });
             }
 
+            function loadTransitionLogs() {
+                if (!selectedDriveId) return $.Deferred().resolve([]);
+                return $.getJSON('/api/cdm/drive/' + selectedDriveId + '/round-transitions').then(function (res) {
+                    transitionLogs = res.transitions || [];
+                    renderTransitionLogs();
+                    return transitionLogs;
+                }, function () {
+                    transitionLogs = [];
+                    renderTransitionLogs();
+                    return [];
+                });
+            }
+
             function populateBulkRoundTarget() {
                 var $sel = $('#bulkRoundTarget').empty();
                 if (!currentRounds.length) {
@@ -1055,17 +1072,17 @@
             }
 
             function boardRoundColumns() {
-                var cols = [];
-                for (var i = 1; i <= 3; i += 1) {
-                    var found = currentRounds.find(function (r) { return Number(r.round_order) === i; });
-                    cols.push({
-                        key: 'R' + i,
-                        label: found ? ('R' + i + ' · ' + found.round_name) : ('R' + i),
-                        round_order: i,
-                        present: !!found
-                    });
-                }
-                cols.push({ key: 'SELECTED', label: 'Selected', round_order: currentRounds.length || 0, present: true });
+                var cols = currentRounds.slice().sort(function (a, b) {
+                    return Number(a.round_order || 0) - Number(b.round_order || 0);
+                }).map(function (r) {
+                    return {
+                        key: 'R' + r.round_order,
+                        label: 'R' + r.round_order + ' · ' + r.round_name,
+                        round_order: Number(r.round_order || 0),
+                        present: true
+                    };
+                });
+                cols.push({ key: 'PLACED', label: 'Final · Placed', round_order: currentRounds.length || 0, present: true });
                 return cols;
             }
 
@@ -1134,10 +1151,10 @@
                 var columns = boardRoundColumns();
                 columns.forEach(function (col) {
                     var members = [];
-                    if (col.key === 'SELECTED') {
+                    if (col.key === 'PLACED') {
                         members = currentStudents.filter(function (s) {
                             var st = (s.status || '').toLowerCase();
-                            return st === 'selected' || st === 'placed';
+                            return st === 'placed';
                         });
                     } else {
                         members = currentStudents.filter(function (s) {
@@ -1145,12 +1162,15 @@
                         });
                     }
                     var html = '<div class="round-board-column"><div class="round-board-col-title"><span>' + col.label + '</span><span>' + members.length + '</span></div>';
-                    if (!col.present && col.key !== 'SELECTED') {
-                        html += '<div class="text-muted small">Round not created</div>';
-                    } else if (!members.length) {
+                    if (!members.length) {
                         html += '<div class="text-muted small">No students</div>';
                     } else {
                         members.forEach(function (s) {
+                            var nextRound = col.key === 'PLACED' ? 0 : (col.round_order + 1);
+                            var hasNextRound = currentRounds.some(function (r) {
+                                return Number(r.round_order || 0) === nextRound;
+                            });
+                            var canPromote = hasNextRound && (s.status || '').toLowerCase() !== 'placed';
                             html +=
                                 '<div class="board-student-chip">' +
                                 '<div class="d-flex justify-content-between align-items-start gap-1">' +
@@ -1160,13 +1180,36 @@
                                 '</label>' +
                                 '<span class="text-muted">' + s.reg_no + '</span>' +
                                 '</div>' +
-                                '<div class="text-muted">Status: ' + (s.status || 'Applied') + '</div>' +
+                                '<div class="text-muted d-flex justify-content-between align-items-center">' +
+                                '<span>Status: ' + (s.status || 'Applied') + '</span>' +
+                                (canPromote ? '<button class="btn btn-xs btn-outline-info promote-next" data-reg="' + s.reg_no + '" data-next="' + nextRound + '">→ R' + nextRound + '</button>' : '') +
+                                '</div>' +
                                 '</div>';
                         });
                     }
                     html += '</div>';
                     $wrap.append(html);
                 });
+            }
+
+            function renderTransitionLogs() {
+                var $wrap = $('#transitionLogWrap').empty();
+                if (!transitionLogs.length) {
+                    $wrap.text('No transitions recorded.');
+                    return;
+                }
+                var rows = transitionLogs.slice(0, 12).map(function (log) {
+                    var actor = normalize(log.actor || 'system');
+                    var at = normalize(log.changed_at || '');
+                    var fromRound = Number(log.from_round || 0);
+                    var toRound = Number(log.to_round || 0);
+                    var fromStatus = normalize(log.from_status || '');
+                    var toStatus = normalize(log.to_status || '');
+                    return '<div class="funnel-row"><span>' +
+                        (log.reg_no || '') + ' · R' + fromRound + '→R' + toRound + ' · ' + fromStatus + '→' + toStatus +
+                        '</span><strong title="' + actor + '">' + at + '</strong></div>';
+                }).join('');
+                $wrap.html(rows);
             }
 
             function updateStudentsRoundBulk(regNos, targetRound, statusOverride) {
@@ -1184,7 +1227,7 @@
                 var participants = currentStudents.length;
                 var placed = currentStudents.filter(function (s) {
                     var st = (s.status || '').toLowerCase();
-                    return st === 'selected' || st === 'placed';
+                    return st === 'placed';
                 });
                 var shortlisted = currentStudents.filter(function (s) {
                     var st = (s.status || '').toLowerCase();
@@ -1221,7 +1264,7 @@
             function refreshSelectedDriveData() {
                 renderHero();
                 syncDriveUrlState();
-                $.when(loadRounds(), loadStudents()).fail(function () {
+                $.when(loadRounds(), loadStudents(), loadTransitionLogs()).fail(function () {
                     showToast('Failed to load drive data', 'danger');
                 });
             }
@@ -1306,7 +1349,7 @@
                 var regNo = $(this).data('reg');
                 var currentRound = Number($(this).val() || 0);
                 var passChecked = $('#bulkMarkPassed').is(':checked');
-                var statusOverride = (passChecked && currentRounds.length && currentRound >= currentRounds.length) ? 'Selected' : null;
+                var statusOverride = (passChecked && currentRounds.length && currentRound >= currentRounds.length) ? 'Placed' : null;
                 $.ajax({
                     url: '/api/cdm/drive/' + selectedDriveId + '/students/' + encodeURIComponent(regNo),
                     method: 'PUT',
@@ -1321,6 +1364,7 @@
                             }
                             renderRoundBoard();
                             renderStats();
+                            loadTransitionLogs();
                             showToast('Round qualification updated', 'success');
                         } else showToast(res.error || 'Error', 'danger');
                     }
@@ -1420,10 +1464,11 @@
                 var nextRound = Number($(this).data('next') || 0);
                 if (!nextRound) return;
                 var passChecked = $('#bulkMarkPassed').is(':checked');
-                var statusOverride = (passChecked && nextRound >= currentRounds.length) ? 'Selected' : null;
+                var statusOverride = (passChecked && nextRound >= currentRounds.length) ? 'Placed' : null;
                 updateStudentsRoundBulk([regNo], nextRound, statusOverride).done(function (res) {
                     if (res.ok) {
                         loadStudents();
+                        loadTransitionLogs();
                         showToast('Student promoted', 'success');
                     } else {
                         showToast(res.error || 'Promotion failed', 'danger');
@@ -1441,10 +1486,11 @@
                 }
                 var targetRound = Number($('#bulkRoundTarget').val() || 0);
                 var passChecked = $('#bulkMarkPassed').is(':checked');
-                var statusOverride = (passChecked && targetRound >= currentRounds.length && currentRounds.length) ? 'Selected' : null;
+                var statusOverride = (passChecked && targetRound >= currentRounds.length && currentRounds.length) ? 'Placed' : null;
                 updateStudentsRoundBulk(regNos, targetRound, statusOverride).done(function (res) {
                     if (res.ok) {
                         loadStudents();
+                        loadTransitionLogs();
                         showToast('Selected students moved', 'success');
                     } else {
                         showToast(res.error || 'Bulk move failed', 'danger');

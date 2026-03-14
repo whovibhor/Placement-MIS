@@ -441,8 +441,32 @@ def init_db():
             FOREIGN KEY (reg_no) REFERENCES students(reg_no) ON DELETE CASCADE
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS drive_round_transitions (
+            transition_id INT AUTO_INCREMENT PRIMARY KEY,
+            drive_id      INT NOT NULL,
+            reg_no        VARCHAR(50) NOT NULL,
+            from_round    INT NULL,
+            to_round      INT NULL,
+            from_status   VARCHAR(50) NULL,
+            to_status     VARCHAR(50) NULL,
+            actor         VARCHAR(100) NULL,
+            note          VARCHAR(255) NULL,
+            changed_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (drive_id) REFERENCES company_drives(drive_id) ON DELETE CASCADE,
+            FOREIGN KEY (reg_no) REFERENCES students(reg_no) ON DELETE CASCADE
+        )
+    """)
     try:
         cursor.execute("CREATE INDEX idx_drive_company ON company_drives(company_id)")
+    except Error:
+        pass
+    try:
+        cursor.execute("CREATE INDEX idx_drive_round_transition_drive ON drive_round_transitions(drive_id)")
+    except Error:
+        pass
+    try:
+        cursor.execute("CREATE INDEX idx_drive_round_transition_student ON drive_round_transitions(reg_no)")
     except Error:
         pass
 

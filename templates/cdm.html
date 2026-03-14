@@ -358,6 +358,27 @@
             line-height: 1.2;
             margin-top: 4px;
         }
+
+        .cdm-alerts-panel {
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .cdm-alert-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 5px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+            font-size: 12px;
+        }
+
+        .cdm-alert-row:last-child {
+            border-bottom: 0;
+        }
     </style>
 </head>
 
@@ -469,6 +490,14 @@
                             placeholder="Search companies..." autocomplete="off">
                         <div id="globalSearchResults" class="global-search-dropdown"></div>
                     </div>
+                </div>
+
+                <div class="cdm-alerts-panel">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="small fw-semibold">SLA Alerts</div>
+                        <div class="small text-muted" id="cdmAlertsCount">0</div>
+                    </div>
+                    <div id="cdmAlertsList" class="text-muted small">No active alerts.</div>
                 </div>
 
                 <!-- Company Tile View (Primary) -->
@@ -650,6 +679,34 @@
             var RAW_DATA = JSON.parse(document.getElementById('cdm-json').textContent);
             var COMPANIES_DATA = JSON.parse(document.getElementById('companies-json').textContent);
 
+            function renderSlaAlerts(alerts) {
+                var $list = $('#cdmAlertsList').empty();
+                $('#cdmAlertsCount').text((alerts || []).length + ' active');
+                if (!alerts || !alerts.length) {
+                    $list.text('No active alerts.');
+                    return;
+                }
+                alerts.slice(0, 8).forEach(function (a) {
+                    var companyUrl = '/cdm/company/' + encodeURIComponent(a.company_id || '');
+                    var flags = Array.isArray(a.flags) ? a.flags : [];
+                    var msg = flags.length ? flags.join(', ') : 'Alert';
+                    $list.append(
+                        '<div class="cdm-alert-row">' +
+                        '<span><a href="' + companyUrl + '" class="text-info">' + (a.company_name || a.company_id || 'Company') + '</a> · Drive #' + (a.drive_id || '—') + ' · ' + msg + '</span>' +
+                        '<strong>' + (a.status || 'Open') + '</strong>' +
+                        '</div>'
+                    );
+                });
+            }
+
+            function loadSlaAlerts() {
+                $.getJSON('/api/cdm/alerts', function (res) {
+                    renderSlaAlerts((res && res.alerts) || []);
+                }).fail(function () {
+                    renderSlaAlerts([]);
+                });
+            }
+
             function formatDateForUi(v) {
                 if (!v) return '—';
                 var dt = new Date(v);
@@ -782,6 +839,7 @@
             updateStats();
 
             renderCompanyTiles('all');
+            loadSlaAlerts();
 
             /* ── Generate <th> headers ────────────────────────── */
             var $hr = $('#headerRow');

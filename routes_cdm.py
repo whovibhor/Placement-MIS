@@ -138,6 +138,63 @@ def parse_ctc_value(ctc_text):
     return None
 
 
+def get_request_actor():
+    actor = (
+        request.headers.get("X-Actor")
+        or request.headers.get("X-User")
+        or request.args.get("actor")
+    )
+    if not actor and request.is_json:
+        payload = request.get_json(silent=True) or {}
+        actor = payload.get("actor")
+    actor = (actor or "system").strip()
+    return actor[:100] if actor else "system"
+
+
+def sync_student_placed_status(cursor, reg_no, company_name, role, ctc_text, to_status):
+    status = (to_status or "").strip().lower()
+    if status == "placed":
+        parsed_ctc = parse_ctc_value(ctc_text)
+        cursor.execute(
+            "UPDATE students "
+            "SET status='Placed', "
+            "company_name = COALESCE(NULLIF(company_name, ''), %s), "
+            "designation = COALESCE(NULLIF(designation, ''), %s), "
+            "ctc = COALESCE(ctc, %s), "
+            "placed_date = COALESCE(placed_date, CURDATE()) "
+            "WHERE reg_no = %s",
+            (company_name, role, parsed_ctc, reg_no),
+        )
+
+
+def append_round_transition_log(
+    cursor,
+    drive_id,
+    reg_no,
+    from_round,
+    to_round,
+    from_status,
+    to_status,
+    actor,
+    note=None,
+):
+    cursor.execute(
+        "INSERT INTO drive_round_transitions "
+        "(drive_id, reg_no, from_round, to_round, from_status, to_status, actor, note, changed_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())",
+        (
+            drive_id,
+            reg_no,
+            from_round,
+            to_round,
+            from_status,
+            to_status,
+            actor,
+            (note or None),
+        ),
+    )
+
+
 def register_cdm_routes(app):
     """Register all CDM routes on the Flask app."""
 
@@ -904,7 +961,10 @@ def register_cdm_routes(app):
             total_companies = cursor.fetchone()["total_companies"]
             cursor.execute("SELECT COUNT(DISTINCT reg_no) AS total_participating_students FROM drive_students")
             total_participating_students = cursor.fetchone()["total_participating_students"]
-            cursor.execute("SELECT COUNT(DISTINCT reg_no) AS total_selected_students FROM drive_students WHERE status='Selected'")
+            cursor.execute(
+                "SELECT COUNT(DISTINCT reg_no) AS total_selected_students "
+                "FROM drive_students WHERE status IN ('Selected', 'Placed')"
+            )
             total_selected_students = cursor.fetchone()["total_selected_students"]
 
             cursor.execute(
@@ -938,7 +998,7 @@ def register_cdm_routes(app):
                 FROM drive_students ds
                 JOIN company_drives d ON ds.drive_id = d.drive_id
                 JOIN companies c ON d.company_id = c.company_id
-                WHERE ds.status = 'Selected'
+                WHERE ds.status IN ('Selected', 'Placed')
                 GROUP BY c.company_id, c.company_name
                 ORDER BY selected_count DESC
                 LIMIT 10
@@ -981,7 +1041,7 @@ def register_cdm_routes(app):
                 FROM company_drives d
                                 JOIN companies c ON d.company_id = c.company_id
                 JOIN drive_students ds ON d.drive_id = ds.drive_id
-                WHERE ds.status = 'Selected'
+                WHERE ds.status IN ('Selected', 'Placed')
                                     AND c.received_by IS NOT NULL AND c.received_by != ''
                                 GROUP BY c.received_by
             """)
@@ -1078,24 +1138,92 @@ def register_cdm_routes(app):
             return jsonify({"error": "No data"}), 400
         try:
             conn = get_connection()
-            cursor = conn.cursor()
+            cursor = conn.cursor(dictionary=True)
+            actor = get_request_actor()
+
+            cursor.execute(
+                "SELECT ds.current_round, ds.status, d.role, d.ctc_text, c.company_name "
+                "FROM drive_students ds "
+                "JOIN company_drives d ON ds.drive_id = d.drive_id "
+                "JOIN companies c ON d.company_id = c.company_id "
+                "WHERE ds.drive_id=%s AND ds.reg_no=%s",
+                (drive_id, reg_no),
+            )
+            before = cursor.fetchone()
+            if not before:
+                cursor.close()
+                conn.close()
+                return jsonify({"error": "Student not linked to drive"}), 404
+
+            cursor.execute(
+                "SELECT IFNULL(MAX(round_order), 0) AS max_round FROM drive_rounds WHERE drive_id=%s",
+                (drive_id,),
+            )
+            max_round = int((cursor.fetchone() or {}).get("max_round") or 0)
+
             sets = []
             vals = []
+            next_status = before.get("status")
+            next_round = int(before.get("current_round") or 0)
             if "status" in data:
+                incoming_status = str(data["status"] or "").strip()
+                if incoming_status.lower() == "selected" and max_round and next_round >= max_round:
+                    incoming_status = "Placed"
                 sets.append("status = %s")
-                vals.append(data["status"])
+                vals.append(incoming_status)
+                next_status = incoming_status
             if "current_round" in data:
+                requested_round = int(data["current_round"] or 0)
+                if max_round and requested_round > max_round:
+                    requested_round = max_round
                 sets.append("current_round = %s")
-                vals.append(data["current_round"])
+                vals.append(requested_round)
+                next_round = requested_round
             if not sets:
                 cursor.close()
                 conn.close()
                 return jsonify({"error": "Nothing to update"}), 400
+
+            if (
+                max_round
+                and next_round >= max_round
+                and str(next_status or "").strip().lower() == "selected"
+            ):
+                next_status = "Placed"
+                if "status = %s" not in sets:
+                    sets.append("status = %s")
+                    vals.append(next_status)
+
             vals.extend([drive_id, reg_no])
             cursor.execute(
                 f"UPDATE drive_students SET {', '.join(sets)} WHERE drive_id = %s AND reg_no = %s",
                 tuple(vals),
             )
+
+            from_round = int(before.get("current_round") or 0)
+            from_status = before.get("status")
+            if from_round != next_round or str(from_status or "") != str(next_status or ""):
+                append_round_transition_log(
+                    cursor,
+                    drive_id,
+                    reg_no,
+                    from_round,
+                    next_round,
+                    from_status,
+                    next_status,
+                    actor,
+                    note="single_update",
+                )
+
+            sync_student_placed_status(
+                cursor,
+                reg_no,
+                before.get("company_name"),
+                before.get("role"),
+                before.get("ctc_text"),
+                next_status,
+            )
+
             conn.commit()
             cursor.close()
             conn.close()
@@ -1126,6 +1254,7 @@ def register_cdm_routes(app):
         try:
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
+            actor = get_request_actor()
             cursor.execute(
                 "SELECT IFNULL(MAX(round_order), 0) AS max_round FROM drive_rounds WHERE drive_id=%s",
                 (drive_id,),
@@ -1134,12 +1263,29 @@ def register_cdm_routes(app):
             if target_round > max_round:
                 target_round = max_round
 
+            cursor.execute(
+                "SELECT ds.reg_no, ds.current_round, ds.status, d.role, d.ctc_text, c.company_name "
+                "FROM drive_students ds "
+                "JOIN company_drives d ON ds.drive_id = d.drive_id "
+                "JOIN companies c ON d.company_id = c.company_id "
+                f"WHERE ds.drive_id = %s AND ds.reg_no IN ({','.join(['%s'] * len(safe_reg_nos))})",
+                tuple([drive_id] + safe_reg_nos),
+            )
+            before_rows = cursor.fetchall()
+            before_map = {r["reg_no"]: r for r in before_rows}
+
+            normalized_status = status
+            if normalized_status is not None:
+                normalized_status = str(normalized_status).strip()
+                if normalized_status.lower() == "selected" and max_round and target_round >= max_round:
+                    normalized_status = "Placed"
+
             placeholders = ",".join(["%s"] * len(safe_reg_nos))
             vals = [target_round]
             set_parts = ["current_round = %s"]
-            if status is not None:
+            if normalized_status is not None:
                 set_parts.append("status = %s")
-                vals.append(str(status))
+                vals.append(normalized_status)
             vals.extend([drive_id] + safe_reg_nos)
             query = (
                 f"UPDATE drive_students SET {', '.join(set_parts)} "
@@ -1148,12 +1294,80 @@ def register_cdm_routes(app):
             cursor.execute(query, tuple(vals))
             updated = cursor.rowcount
 
+            if updated:
+                cursor.execute(
+                    "SELECT reg_no, current_round, status FROM drive_students "
+                    f"WHERE drive_id = %s AND reg_no IN ({placeholders})",
+                    tuple([drive_id] + safe_reg_nos),
+                )
+                after_rows = cursor.fetchall()
+                for after in after_rows:
+                    reg_no = after["reg_no"]
+                    before = before_map.get(reg_no)
+                    if not before:
+                        continue
+                    from_round = int(before.get("current_round") or 0)
+                    to_round = int(after.get("current_round") or 0)
+                    from_status = before.get("status")
+                    to_status = after.get("status")
+                    if from_round != to_round or str(from_status or "") != str(to_status or ""):
+                        append_round_transition_log(
+                            cursor,
+                            drive_id,
+                            reg_no,
+                            from_round,
+                            to_round,
+                            from_status,
+                            to_status,
+                            actor,
+                            note="bulk_update",
+                        )
+                    sync_student_placed_status(
+                        cursor,
+                        reg_no,
+                        before.get("company_name"),
+                        before.get("role"),
+                        before.get("ctc_text"),
+                        to_status,
+                    )
+
             conn.commit()
             cursor.close()
             conn.close()
             return jsonify({"ok": True, "updated": updated, "target_round": target_round})
         except Error as e:
             return jsonify({"ok": False, "error": str(e)}), 500
+
+    @app.route("/api/cdm/drive/<int:drive_id>/round-transitions")
+    def cdm_drive_round_transitions(drive_id):
+        reg_no = (request.args.get("reg_no") or "").strip()
+        limit = request.args.get("limit", 100, type=int)
+        if limit <= 0:
+            limit = 100
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            if reg_no:
+                cursor.execute(
+                    "SELECT transition_id, drive_id, reg_no, from_round, to_round, from_status, to_status, actor, note, changed_at "
+                    "FROM drive_round_transitions WHERE drive_id=%s AND reg_no=%s "
+                    "ORDER BY changed_at DESC, transition_id DESC LIMIT %s",
+                    (drive_id, reg_no, limit),
+                )
+            else:
+                cursor.execute(
+                    "SELECT transition_id, drive_id, reg_no, from_round, to_round, from_status, to_status, actor, note, changed_at "
+                    "FROM drive_round_transitions WHERE drive_id=%s "
+                    "ORDER BY changed_at DESC, transition_id DESC LIMIT %s",
+                    (drive_id, limit),
+                )
+            rows = cursor.fetchall()
+            normalize_rows(rows)
+            cursor.close()
+            conn.close()
+            return jsonify({"transitions": rows})
+        except Error as e:
+            return jsonify({"transitions": [], "error": str(e)}), 500
 
     @app.route("/api/cdm/drive/<int:drive_id>/students/<reg_no>", methods=["DELETE"])
     def cdm_unlink_student(drive_id, reg_no):
@@ -1509,7 +1723,8 @@ def register_cdm_routes(app):
     def cdm_delete_round(round_id):
         try:
             conn = get_connection()
-            cursor = conn.cursor()
+            cursor = conn.cursor(dictionary=True)
+            actor = get_request_actor()
             cursor.execute(
                 "SELECT drive_id, round_order FROM drive_rounds WHERE round_id=%s",
                 (round_id,),
@@ -1520,8 +1735,15 @@ def register_cdm_routes(app):
                 conn.close()
                 return jsonify({"ok": False, "error": "Round not found"}), 404
 
-            drive_id = row[0]
-            deleted_order = int(row[1] or 0)
+            drive_id = row["drive_id"]
+            deleted_order = int(row["round_order"] or 0)
+
+            cursor.execute(
+                "SELECT reg_no, current_round, status FROM drive_students "
+                "WHERE drive_id=%s AND current_round >= %s",
+                (drive_id, deleted_order),
+            )
+            before_rows = cursor.fetchall()
 
             cursor.execute("DELETE FROM drive_rounds WHERE round_id=%s", (round_id,))
 
@@ -1545,6 +1767,33 @@ def register_cdm_routes(app):
                 "WHERE drive_id=%s AND (current_round IS NULL OR current_round < 0)",
                 (drive_id,),
             )
+
+            if before_rows:
+                cursor.execute(
+                    "SELECT reg_no, current_round, status FROM drive_students "
+                    "WHERE drive_id=%s",
+                    (drive_id,),
+                )
+                after_map = {r["reg_no"]: r for r in cursor.fetchall()}
+                for before in before_rows:
+                    reg_no = before["reg_no"]
+                    after = after_map.get(reg_no)
+                    if not after:
+                        continue
+                    from_round = int(before.get("current_round") or 0)
+                    to_round = int(after.get("current_round") or 0)
+                    if from_round != to_round:
+                        append_round_transition_log(
+                            cursor,
+                            drive_id,
+                            reg_no,
+                            from_round,
+                            to_round,
+                            before.get("status"),
+                            after.get("status"),
+                            actor,
+                            note="round_deleted",
+                        )
 
             conn.commit()
             cursor.close()
@@ -1576,6 +1825,89 @@ def register_cdm_routes(app):
         except Error as e:
             return jsonify({"events": [], "error": str(e)}), 500
 
+    @app.route("/api/cdm/alerts")
+    def cdm_alerts():
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT d.drive_id, d.company_id, c.company_name, d.role, d.process_date, d.status, "
+                "COUNT(DISTINCT h.hr_id) AS hr_count, "
+                "COUNT(DISTINCT r.round_id) AS rounds_count, "
+                "MAX(r.round_date) AS last_round_date "
+                "FROM company_drives d "
+                "JOIN companies c ON d.company_id = c.company_id "
+                "LEFT JOIN company_hr h ON h.company_id = c.company_id "
+                "LEFT JOIN drive_rounds r ON r.drive_id = d.drive_id "
+                "GROUP BY d.drive_id, d.company_id, c.company_name, d.role, d.process_date, d.status "
+                "ORDER BY d.drive_id DESC"
+            )
+            rows = cursor.fetchall()
+            normalize_rows(rows)
+            cursor.close()
+            conn.close()
+
+            today = date.today()
+            alerts = []
+            for row in rows:
+                status = (row.get("status") or "Upcoming").strip()
+                status_l = status.lower()
+                process_date_str = row.get("process_date")
+                last_round_date_str = row.get("last_round_date")
+                hr_count = int(row.get("hr_count") or 0)
+                rounds_count = int(row.get("rounds_count") or 0)
+
+                flags = []
+
+                if not process_date_str:
+                    flags.append("missing_process_date")
+
+                if hr_count == 0:
+                    flags.append("missing_hr")
+
+                process_date_obj = None
+                last_round_obj = None
+                if process_date_str:
+                    try:
+                        process_date_obj = datetime.strptime(str(process_date_str), "%Y-%m-%d").date()
+                    except ValueError:
+                        process_date_obj = None
+                if last_round_date_str:
+                    try:
+                        last_round_obj = datetime.strptime(str(last_round_date_str), "%Y-%m-%d").date()
+                    except ValueError:
+                        last_round_obj = None
+
+                if status_l not in ("completed", "cancelled"):
+                    if rounds_count > 0 and last_round_obj and last_round_obj < today:
+                        flags.append("rounds_overdue")
+                    if process_date_obj and process_date_obj < today and rounds_count == 0:
+                        flags.append("stale_no_rounds")
+
+                if flags:
+                    alerts.append({
+                        "drive_id": row.get("drive_id"),
+                        "company_id": row.get("company_id"),
+                        "company_name": row.get("company_name"),
+                        "role": row.get("role"),
+                        "process_date": process_date_str,
+                        "status": status,
+                        "flags": flags,
+                    })
+
+            return jsonify({
+                "alerts": alerts,
+                "counts": {
+                    "total": len(alerts),
+                    "missing_process_date": len([a for a in alerts if "missing_process_date" in a["flags"]]),
+                    "missing_hr": len([a for a in alerts if "missing_hr" in a["flags"]]),
+                    "rounds_overdue": len([a for a in alerts if "rounds_overdue" in a["flags"]]),
+                    "stale_no_rounds": len([a for a in alerts if "stale_no_rounds" in a["flags"]]),
+                },
+            })
+        except Error as e:
+            return jsonify({"alerts": [], "error": str(e)}), 500
+
     # ── Placement Source Analytics ────────────────────────────────────────
     @app.route("/api/cdm/placement-sources")
     def cdm_placement_sources():
@@ -1600,7 +1932,7 @@ def register_cdm_routes(app):
                 FROM drive_students ds
                 JOIN company_drives d ON ds.drive_id = d.drive_id
                 JOIN companies c ON d.company_id = c.company_id
-                WHERE ds.status = 'Selected'
+                WHERE ds.status IN ('Selected', 'Placed')
                 GROUP BY c.company_name
             """)
             linked = {r["company_name"]: r["linked_count"] for r in cursor.fetchall()}
