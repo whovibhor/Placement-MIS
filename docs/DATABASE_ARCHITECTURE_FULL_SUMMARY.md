@@ -363,6 +363,6 @@ These are intentional or legacy overlaps currently present:
 
 ## 8) Schema Drift Note
 
-- `schema.sql` currently defines only `students` base shape.
+- `database/schema.sql` currently defines only `students` base shape.
 - Runtime schema in `helpers.py` is broader and includes all operational tables/migrations above.
 - For accurate production architecture, use `helpers.py` behavior as the authoritative schema initializer.

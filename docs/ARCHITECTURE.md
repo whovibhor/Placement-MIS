@@ -8,8 +8,10 @@
 MIS Placements/
 ├── config.py                  # DB credentials & Flask secret
 ├── app.py                     # Flask server — all routes & DB logic
-├── schema.sql                 # Reference SQL (app auto-creates tables)
-├── fix_sr_no.py               # One-time migration script
+├── database/
+│   └── schema.sql             # Reference SQL (app auto-creates tables)
+├── scripts/
+│   └── fix_sr_no.py           # One-time migration script
 ├── requirements.txt           # pip dependencies
 ├── static/
 │   └── style.css              # Dark theme + filter widget CSS

@@ -43,8 +43,11 @@ MIS Placements/
 ├── app.py                    # Flask application — all routes, logic, DB operations
 ├── config.py                 # Database credentials, secret key
 ├── requirements.txt          # Python dependencies (4 packages)
-├── schema.sql                # Reference SQL schema (app auto-creates tables)
-├── fix_sr_no.py              # One-time script to fix serial numbers
+├── database/
+│   └── schema.sql            # Reference SQL schema (app auto-creates tables)
+├── scripts/
+│   └── fix_sr_no.py          # One-time script to fix serial numbers
+├── docs/                     # Architecture & flow documentation
 ├── static/
 │   ├── style.css             # Global dark-theme CSS (~1412 lines)
 │   ├── filterSystem.js       # Reusable Excel-style column filter engine (~364 lines)
