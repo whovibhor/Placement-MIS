@@ -1103,6 +1103,58 @@ def register_cdm_routes(app):
         except Error as e:
             return jsonify({"ok": False, "error": str(e)}), 500
 
+    @app.route("/api/cdm/drive/<int:drive_id>/students/rounds/bulk", methods=["PUT"])
+    def cdm_bulk_update_student_rounds(drive_id):
+        data = request.get_json(silent=True) or {}
+        reg_nos = data.get("reg_nos") or []
+        target_round = data.get("target_round")
+        status = data.get("status")
+
+        if not isinstance(reg_nos, list) or not reg_nos:
+            return jsonify({"ok": False, "error": "reg_nos list is required"}), 400
+        try:
+            target_round = int(target_round)
+        except Exception:
+            return jsonify({"ok": False, "error": "target_round must be an integer"}), 400
+        if target_round < 0:
+            return jsonify({"ok": False, "error": "target_round must be >= 0"}), 400
+
+        safe_reg_nos = [str(r).strip() for r in reg_nos if str(r).strip()]
+        if not safe_reg_nos:
+            return jsonify({"ok": False, "error": "No valid registration numbers provided"}), 400
+
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT IFNULL(MAX(round_order), 0) AS max_round FROM drive_rounds WHERE drive_id=%s",
+                (drive_id,),
+            )
+            max_round = int((cursor.fetchone() or {}).get("max_round") or 0)
+            if target_round > max_round:
+                target_round = max_round
+
+            placeholders = ",".join(["%s"] * len(safe_reg_nos))
+            vals = [target_round]
+            set_parts = ["current_round = %s"]
+            if status is not None:
+                set_parts.append("status = %s")
+                vals.append(str(status))
+            vals.extend([drive_id] + safe_reg_nos)
+            query = (
+                f"UPDATE drive_students SET {', '.join(set_parts)} "
+                f"WHERE drive_id = %s AND reg_no IN ({placeholders})"
+            )
+            cursor.execute(query, tuple(vals))
+            updated = cursor.rowcount
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({"ok": True, "updated": updated, "target_round": target_round})
+        except Error as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
     @app.route("/api/cdm/drive/<int:drive_id>/students/<reg_no>", methods=["DELETE"])
     def cdm_unlink_student(drive_id, reg_no):
         try:
@@ -1217,6 +1269,198 @@ def register_cdm_routes(app):
             download_name="student_import_template.xlsx",
         )
 
+    @app.route("/api/cdm/drive/<int:drive_id>/export.xlsx")
+    def cdm_drive_export_excel(drive_id):
+        try:
+            import openpyxl
+
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+
+            cursor.execute(
+                "SELECT d.*, c.company_name, c.received_by "
+                "FROM company_drives d JOIN companies c ON d.company_id = c.company_id "
+                "WHERE d.drive_id=%s",
+                (drive_id,),
+            )
+            drive = cursor.fetchone()
+            if not drive:
+                cursor.close()
+                conn.close()
+                return jsonify({"error": "Drive not found"}), 404
+
+            cursor.execute(
+                "SELECT round_order, round_name, round_date "
+                "FROM drive_rounds WHERE drive_id=%s ORDER BY round_order",
+                (drive_id,),
+            )
+            rounds = cursor.fetchall()
+
+            cursor.execute(
+                "SELECT ds.reg_no, ds.status, ds.current_round, "
+                "s.student_name, s.course, s.department, s.email, s.mobile_number "
+                "FROM drive_students ds "
+                "JOIN students s ON ds.reg_no = s.reg_no "
+                "WHERE ds.drive_id=%s ORDER BY s.student_name",
+                (drive_id,),
+            )
+            students = cursor.fetchall()
+
+            cursor.close()
+            conn.close()
+
+            wb = openpyxl.Workbook()
+            ws_info = wb.active
+            ws_info.title = "Drive Overview"
+            ws_info.append(["Field", "Value"])
+            info_rows = [
+                ("Drive ID", drive.get("drive_id")),
+                ("Company", drive.get("company_name")),
+                ("Role", drive.get("role")),
+                ("CTC", drive.get("ctc_text")),
+                ("Process Date", drive.get("process_date")),
+                ("Venue", drive.get("location")),
+                ("Status", drive.get("status")),
+                ("JD Received", drive.get("jd_received_date")),
+                ("Data Shared", "Yes" if drive.get("data_shared") else "No"),
+                ("Received By", drive.get("received_by")),
+            ]
+            for key, value in info_rows:
+                ws_info.append([key, value if value is not None else ""])
+
+            ws_rounds = wb.create_sheet("Rounds")
+            ws_rounds.append(["Round #", "Round Name", "Date", "Qualified Count"])
+            for r in rounds:
+                r_order = int(r.get("round_order") or 0)
+                q_count = len([s for s in students if int(s.get("current_round") or 0) >= r_order])
+                ws_rounds.append([r_order, r.get("round_name"), r.get("round_date"), q_count])
+
+            ws_students = wb.create_sheet("Participants")
+            ws_students.append([
+                "Reg No", "Name", "Course", "Department", "Email", "Phone",
+                "Status", "Qualified Round", "Qualified Round Name",
+            ])
+            round_name_map = {int(r.get("round_order") or 0): r.get("round_name") for r in rounds}
+            for s in students:
+                q_round = int(s.get("current_round") or 0)
+                ws_students.append([
+                    s.get("reg_no"),
+                    s.get("student_name"),
+                    s.get("course"),
+                    s.get("department"),
+                    s.get("email"),
+                    s.get("mobile_number"),
+                    s.get("status"),
+                    q_round,
+                    round_name_map.get(q_round, "Not Cleared" if q_round == 0 else ""),
+                ])
+
+            for ws in (ws_info, ws_rounds, ws_students):
+                for col in ws.columns:
+                    max_len = max(len(str(cell.value or "")) for cell in col)
+                    ws.column_dimensions[col[0].column_letter].width = min(max(max_len + 2, 12), 42)
+
+            buf = BytesIO()
+            wb.save(buf)
+            buf.seek(0)
+            return send_file(
+                buf,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                as_attachment=True,
+                download_name=f"drive_{drive_id}_progress.xlsx",
+            )
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/cdm/drive/<int:drive_id>/export.pdf")
+    def cdm_drive_export_pdf(drive_id):
+        try:
+            try:
+                from reportlab.lib.pagesizes import A4
+                from reportlab.pdfgen import canvas
+            except ImportError:
+                return jsonify({"error": "PDF export requires reportlab package."}), 500
+
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT d.*, c.company_name "
+                "FROM company_drives d JOIN companies c ON d.company_id = c.company_id "
+                "WHERE d.drive_id=%s",
+                (drive_id,),
+            )
+            drive = cursor.fetchone()
+            if not drive:
+                cursor.close()
+                conn.close()
+                return jsonify({"error": "Drive not found"}), 404
+
+            cursor.execute(
+                "SELECT round_order, round_name FROM drive_rounds WHERE drive_id=%s ORDER BY round_order",
+                (drive_id,),
+            )
+            rounds = cursor.fetchall()
+
+            cursor.execute(
+                "SELECT ds.reg_no, ds.status, ds.current_round, s.student_name "
+                "FROM drive_students ds JOIN students s ON ds.reg_no=s.reg_no "
+                "WHERE ds.drive_id=%s ORDER BY s.student_name",
+                (drive_id,),
+            )
+            students = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            buf = BytesIO()
+            pdf = canvas.Canvas(buf, pagesize=A4)
+            width, height = A4
+            y = height - 36
+
+            def write_line(text, step=14):
+                nonlocal y
+                if y < 50:
+                    pdf.showPage()
+                    y = height - 36
+                pdf.drawString(36, y, str(text))
+                y -= step
+
+            write_line(f"Drive Progress Report - #{drive_id}", 18)
+            write_line(f"Company: {drive.get('company_name')}")
+            write_line(f"Role: {drive.get('role') or '—'}")
+            write_line(f"CTC: {drive.get('ctc_text') or '—'}")
+            write_line(f"Status: {drive.get('status') or 'Upcoming'}")
+            write_line(f"Process Date: {drive.get('process_date') or '—'}")
+            write_line("", 8)
+
+            write_line("Rounds:", 16)
+            if not rounds:
+                write_line("- No rounds added")
+            for r in rounds:
+                order = int(r.get("round_order") or 0)
+                qualified = len([s for s in students if int(s.get("current_round") or 0) >= order])
+                write_line(f"- R{order} {r.get('round_name')}: qualified {qualified}")
+
+            write_line("", 8)
+            write_line("Participants:", 16)
+            if not students:
+                write_line("- No participants linked")
+            for s in students:
+                write_line(
+                    f"- {s.get('student_name')} ({s.get('reg_no')}): "
+                    f"Status={s.get('status')}, Qualified Round={int(s.get('current_round') or 0)}"
+                )
+
+            pdf.save()
+            buf.seek(0)
+            return send_file(
+                buf,
+                mimetype="application/pdf",
+                as_attachment=True,
+                download_name=f"drive_{drive_id}_progress.pdf",
+            )
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+
     # ── Round Management API ─────────────────────────────────────────────
     @app.route("/api/cdm/drive/<int:drive_id>/rounds", methods=["GET"])
     def cdm_drive_rounds(drive_id):
@@ -1266,7 +1510,42 @@ def register_cdm_routes(app):
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            cursor.execute(
+                "SELECT drive_id, round_order FROM drive_rounds WHERE round_id=%s",
+                (round_id,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                cursor.close()
+                conn.close()
+                return jsonify({"ok": False, "error": "Round not found"}), 404
+
+            drive_id = row[0]
+            deleted_order = int(row[1] or 0)
+
             cursor.execute("DELETE FROM drive_rounds WHERE round_id=%s", (round_id,))
+
+            cursor.execute(
+                "UPDATE drive_rounds SET round_order = round_order - 1 "
+                "WHERE drive_id=%s AND round_order > %s",
+                (drive_id, deleted_order),
+            )
+
+            cursor.execute(
+                "UPDATE drive_students "
+                "SET current_round = CASE "
+                "  WHEN current_round > %s THEN current_round - 1 "
+                "  WHEN current_round = %s THEN GREATEST(%s, 0) "
+                "  ELSE current_round END "
+                "WHERE drive_id=%s",
+                (deleted_order, deleted_order, deleted_order - 1, drive_id),
+            )
+            cursor.execute(
+                "UPDATE drive_students SET current_round = 0 "
+                "WHERE drive_id=%s AND (current_round IS NULL OR current_round < 0)",
+                (drive_id,),
+            )
+
             conn.commit()
             cursor.close()
             conn.close()

@@ -2,3 +2,4 @@ flask
 pandas
 openpyxl
 mysql-connector-python
+reportlab

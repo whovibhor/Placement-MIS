@@ -119,6 +119,121 @@
             border-bottom: 1px dashed rgba(255, 255, 255, 0.07);
         }
 
+        .drive-summary-strip {
+            max-height: 128px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-card);
+            padding: 6px;
+        }
+
+        .drive-summary-item {
+            border: 1px solid var(--border-color);
+            border-radius: 7px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: .74rem;
+            transition: border-color .2s ease;
+        }
+
+        .drive-summary-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .drive-summary-item:hover {
+            border-color: var(--accent-color);
+        }
+
+        .board-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .round-board-row {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-surface);
+            padding: 8px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .sticky-drive-header {
+            position: sticky;
+            top: 64px;
+            z-index: 20;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-card);
+            padding: 8px 10px;
+            margin-bottom: 10px;
+        }
+
+        .sticky-drive-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .sticky-drive-cell {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-surface);
+            padding: 6px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: .75rem;
+        }
+
+        .round-board-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .round-board-column {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-surface);
+            min-height: 180px;
+            padding: 8px;
+        }
+
+        .round-board-col-title {
+            font-size: .78rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .board-student-chip {
+            border: 1px solid var(--border-color);
+            border-radius: 7px;
+            background: var(--bg-card);
+            padding: 6px;
+            margin-bottom: 6px;
+            font-size: .72rem;
+            transition: border-color .2s ease;
+        }
+
+        .board-student-chip:hover {
+            border-color: var(--accent-color);
+        }
+
         .drives-toolbar {
             padding: 16px 20px;
             border: 1px solid var(--border-color);
@@ -231,6 +346,17 @@
                 <button class="btn btn-sm btn-danger" id="btnAddDrive">Add Drive</button>
                 <button class="btn btn-sm btn-outline-light" id="btnAddHR">Add HR</button>
                 <button class="btn btn-sm btn-outline-info" id="btnEditSelectedDrive">Edit Selected Drive</button>
+                <button class="btn btn-sm btn-outline-success" id="btnExportDriveExcel">Export Excel</button>
+                <button class="btn btn-sm btn-outline-success" id="btnExportDrivePdf">Export PDF</button>
+            </div>
+        </div>
+
+        <div class="sticky-drive-header" id="stickyDriveHeader">
+            <div class="sticky-drive-grid">
+                <div class="sticky-drive-cell"><span>Drive</span><strong id="stickyDriveId">—</strong></div>
+                <div class="sticky-drive-cell"><span>Status</span><strong id="stickyDriveStatus">—</strong></div>
+                <div class="sticky-drive-cell"><span>Participants</span><strong id="stickyParticipants">0</strong></div>
+                <div class="sticky-drive-cell"><span>Placed</span><strong id="stickyPlaced">0</strong></div>
             </div>
         </div>
 
@@ -242,6 +368,8 @@
                         <label class="form-label small text-muted mb-1">Select Drive</label>
                         <select id="activeDriveSelect" class="form-select form-select-sm mb-3"
                             style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);"></select>
+                        <div class="small text-muted mb-1">All Drives Snapshot</div>
+                        <div id="allDrivesSummary" class="drive-summary-strip mb-3"></div>
                         <div class="hero-metric-grid">
                             <div class="hero-metric-item">
                                 <div class="hero-metric-label">Total Drives</div>
@@ -326,6 +454,7 @@
                                 style="font-size:0.82rem;" id="participantsTable">
                                 <thead>
                                     <tr>
+                                        <th>Select</th>
                                         <th>Reg No</th>
                                         <th>Name</th>
                                         <th>Course</th>
@@ -339,11 +468,28 @@
                                 </thead>
                                 <tbody id="participantsTableBody">
                                     <tr>
-                                        <td colspan="9" class="text-center text-muted">No students linked</td>
+                                        <td colspan="10" class="text-center text-muted">No students linked</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+
+                        <div class="small text-muted mb-1">Round Board</div>
+                        <div class="board-controls">
+                            <label class="small mb-0" style="color:var(--text-secondary);">Move selected to</label>
+                            <select id="bulkRoundTarget" class="form-select form-select-sm"
+                                style="width:170px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);"></select>
+                            <div class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="checkbox" id="bulkMarkPassed">
+                                <label class="form-check-label small" for="bulkMarkPassed"
+                                    style="color:var(--text-secondary);">Mark Pass</label>
+                            </div>
+                            <button class="btn btn-sm btn-outline-info" id="btnPromoteSelected">Promote
+                                Selected</button>
+                            <button class="btn btn-sm btn-outline-light" id="btnSelectAllBoard">Select All</button>
+                            <button class="btn btn-sm btn-outline-light" id="btnClearAllBoard">Clear</button>
+                        </div>
+                        <div id="roundBoardWrap" class="round-board-grid"></div>
                     </div>
                 </div>
 
@@ -435,111 +581,6 @@
                 round progression.</div>
         </div>
         {% endif %}
-
-        <!-- ══════════════ Student Linking Modal ══════════════ -->
-        <div class="modal fade" id="studentsModal" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content"
-                    style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
-                    <div class="modal-header border-0 pb-0">
-                        <h6 class="modal-title">Drive Students — <span id="smDriveId"></span></h6>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <div class="input-group input-group-sm">
-                                <input type="text" id="studentSearchInput" class="form-control"
-                                    placeholder="Search student by name or reg no..."
-                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                                <button class="btn btn-outline-light" id="btnLinkStudent" disabled>Add</button>
-                            </div>
-                            <div id="studentSearchResults" class="cdm-search-dropdown"></div>
-                        </div>
-
-                        <div class="mb-3 p-2 rounded"
-                            style="background:var(--bg-surface);border:1px dashed var(--border-color);">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <span class="small text-muted">Bulk Import Students</span>
-                                <a href="/api/cdm/student-template" class="btn btn-xs btn-outline-info">Download
-                                    Template</a>
-                            </div>
-                            <div class="d-flex gap-2 align-items-center">
-                                <input type="file" id="bulkStudentFile" accept=".xlsx,.xls"
-                                    class="form-control form-control-sm"
-                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                                <button class="btn btn-sm btn-danger" id="btnBulkImport" disabled>Import</button>
-                            </div>
-                            <div id="bulkImportResult" class="small mt-2 d-none"></div>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered table-hover" style="font-size:0.82rem;"
-                                id="linkedStudentsTable">
-                                <thead>
-                                    <tr>
-                                        <th>Reg No</th>
-                                        <th>Name</th>
-                                        <th>Course</th>
-                                        <th>Department</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr id="noStudentsRow">
-                                        <td colspan="6" class="text-muted text-center">No students linked</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- ══════════════ Rounds Modal ══════════════ -->
-        <div class="modal fade" id="roundsModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content"
-                    style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
-                    <div class="modal-header border-0 pb-0">
-                        <h6 class="modal-title">Drive Rounds — <span id="rmDriveId"></span></h6>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Add round form -->
-                        <div class="mb-3 d-flex gap-2">
-                            <input type="text" id="roundNameInput" class="form-control form-control-sm"
-                                placeholder="Round name (e.g. Aptitude, Interview)"
-                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                            <input type="date" id="roundDateInput" class="form-control form-control-sm"
-                                style="width:140px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                            <button class="btn btn-sm btn-danger" id="btnAddRound">Add</button>
-                        </div>
-
-                        <!-- Rounds list -->
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered table-hover" style="font-size:0.82rem;"
-                                id="roundsTable">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Round Name</th>
-                                        <th>Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr id="noRoundsRow">
-                                        <td colspan="4" class="text-muted text-center">No
-                                            rounds added</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- ── Add HR Modal ──────────────────────────── -->
         <div class="modal fade" id="addHrModal" tabindex="-1">
@@ -820,6 +861,21 @@
             var DRIVE_COURSE_OPTIONS = [];
             var DRIVE_TYPE_OPTIONS = ['Mandatory', 'Interest Based', 'Core'];
 
+            (function initDriveFromUrl() {
+                var params = new URLSearchParams(window.location.search || '');
+                var urlDrive = Number(params.get('drive') || 0);
+                if (urlDrive && DRIVES.some(function (d) { return Number(d.drive_id) === urlDrive; })) {
+                    selectedDriveId = urlDrive;
+                }
+            })();
+
+            function syncDriveUrlState() {
+                if (!selectedDriveId) return;
+                var url = new URL(window.location.href);
+                url.searchParams.set('drive', selectedDriveId);
+                window.history.replaceState({}, '', url.toString());
+            }
+
             function showToast(msg, type) {
                 var $t = $('#editToast');
                 $t.removeClass('text-bg-success text-bg-danger').addClass('text-bg-' + (type || 'success'));
@@ -926,6 +982,23 @@
                     $sel.append('<option value="' + d.drive_id + '">' + label + '</option>');
                 });
                 if (selectedDriveId) $sel.val(String(selectedDriveId));
+                renderAllDrivesSummary();
+            }
+
+            function renderAllDrivesSummary() {
+                var $wrap = $('#allDrivesSummary').empty();
+                DRIVES.forEach(function (d) {
+                    var st = d.status || 'Upcoming';
+                    $wrap.append(
+                        '<div class="drive-summary-item">' +
+                        '<div><div class="fw-semibold">#' + d.drive_id + ' · ' + (d.role || '—') + '</div><div class="text-muted">' + (d.process_date || '—') + ' · ' + (d.location || '—') + '</div></div>' +
+                        '<div class="text-end"><div>' + (d.ctc_text || '—') + '</div><div class="text-muted">' + st + '</div></div>' +
+                        '</div>'
+                    );
+                });
+                if (!DRIVES.length) {
+                    $wrap.html('<div class="text-muted small">No drives available</div>');
+                }
             }
 
             function renderHero() {
@@ -945,6 +1018,8 @@
                 $('#heroNotes').text(normalize(drive.notes));
                 var status = drive.status || 'Upcoming';
                 $('#heroDriveStatusBadge').removeClass('bg-success bg-warning bg-danger bg-info text-dark').addClass(statusBadgeClass(status)).text(status);
+                $('#stickyDriveId').text('#' + drive.drive_id + ' · ' + normalize(drive.role));
+                $('#stickyDriveStatus').text(status);
             }
 
             function loadRounds() {
@@ -952,6 +1027,7 @@
                 return $.getJSON('/api/cdm/drive/' + selectedDriveId + '/rounds').then(function (res) {
                     currentRounds = res.rounds || [];
                     renderRounds();
+                    populateBulkRoundTarget();
                     return currentRounds;
                 });
             }
@@ -961,9 +1037,36 @@
                 return $.getJSON('/api/cdm/drive/' + selectedDriveId + '/students').then(function (res) {
                     currentStudents = res.students || [];
                     renderParticipants();
+                    renderRoundBoard();
                     renderStats();
                     return currentStudents;
                 });
+            }
+
+            function populateBulkRoundTarget() {
+                var $sel = $('#bulkRoundTarget').empty();
+                if (!currentRounds.length) {
+                    $sel.append('<option value="0">No rounds</option>');
+                    return;
+                }
+                currentRounds.forEach(function (r) {
+                    $sel.append('<option value="' + r.round_order + '">R' + r.round_order + ' · ' + r.round_name + '</option>');
+                });
+            }
+
+            function boardRoundColumns() {
+                var cols = [];
+                for (var i = 1; i <= 3; i += 1) {
+                    var found = currentRounds.find(function (r) { return Number(r.round_order) === i; });
+                    cols.push({
+                        key: 'R' + i,
+                        label: found ? ('R' + i + ' · ' + found.round_name) : ('R' + i),
+                        round_order: i,
+                        present: !!found
+                    });
+                }
+                cols.push({ key: 'SELECTED', label: 'Selected', round_order: currentRounds.length || 0, present: true });
+                return cols;
             }
 
             function renderRounds() {
@@ -997,16 +1100,17 @@
                 var $tbody = $('#participantsTableBody').empty();
                 $('#participantsCountLabel').text(currentStudents.length + ' student(s)');
                 if (!currentStudents.length) {
-                    $tbody.append('<tr><td colspan="9" class="text-center text-muted">No students linked</td></tr>');
+                    $tbody.append('<tr><td colspan="10" class="text-center text-muted">No students linked</td></tr>');
                     return;
                 }
                 currentStudents.forEach(function (s) {
-                    var statusOpts = ['Applied', 'Shortlisted', 'In Process', 'Selected', 'Rejected', 'On Hold'].map(function (o) {
+                    var statusOpts = ['Applied', 'Shortlisted', 'In Process', 'Selected', 'Placed', 'Rejected', 'On Hold'].map(function (o) {
                         return '<option value="' + o + '"' + (o === s.status ? ' selected' : '') + '>' + o + '</option>';
                     }).join('');
                     var profileUrl = '/student/' + encodeURIComponent(s.reg_no);
                     $tbody.append(
                         '<tr>' +
+                        '<td><input type="checkbox" class="form-check-input board-select" value="' + s.reg_no + '"></td>' +
                         '<td>' + s.reg_no + '</td>' +
                         '<td><a href="' + profileUrl + '" class="text-info fw-semibold">' + (s.student_name || '') + '</a></td>' +
                         '<td>' + normalize(s.course) + '</td>' +
@@ -1021,19 +1125,78 @@
                 });
             }
 
+            function renderRoundBoard() {
+                var $wrap = $('#roundBoardWrap').empty();
+                if (!currentStudents.length) {
+                    $wrap.html('<div class="text-muted small">No students to display.</div>');
+                    return;
+                }
+                var columns = boardRoundColumns();
+                columns.forEach(function (col) {
+                    var members = [];
+                    if (col.key === 'SELECTED') {
+                        members = currentStudents.filter(function (s) {
+                            var st = (s.status || '').toLowerCase();
+                            return st === 'selected' || st === 'placed';
+                        });
+                    } else {
+                        members = currentStudents.filter(function (s) {
+                            return Number(s.current_round || 0) === col.round_order;
+                        });
+                    }
+                    var html = '<div class="round-board-column"><div class="round-board-col-title"><span>' + col.label + '</span><span>' + members.length + '</span></div>';
+                    if (!col.present && col.key !== 'SELECTED') {
+                        html += '<div class="text-muted small">Round not created</div>';
+                    } else if (!members.length) {
+                        html += '<div class="text-muted small">No students</div>';
+                    } else {
+                        members.forEach(function (s) {
+                            html +=
+                                '<div class="board-student-chip">' +
+                                '<div class="d-flex justify-content-between align-items-start gap-1">' +
+                                '<label class="mb-0" style="cursor:pointer;">' +
+                                '<input type="checkbox" class="form-check-input me-1 board-select" value="' + s.reg_no + '">' +
+                                '<span class="fw-semibold">' + (s.student_name || '—') + '</span>' +
+                                '</label>' +
+                                '<span class="text-muted">' + s.reg_no + '</span>' +
+                                '</div>' +
+                                '<div class="text-muted">Status: ' + (s.status || 'Applied') + '</div>' +
+                                '</div>';
+                        });
+                    }
+                    html += '</div>';
+                    $wrap.append(html);
+                });
+            }
+
+            function updateStudentsRoundBulk(regNos, targetRound, statusOverride) {
+                if (!selectedDriveId || !regNos.length) return $.Deferred().reject('No students selected');
+                return $.ajax({
+                    url: '/api/cdm/drive/' + selectedDriveId + '/students/rounds/bulk',
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ reg_nos: regNos, target_round: targetRound, status: statusOverride || null })
+                });
+            }
+
             function renderStats() {
                 var totalRounds = currentRounds.length;
                 var participants = currentStudents.length;
-                var placed = currentStudents.filter(function (s) { return (s.status || '').toLowerCase() === 'selected'; });
+                var placed = currentStudents.filter(function (s) {
+                    var st = (s.status || '').toLowerCase();
+                    return st === 'selected' || st === 'placed';
+                });
                 var shortlisted = currentStudents.filter(function (s) {
                     var st = (s.status || '').toLowerCase();
-                    return st === 'shortlisted' || st === 'in process' || st === 'selected';
+                    return st === 'shortlisted' || st === 'in process' || st === 'selected' || st === 'placed';
                 }).length;
 
                 $('#statTotalRounds').text(totalRounds);
                 $('#statParticipants').text(participants);
                 $('#statShortlisted').text(shortlisted);
                 $('#statPlaced').text(placed.length);
+                $('#stickyParticipants').text(participants);
+                $('#stickyPlaced').text(placed.length);
 
                 var $funnel = $('#roundFunnelWrap').empty();
                 if (!totalRounds) {
@@ -1057,6 +1220,7 @@
 
             function refreshSelectedDriveData() {
                 renderHero();
+                syncDriveUrlState();
                 $.when(loadRounds(), loadStudents()).fail(function () {
                     showToast('Failed to load drive data', 'danger');
                 });
@@ -1141,15 +1305,21 @@
             $(document).on('change', '.student-round-sel', function () {
                 var regNo = $(this).data('reg');
                 var currentRound = Number($(this).val() || 0);
+                var passChecked = $('#bulkMarkPassed').is(':checked');
+                var statusOverride = (passChecked && currentRounds.length && currentRound >= currentRounds.length) ? 'Selected' : null;
                 $.ajax({
                     url: '/api/cdm/drive/' + selectedDriveId + '/students/' + encodeURIComponent(regNo),
                     method: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify({ current_round: currentRound }),
+                    data: JSON.stringify(statusOverride ? { current_round: currentRound, status: statusOverride } : { current_round: currentRound }),
                     success: function (res) {
                         if (res.ok) {
                             var student = currentStudents.find(function (s) { return s.reg_no === regNo; });
-                            if (student) student.current_round = currentRound;
+                            if (student) {
+                                student.current_round = currentRound;
+                                if (statusOverride) student.status = statusOverride;
+                            }
+                            renderRoundBoard();
                             renderStats();
                             showToast('Round qualification updated', 'success');
                         } else showToast(res.error || 'Error', 'danger');
@@ -1224,7 +1394,7 @@
                         if (res.ok) {
                             $('#roundNameInput').val('');
                             $('#roundDateInput').val('');
-                            loadRounds().then(function () { renderParticipants(); renderStats(); });
+                            loadRounds().then(function () { renderParticipants(); renderRoundBoard(); renderStats(); });
                             showToast('Round added', 'success');
                         } else showToast(res.error || 'Error', 'danger');
                     }
@@ -1238,11 +1408,68 @@
                     method: 'DELETE',
                     success: function (res) {
                         if (res.ok) {
-                            loadRounds().then(function () { renderParticipants(); renderStats(); });
+                            loadRounds().then(function () { loadStudents(); });
                             showToast('Round deleted', 'success');
                         }
                     }
                 });
+            });
+
+            $(document).on('click', '.promote-next', function () {
+                var regNo = $(this).data('reg');
+                var nextRound = Number($(this).data('next') || 0);
+                if (!nextRound) return;
+                var passChecked = $('#bulkMarkPassed').is(':checked');
+                var statusOverride = (passChecked && nextRound >= currentRounds.length) ? 'Selected' : null;
+                updateStudentsRoundBulk([regNo], nextRound, statusOverride).done(function (res) {
+                    if (res.ok) {
+                        loadStudents();
+                        showToast('Student promoted', 'success');
+                    } else {
+                        showToast(res.error || 'Promotion failed', 'danger');
+                    }
+                }).fail(function () {
+                    showToast('Promotion failed', 'danger');
+                });
+            });
+
+            $('#btnPromoteSelected').on('click', function () {
+                var regNos = Array.from(new Set($('.board-select:checked').map(function () { return $(this).val(); }).get()));
+                if (!regNos.length) {
+                    showToast('Select students first', 'danger');
+                    return;
+                }
+                var targetRound = Number($('#bulkRoundTarget').val() || 0);
+                var passChecked = $('#bulkMarkPassed').is(':checked');
+                var statusOverride = (passChecked && targetRound >= currentRounds.length && currentRounds.length) ? 'Selected' : null;
+                updateStudentsRoundBulk(regNos, targetRound, statusOverride).done(function (res) {
+                    if (res.ok) {
+                        loadStudents();
+                        showToast('Selected students moved', 'success');
+                    } else {
+                        showToast(res.error || 'Bulk move failed', 'danger');
+                    }
+                }).fail(function () {
+                    showToast('Bulk move failed', 'danger');
+                });
+            });
+
+            $('#btnSelectAllBoard').on('click', function () {
+                $('.board-select').prop('checked', true);
+            });
+
+            $('#btnClearAllBoard').on('click', function () {
+                $('.board-select').prop('checked', false);
+            });
+
+            $('#btnExportDriveExcel').on('click', function () {
+                if (!selectedDriveId) return;
+                window.open('/api/cdm/drive/' + selectedDriveId + '/export.xlsx', '_blank');
+            });
+
+            $('#btnExportDrivePdf').on('click', function () {
+                if (!selectedDriveId) return;
+                window.open('/api/cdm/drive/' + selectedDriveId + '/export.pdf', '_blank');
             });
 
             $(document).on('change', '.drive-course-cb, .edit-drive-course-cb', function () {
