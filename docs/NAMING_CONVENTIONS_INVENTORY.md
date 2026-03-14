@@ -1,0 +1,760 @@
+# PlaceNest Naming Conventions Inventory (Clean Exhaustive Pass)
+
+## 1) PAGE TITLES & HEADINGS
+
+### HTML <title> tags
+- "CDM — Placenest" — templates/cdm.html
+- "{{ company.company_name }} — CDM" — templates/cdm_company.html
+- "Import CDM — Placenest" — templates/cdm_upload.html
+- "Dashboard — Placenest" — templates/dashboard.html
+- "Student Data — Placenest" — templates/data.html
+- "{{ student.student_name }} — Placenest" — templates/student_profile.html
+- "Upload & Manage — Placenest" — templates/upload.html
+- "Version #{{ version_id }} — Placenest" — templates/version_detail.html
+- "Logs & Versions — Placenest" — templates/versions.html
+
+### <h1>, <h2>, <h3> visible headings
+- "Company Data Management" — templates/cdm.html
+- "{{ company.company_name }}" — templates/cdm_company.html
+- "Student Data" — templates/data.html
+- "Version #{{ version_id }} — Snapshot Data" — templates/version_detail.html
+- "Logs & Versions" — templates/versions.html
+
+### Tab labels (nav-link text, tab headers)
+- "Dashboard" — templates/cdm.html
+- "Data" — templates/cdm.html
+- "CDM" — templates/cdm.html
+- "More ▾" — templates/cdm.html
+- "Drives" — templates/cdm.html
+- "Calendar" — templates/cdm.html
+- "Mini Stats" — templates/cdm.html
+- "Dashboard" — templates/cdm_company.html
+- "Data" — templates/cdm_company.html
+- "CDM" — templates/cdm_company.html
+- "More ▾" — templates/cdm_company.html
+- "Dashboard" — templates/cdm_upload.html
+- "Data" — templates/cdm_upload.html
+- "CDM" — templates/cdm_upload.html
+- "More ▾" — templates/cdm_upload.html
+- "Dashboard" — templates/dashboard.html
+- "Data" — templates/dashboard.html
+- "CDM" — templates/dashboard.html
+- "More ▾" — templates/dashboard.html
+- "Dashboard" — templates/data.html
+- "Data" — templates/data.html
+- "CDM" — templates/data.html
+- "More ▾" — templates/data.html
+- "Dashboard" — templates/student_profile.html
+- "Data" — templates/student_profile.html
+- "CDM" — templates/student_profile.html
+- "More ▾" — templates/student_profile.html
+- "Dashboard" — templates/upload.html
+- "Data" — templates/upload.html
+- "CDM" — templates/upload.html
+- "More ▾" — templates/upload.html
+- "Student Data" — templates/upload.html
+- "Company Data (CDM)" — templates/upload.html
+- "Export Data" — templates/upload.html
+- "Dashboard" — templates/version_detail.html
+- "Data" — templates/version_detail.html
+- "CDM" — templates/version_detail.html
+- "More ▾" — templates/version_detail.html
+- "Dashboard" — templates/versions.html
+- "Data" — templates/versions.html
+- "CDM" — templates/versions.html
+- "More ▾" — templates/versions.html
+- "Upload Versions" — templates/versions.html
+- "Student Change Log" — templates/versions.html
+- "CDM Change Log" — templates/versions.html
+
+### Page section headers
+- "Company tiles (Latest to oldest by process date)" — templates/cdm.html
+- "Click company name to view details" — templates/cdm.html
+- "Companies Brought by Team" — templates/cdm.html
+- "Add New Company" — templates/cdm.html
+- "Course Presets" — templates/cdm.html
+- "Drive Overview" — templates/cdm_company.html
+- "Participants" — templates/cdm_company.html
+- "Drive Progress & Stats" — templates/cdm_company.html
+- "HR Contacts" — templates/cdm_company.html
+- "Add HR Contact" — templates/cdm_company.html
+- "Add New Drive" — templates/cdm_company.html
+- "Edit Drive —" — templates/cdm_company.html
+- "Department → Course Breakdown" — templates/dashboard.html
+- "Recent Changes" — templates/dashboard.html
+- "Placement Trends" — templates/dashboard.html
+- "Course Summary" — templates/dashboard.html
+- "Department Summary" — templates/dashboard.html
+- "Save Current View" — templates/data.html
+- "Click student name to open profile" — templates/data.html
+
+## 2) MODULE / DOMAIN NAMES
+
+### Module identifiers and naming terms
+- "Data" — templates/cdm.html
+- "CDM" — templates/cdm.html
+- "Dashboard" — templates/cdm.html
+- "Upload / Export" — templates/cdm.html
+- "Company Data Management" — templates/cdm.html
+- "Placenest" — templates/cdm.html
+- "Mini Stats" — templates/cdm.html
+- "Calendar" — templates/cdm.html
+- "Drives" — templates/cdm.html
+- "Data" — templates/cdm_company.html
+- "CDM" — templates/cdm_company.html
+- "Dashboard" — templates/cdm_company.html
+- "Upload / Export" — templates/cdm_company.html
+- "Placenest" — templates/cdm_company.html
+- "Drives" — templates/cdm_company.html
+- "Data" — templates/cdm_upload.html
+- "CDM" — templates/cdm_upload.html
+- "Dashboard" — templates/cdm_upload.html
+- "Upload / Export" — templates/cdm_upload.html
+- "Placenest" — templates/cdm_upload.html
+- "Drives" — templates/cdm_upload.html
+- "Data" — templates/dashboard.html
+- "CDM" — templates/dashboard.html
+- "Dashboard" — templates/dashboard.html
+- "Upload / Export" — templates/dashboard.html
+- "Placenest" — templates/dashboard.html
+- "Drives" — templates/dashboard.html
+- "Data" — templates/data.html
+- "CDM" — templates/data.html
+- "Dashboard" — templates/data.html
+- "Upload / Export" — templates/data.html
+- "Student Data" — templates/data.html
+- "Placenest" — templates/data.html
+- "Data" — templates/student_profile.html
+- "CDM" — templates/student_profile.html
+- "Dashboard" — templates/student_profile.html
+- "Upload / Export" — templates/student_profile.html
+- "Placenest" — templates/student_profile.html
+- "Data" — templates/upload.html
+- "CDM" — templates/upload.html
+- "Dashboard" — templates/upload.html
+- "Upload / Export" — templates/upload.html
+- "Student Data" — templates/upload.html
+- "Placenest" — templates/upload.html
+- "Drives" — templates/upload.html
+- "Data" — templates/version_detail.html
+- "CDM" — templates/version_detail.html
+- "Dashboard" — templates/version_detail.html
+- "Upload / Export" — templates/version_detail.html
+- "Placenest" — templates/version_detail.html
+- "Data" — templates/versions.html
+- "CDM" — templates/versions.html
+- "Dashboard" — templates/versions.html
+- "Upload / Export" — templates/versions.html
+- "Student Data" — templates/versions.html
+- "Placenest" — templates/versions.html
+- "Data" — app.py
+- "CDM" — app.py
+- "Data" — routes_data.py
+- "Data" — routes_cdm.py
+- "CDM" — routes_cdm.py
+- "Company Data Management" — routes_cdm.py
+- "Calendar" — routes_cdm.py
+
+### URL slugs
+- "/cdm/company/" — templates/cdm.html
+- "/api/cdm/alerts" — templates/cdm.html
+- "/api/cdm/search?q=" — templates/cdm.html
+- "/api/cdm/calendar" — templates/cdm.html
+- "/api/cdm/analytics" — templates/cdm.html
+- "/api/cdm/unique-courses-departments" — templates/cdm.html
+- "/api/cdm/course-presets" — templates/cdm.html
+- "/api/cdm/course-presets/" — templates/cdm.html
+- "/api/cdm/company" — templates/cdm.html
+- "/api/cdm/student-template" — templates/cdm_company.html
+- "/api/cdm/unique-courses-departments" — templates/cdm_company.html
+- "/api/cdm/drive/" — templates/cdm_company.html
+- "/student/" — templates/cdm_company.html
+- "/api/cdm/search-students?q=" — templates/cdm_company.html
+- "/api/cdm/round/" — templates/cdm_company.html
+- "/api/cdm/drive" — templates/cdm_company.html
+- "/api/cdm/company/" — templates/cdm_company.html
+- "/cdm" — templates/cdm_company.html
+- "/api/cdm/hr" — templates/cdm_company.html
+- "/api/cdm/hr/" — templates/cdm_company.html
+- "/api/edit-log?limit=15" — templates/dashboard.html
+- "/api/cdm/analytics" — templates/dashboard.html
+- "/student/" — templates/data.html
+- "/api/student/" — templates/student_profile.html
+- "/api/edit-log?reg_no=" — templates/student_profile.html
+- "/api/students" — templates/upload.html
+- "/api/cdm" — templates/upload.html
+- "/api/edit-log?limit=10000" — templates/upload.html
+- "/api/cdm/edit-log?limit=10000" — templates/upload.html
+- "/api/edit-log?limit=" — templates/versions.html
+- "/student/" — templates/versions.html
+- "/api/cdm/edit-log?limit=" — templates/versions.html
+- "/" — app.py
+- "/upload" — app.py
+- "/download-template/student" — app.py
+- "/download-template/cdm" — app.py
+- "/dashboard" — app.py
+- "/drop-all" — app.py
+- "/drop-cdm" — app.py
+- "/logs" — app.py
+- "/versions/<int:version_id>" — app.py
+- "/api/version/<int:version_id>" — app.py
+- "/delete-version/<int:version_id>" — app.py
+- "/data" — routes_data.py
+- "/api/student/<reg_no>" — routes_data.py
+- "/student/<reg_no>" — routes_data.py
+- "/student/<reg_no>/upload-file" — routes_data.py
+- "/uploads/<filename>" — routes_data.py
+- "/student/<reg_no>/delete-file/<int:file_id>" — routes_data.py
+- "/api/student/<reg_no>/bulk-update" — routes_data.py
+- "/api/edit-log" — routes_data.py
+- "/api/students" — routes_data.py
+- "/api/search" — routes_data.py
+- "/cdm" — routes_cdm.py
+- "/api/cdm" — routes_cdm.py
+- "/cdm/import" — routes_cdm.py
+- "/cdm/company/<company_id>" — routes_cdm.py
+- "/api/cdm/delete-drive/<int:drive_id>" — routes_cdm.py
+- "/api/cdm/drive" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>" — routes_cdm.py
+- "/api/cdm/edit-log" — routes_cdm.py
+- "/api/cdm/hr/<int:hr_id>" — routes_cdm.py
+- "/api/cdm/hr" — routes_cdm.py
+- "/api/cdm/search" — routes_cdm.py
+- "/api/cdm/company" — routes_cdm.py
+- "/api/cdm/company/<company_id>" — routes_cdm.py
+- "/api/cdm/analytics" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/students" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/students/<reg_no>" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/students/rounds/bulk" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/round-transitions" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/students/bulk" — routes_cdm.py
+- "/api/cdm/student-template" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/export.xlsx" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/export.pdf" — routes_cdm.py
+- "/api/cdm/drive/<int:drive_id>/rounds" — routes_cdm.py
+- "/api/cdm/round/<int:round_id>" — routes_cdm.py
+- "/api/cdm/calendar" — routes_cdm.py
+- "/api/cdm/alerts" — routes_cdm.py
+- "/api/cdm/placement-sources" — routes_cdm.py
+- "/api/cdm/unique-courses-departments" — routes_cdm.py
+- "/api/cdm/course-presets" — routes_cdm.py
+- "/api/cdm/course-presets/<int:preset_id>" — routes_cdm.py
+- "/api/cdm/company/<company_id>/details" — routes_cdm.py
+- "/api/cdm/search-students" — routes_cdm.py
+
+## 3) FIELD LABELS & COLUMN HEADERS
+
+### Table column headers
+- "Member" — templates/cdm.html
+- "Companies Brought" — templates/cdm.html
+- "Total Drives" — templates/cdm.html
+- "Selections" — templates/cdm.html
+- "Company" — templates/cdm.html
+- "Position" — templates/cdm.html
+- "CTC" — templates/cdm.html
+- "Status" — templates/cdm.html
+- "Courses" — templates/cdm.html
+- "JD Received" — templates/cdm.html
+- "Process Date" — templates/cdm.html
+- "Location" — templates/cdm.html
+- "Received By" — templates/cdm.html
+- "Data Shared" — templates/cdm.html
+- "Notes" — templates/cdm.html
+- "Select" — templates/cdm_company.html
+- "Reg No" — templates/cdm_company.html
+- "Name" — templates/cdm_company.html
+- "Course" — templates/cdm_company.html
+- "Department" — templates/cdm_company.html
+- "Email" — templates/cdm_company.html
+- "Phone" — templates/cdm_company.html
+- "Qualified Round" — templates/cdm_company.html
+- "Status" — templates/cdm_company.html
+- "Action" — templates/cdm_company.html
+- "Team Member" — templates/dashboard.html
+- "Companies Brought" — templates/dashboard.html
+- "Total Drives" — templates/dashboard.html
+- "Selections" — templates/dashboard.html
+- "Avg CTC (LPA)" — templates/dashboard.html
+- "Highest CTC (LPA)" — templates/dashboard.html
+- "Department" — templates/dashboard.html
+- "Stream" — templates/dashboard.html
+- "Total Students" — templates/dashboard.html
+- "Seeking Placement" — templates/dashboard.html
+- "Not Seeking" — templates/dashboard.html
+- "Eligible" — templates/dashboard.html
+- "Ineligible (Backlogs)" — templates/dashboard.html
+- "Gap %" — templates/dashboard.html
+- "Backlogs" — templates/dashboard.html
+- "Deemed Placed" — templates/dashboard.html
+- "Placed" — templates/dashboard.html
+- "Unplaced" — templates/dashboard.html
+- "Pending" — templates/dashboard.html
+- "Target %" — templates/dashboard.html
+- "Achieved %" — templates/dashboard.html
+- "Sr. No." — templates/dashboard.html
+- "School Name" — templates/dashboard.html
+- "Total Graduating Students" — templates/dashboard.html
+- "Opted In for Placements" — templates/dashboard.html
+- "Placed Students" — templates/dashboard.html
+- "Placed %" — templates/dashboard.html
+- "Highest CTC" — templates/dashboard.html
+- "Avg CTC" — templates/dashboard.html
+- "Median CTC" — templates/dashboard.html
+- "Unique Companies" — templates/dashboard.html
+- "Companies" — templates/dashboard.html
+- "Sr No" — templates/data.html
+- "Reg No" — templates/data.html
+- "Student Name" — templates/data.html
+- "Gender" — templates/data.html
+- "Course" — templates/data.html
+- "Department" — templates/data.html
+- "Mobile Number" — templates/data.html
+- "Email" — templates/data.html
+- "Seeking Placement" — templates/data.html
+- "Status" — templates/data.html
+- "Company Name" — templates/data.html
+- "Designation" — templates/data.html
+- "CTC" — templates/data.html
+- "Graduation/OGPA" — templates/data.html
+- "10%" — templates/data.html
+- "12%" — templates/data.html
+- "Backlogs" — templates/data.html
+- "Hometown" — templates/data.html
+- "Address" — templates/data.html
+- "Reason" — templates/data.html
+- "Resume Status" — templates/data.html
+- "Offer Letter Status" — templates/data.html
+- "Joining Date" — templates/data.html
+- "Joining Status" — templates/data.html
+- "Graduation Course" — templates/data.html
+- "Sr No" — templates/version_detail.html
+- "Reg No" — templates/version_detail.html
+- "Student Name" — templates/version_detail.html
+- "Gender" — templates/version_detail.html
+- "Course" — templates/version_detail.html
+- "Resume Status" — templates/version_detail.html
+- "Seeking Placement" — templates/version_detail.html
+- "Department" — templates/version_detail.html
+- "Offer Letter Status" — templates/version_detail.html
+- "Status" — templates/version_detail.html
+- "Company Name" — templates/version_detail.html
+- "Designation" — templates/version_detail.html
+- "CTC" — templates/version_detail.html
+- "Joining Date" — templates/version_detail.html
+- "Joining Status" — templates/version_detail.html
+- "School Name" — templates/version_detail.html
+- "Mobile Number" — templates/version_detail.html
+- "Email" — templates/version_detail.html
+- "Graduation Course" — templates/version_detail.html
+- "Graduation/OGPA" — templates/version_detail.html
+- "10%" — templates/version_detail.html
+- "12%" — templates/version_detail.html
+- "Backlogs" — templates/version_detail.html
+- "Hometown" — templates/version_detail.html
+- "Address" — templates/version_detail.html
+- "Reason" — templates/version_detail.html
+- "Version #" — templates/versions.html
+- "Filename" — templates/versions.html
+- "Uploaded At" — templates/versions.html
+- "Total Records" — templates/versions.html
+- "Inserted" — templates/versions.html
+- "Updated" — templates/versions.html
+- "Actions" — templates/versions.html
+
+### Form field labels
+- "Company Name *" — templates/cdm.html
+- "Received By" — templates/cdm.html
+- "Notes" — templates/cdm.html
+- "Select Drive" — templates/cdm_company.html
+- "Move selected to" — templates/cdm_company.html
+- "Mark Pass" — templates/cdm_company.html
+- "Position / Role *" — templates/cdm_company.html
+- "CTC" — templates/cdm_company.html
+- "Courses & Drive Type" — templates/cdm_company.html
+- "Bulk type:" — templates/cdm_company.html
+- "Process Date" — templates/cdm_company.html
+- "Venue" — templates/cdm_company.html
+- "JD Received Date" — templates/cdm_company.html
+- "Data Shared" — templates/cdm_company.html
+- "JD Briefing Session Done" — templates/cdm_company.html
+- "JD Briefing Session Date" — templates/cdm_company.html
+- "JD Briefing Conducted By" — templates/cdm_company.html
+- "Status" — templates/cdm_company.html
+- "Notes" — templates/cdm_company.html
+- "File Type" — templates/student_profile.html
+- "Choose File" — templates/student_profile.html
+
+### Filter/search placeholder text
+- "Search companies..." — templates/cdm.html
+- "Enter company name" — templates/cdm.html
+- "Owner / SPOC" — templates/cdm.html
+- "Preset name (e.g. Engineering, Management)" — templates/cdm.html
+- "Search students..." — templates/cdm_company.html
+- "Search student by name or reg no..." — templates/cdm_company.html
+- "Round name" — templates/cdm_company.html
+- "Name *" — templates/cdm_company.html
+- "Designation" — templates/cdm_company.html
+- "Email" — templates/cdm_company.html
+- "Phone" — templates/cdm_company.html
+- "Select or type venue" — templates/cdm_company.html
+- "Name" — templates/cdm_company.html
+- "Search students..." — templates/cdm_upload.html
+- "Search students..." — templates/dashboard.html
+- "Search students..." — templates/data.html
+- "Enter view name…" — templates/data.html
+- "Search students..." — templates/student_profile.html
+- "Search students..." — templates/upload.html
+- "Search students..." — templates/versions.html
+- "Filter by Reg No or Name..." — templates/versions.html
+- "Filter by Company..." — templates/versions.html
+
+## 4) BUTTON & ACTION LABELS
+
+### Button text
+- "Add Company" — templates/cdm.html
+- "Columns" — templates/cdm.html
+- "Show All" — templates/cdm.html
+- "Minimal" — templates/cdm.html
+- "Show Sheet View" — templates/cdm.html
+- "←" — templates/cdm.html
+- "Today" — templates/cdm.html
+- "→" — templates/cdm.html
+- "Day" — templates/cdm.html
+- "Week" — templates/cdm.html
+- "Month" — templates/cdm.html
+- "Cancel" — templates/cdm.html
+- "Save Preset" — templates/cdm.html
+- "Drives" — templates/cdm.html
+- "Calendar" — templates/cdm.html
+- "Mini Stats" — templates/cdm.html
+- "&larr;" — templates/cdm.html
+- "&rarr;" — templates/cdm.html
+- "✕" — templates/cdm.html
+- "Delete Company" — templates/cdm_company.html
+- "Add Drive" — templates/cdm_company.html
+- "Add HR" — templates/cdm_company.html
+- "Edit Selected Drive" — templates/cdm_company.html
+- "Export Excel" — templates/cdm_company.html
+- "Export PDF" — templates/cdm_company.html
+- "Add" — templates/cdm_company.html
+- "Import" — templates/cdm_company.html
+- "Promote Selected" — templates/cdm_company.html
+- "Select All" — templates/cdm_company.html
+- "Clear" — templates/cdm_company.html
+- "+ Add" — templates/cdm_company.html
+- "Delete" — templates/cdm_company.html
+- "Cancel" — templates/cdm_company.html
+- "Apply to checked" — templates/cdm_company.html
+- "Save Changes" — templates/cdm_company.html
+- "&times;" — templates/cdm_company.html
+- "→ R' + nextRound + '" — templates/cdm_company.html
+- "Upload & Import" — templates/cdm_upload.html
+- "Upload &amp; Import" — templates/cdm_upload.html
+- "Placement Charts" — templates/dashboard.html
+- "CDM Analytics" — templates/dashboard.html
+- "Placement Trends" — templates/dashboard.html
+- "Course Summary" — templates/dashboard.html
+- "Department Summary" — templates/dashboard.html
+- "Export Excel" — templates/dashboard.html
+- "Columns" — templates/data.html
+- "Show All" — templates/data.html
+- "Minimal" — templates/data.html
+- "Save View" — templates/data.html
+- "Saved Views 0" — templates/data.html
+- "{{ analytics.total }} All Students" — templates/data.html
+- "{{ analytics.placed }} Placed" — templates/data.html
+- "{{ analytics.unplaced }} Unplaced" — templates/data.html
+- "{{ analytics.eligible }} Eligible" — templates/data.html
+- "{{ analytics.ineligible }} Ineligible" — templates/data.html
+- "{{ analytics.opted_out }} Opted Out" — templates/data.html
+- "— CSE" — templates/data.html
+- "— MBA" — templates/data.html
+- "— BBA" — templates/data.html
+- "— Pharmacy" — templates/data.html
+- "Cancel" — templates/data.html
+- "Save" — templates/data.html
+- "Placement" — templates/data.html
+- "Academic" — templates/data.html
+- "Contact" — templates/data.html
+- "Full" — templates/data.html
+- "&times;" — templates/data.html
+- "Delete" — templates/student_profile.html
+- "Upload" — templates/student_profile.html
+- "Upload & Process" — templates/upload.html
+- "Drop All Student Data" — templates/upload.html
+- "Upload & Import" — templates/upload.html
+- "Drop All CDM Data" — templates/upload.html
+- "Export Excel" — templates/upload.html
+- "Upload &amp; Process" — templates/upload.html
+- "Upload &amp; Import" — templates/upload.html
+- "Delete" — templates/versions.html
+- "Refresh" — templates/versions.html
+- "« Prev" — templates/versions.html
+- "1 / 1" — templates/versions.html
+- "Next »" — templates/versions.html
+- "Upload Versions" — templates/versions.html
+- "Student Change Log" — templates/versions.html
+- "CDM Change Log" — templates/versions.html
+- "&laquo; Prev" — templates/versions.html
+- "Next &raquo;" — templates/versions.html
+
+### Dropdown option labels
+- "— Type —" — templates/cdm.html
+- "Mandatory" — templates/cdm.html
+- "Interest Based" — templates/cdm.html
+- "Core" — templates/cdm.html
+- "—" — templates/cdm_company.html
+- "Mandatory" — templates/cdm_company.html
+- "Interest Based" — templates/cdm_company.html
+- "Core" — templates/cdm_company.html
+- "Yes" — templates/cdm_company.html
+- "No" — templates/cdm_company.html
+- "Upcoming" — templates/cdm_company.html
+- "Ongoing" — templates/cdm_company.html
+- "Completed" — templates/cdm_company.html
+- "Cancelled" — templates/cdm_company.html
+- "— Type —" — templates/cdm_company.html
+- "' + dt + '" — templates/cdm_company.html
+- "' + label + '" — templates/cdm_company.html
+- "No rounds" — templates/cdm_company.html
+- "R' + r.round_order + ' · ' + r.round_name + '" — templates/cdm_company.html
+- "Not Cleared" — templates/cdm_company.html
+- "' + o + '" — templates/cdm_company.html
+- "Daily" — templates/dashboard.html
+- "Weekly" — templates/dashboard.html
+- "Monthly" — templates/dashboard.html
+- "Resume" — templates/student_profile.html
+- "Offer Letter" — templates/student_profile.html
+- "LOI" — templates/student_profile.html
+- "Confirmation Message" — templates/student_profile.html
+- "Other" — templates/student_profile.html
+- "— Clear —" — templates/student_profile.html
+- "' + o.trim() + '" — templates/student_profile.html
+- "50 / page" — templates/versions.html
+- "100 / page" — templates/versions.html
+- "200 / page" — templates/versions.html
+
+### Confirmation dialog text
+- "Delete this preset?" — templates/cdm.html
+- "Remove this student from the drive?" — templates/cdm_company.html
+- "Delete this company and ALL its drives, HR contacts, rounds, and linked students? This cannot be undone." — templates/cdm_company.html
+- "Delete this HR contact?" — templates/cdm_company.html
+- "Delete this file?" — templates/student_profile.html
+- "Are you sure you want to delete ALL student data? This cannot be undone." — templates/upload.html
+- "Are you sure you want to delete ALL CDM data (companies, drives, HR contacts, rounds, linked students, and change logs)? This cannot be undone." — templates/upload.html
+- "Delete version #{{ v.version_id }}?" — templates/versions.html
+
+## 5) STATUS & STATE LABELS
+
+- "Upcoming" — templates/cdm.html
+- "Ongoing" — templates/cdm.html
+- "Cancelled" — templates/cdm.html
+- "Placed" — templates/cdm.html
+- "Completed" — templates/cdm.html
+- "Shortlisted" — templates/cdm_company.html
+- "In Process" — templates/cdm_company.html
+- "Applied" — templates/cdm_company.html
+- "On Hold" — templates/cdm_company.html
+- "Selected" — templates/cdm_company.html
+- "Not Cleared" — templates/cdm_company.html
+- "Upcoming" — templates/cdm_company.html
+- "Rejected" — templates/cdm_company.html
+- "Ongoing" — templates/cdm_company.html
+- "Cancelled" — templates/cdm_company.html
+- "Placed" — templates/cdm_company.html
+- "Completed" — templates/cdm_company.html
+- "Pending" — templates/dashboard.html
+- "Unplaced" — templates/dashboard.html
+- "Ongoing" — templates/dashboard.html
+- "Placed" — templates/dashboard.html
+- "Completed" — templates/dashboard.html
+- "Unplaced" — templates/data.html
+- "Placed" — templates/data.html
+- "Pending" — templates/student_profile.html
+- "Unplaced" — templates/student_profile.html
+- "Placed" — templates/student_profile.html
+- "Joined" — templates/student_profile.html
+- "Not Joined" — templates/student_profile.html
+- "Placed" — app.py
+- "Placed" — routes_data.py
+- "Applied" — routes_cdm.py
+- "Selected" — routes_cdm.py
+- "Not Cleared" — routes_cdm.py
+- "Upcoming" — routes_cdm.py
+- "Ongoing" — routes_cdm.py
+- "Cancelled" — routes_cdm.py
+- "Placed" — routes_cdm.py
+- "Completed" — routes_cdm.py
+
+## 6) API ROUTE NAMES & INTERNAL IDENTIFIERS
+
+### Flask @app.route strings
+- "/" — app.py:L32
+- "/upload" — app.py:L37
+- "/download-template/student" — app.py:L267
+- "/download-template/cdm" — app.py:L290
+- "/dashboard" — app.py:L330
+- "/drop-all" — app.py:L350
+- "/drop-cdm" — app.py:L368
+- "/logs" — app.py:L392
+- "/versions/<int:version_id>" — app.py:L408
+- "/api/version/<int:version_id>" — app.py:L426
+- "/delete-version/<int:version_id>" — app.py:L450
+- "/data" — routes_data.py:L26
+- "/api/student/<reg_no>" — routes_data.py:L46
+- "/api/student/<reg_no>" — routes_data.py:L135
+- "/student/<reg_no>" — routes_data.py:L153
+- "/student/<reg_no>/upload-file" — routes_data.py:L179
+- "/uploads/<filename>" — routes_data.py:L210
+- "/student/<reg_no>/delete-file/<int:file_id>" — routes_data.py:L214
+- "/api/student/<reg_no>/bulk-update" — routes_data.py:L235
+- "/api/edit-log" — routes_data.py:L314
+- "/api/students" — routes_data.py:L360
+- "/api/search" — routes_data.py:L374
+- "/cdm" — routes_cdm.py:L202
+- "/api/cdm" — routes_cdm.py:L260
+- "/cdm/import" — routes_cdm.py:L300
+- "/cdm/company/<company_id>" — routes_cdm.py:L462
+- "/api/cdm/delete-drive/<int:drive_id>" — routes_cdm.py:L520
+- "/api/cdm/drive" — routes_cdm.py:L536
+- "/api/cdm/drive/<int:drive_id>" — routes_cdm.py:L587
+- "/api/cdm/edit-log" — routes_cdm.py:L689
+- "/api/cdm/hr/<int:hr_id>" — routes_cdm.py:L735
+- "/api/cdm/hr/<int:hr_id>" — routes_cdm.py:L775
+- "/api/cdm/hr" — routes_cdm.py:L788
+- "/api/cdm/search" — routes_cdm.py:L812
+- "/api/cdm/company" — routes_cdm.py:L837
+- "/api/cdm/company/<company_id>" — routes_cdm.py:L873
+- "/api/cdm/company/<company_id>" — routes_cdm.py:L912
+- "/api/cdm/analytics" — routes_cdm.py:L952
+- "/api/cdm/drive/<int:drive_id>/students" — routes_cdm.py:L1095
+- "/api/cdm/drive/<int:drive_id>/students" — routes_cdm.py:L1114
+- "/api/cdm/drive/<int:drive_id>/students/<reg_no>" — routes_cdm.py:L1134
+- "/api/cdm/drive/<int:drive_id>/students/rounds/bulk" — routes_cdm.py:L1234
+- "/api/cdm/drive/<int:drive_id>/round-transitions" — routes_cdm.py:L1341
+- "/api/cdm/drive/<int:drive_id>/students/<reg_no>" — routes_cdm.py:L1372
+- "/api/cdm/drive/<int:drive_id>/students/bulk" — routes_cdm.py:L1389
+- "/api/cdm/student-template" — routes_cdm.py:L1466
+- "/api/cdm/drive/<int:drive_id>/export.xlsx" — routes_cdm.py:L1486
+- "/api/cdm/drive/<int:drive_id>/export.pdf" — routes_cdm.py:L1589
+- "/api/cdm/drive/<int:drive_id>/rounds" — routes_cdm.py:L1679
+- "/api/cdm/drive/<int:drive_id>/rounds" — routes_cdm.py:L1696
+- "/api/cdm/round/<int:round_id>" — routes_cdm.py:L1722
+- "/api/cdm/calendar" — routes_cdm.py:L1806
+- "/api/cdm/alerts" — routes_cdm.py:L1831
+- "/api/cdm/placement-sources" — routes_cdm.py:L1915
+- "/api/cdm/unique-courses-departments" — routes_cdm.py:L1953
+- "/api/cdm/course-presets" — routes_cdm.py:L1973
+- "/api/cdm/course-presets" — routes_cdm.py:L1998
+- "/api/cdm/course-presets/<int:preset_id>" — routes_cdm.py:L2028
+- "/api/cdm/company/<company_id>/details" — routes_cdm.py:L2042
+- "/api/cdm/search-students" — routes_cdm.py:L2062
+
+### User-visible error/flash messages
+- "No file selected." — app.py
+- "Only .xlsx files are accepted." — app.py
+- f"Invalid template. Please upload correct MIS format. " f"Missing columns: {missing}" — app.py
+- f"All student data deleted. {count} records removed." — app.py
+- f"All CDM data deleted successfully." — app.py
+- f"Version #{version_id} deleted." — app.py
+- f"Could not read Excel file: {e}" — app.py
+- f"Upload successful. {total} records processed, " f"{inserted} new, {updated} updated. Version #{version_id} created." — app.py
+- f"No changes detected — uploaded data matches the current database. " f"No new version created." — app.py
+- f"Database error: {e}" — app.py
+- str(e) — app.py
+- "No file selected." — routes_data.py
+- f"File '{file.filename}' uploaded successfully." — routes_data.py
+- "Missing field" — routes_data.py
+- f"Field '{field}' is not editable" — routes_data.py
+- "Student not found." — routes_data.py
+- f"Database error: {e}" — routes_data.py
+- "File deleted." — routes_data.py
+- f"Error: {e}" — routes_data.py
+- "Missing fields" — routes_data.py
+- f"Non-editable fields: {invalid}" — routes_data.py
+- "Student not found" — routes_data.py
+- str(e) — routes_data.py
+- f"{field.replace('_',' ').title()} must be a numeric value" — routes_data.py
+- f"{field.replace('_',' ').title()} must be a whole number" — routes_data.py
+- "Invalid email format" — routes_data.py
+- "Mobile number must have at least 10 digits" — routes_data.py
+- "No file selected." — routes_cdm.py
+- "Only .xlsx files are accepted." — routes_cdm.py
+- f"Missing required columns: {missing}" — routes_cdm.py
+- f"CDM import successful — {companies_added} companies, " f"{drives_added} drives, {hr_added} HR contacts added." — routes_cdm.py
+- f"Database error: {e}" — routes_cdm.py
+- f"Could not read Excel file: {e}" — routes_cdm.py
+- "Company not found." — routes_cdm.py
+- "Company ID and role are required." — routes_cdm.py
+- "Missing field" — routes_cdm.py
+- f"Field '{field}' is not editable" — routes_cdm.py
+- "company_id and name are required" — routes_cdm.py
+- "Company name is required." — routes_cdm.py
+- "reg_no is required" — routes_cdm.py
+- "No data" — routes_cdm.py
+- "reg_nos list is required" — routes_cdm.py
+- "target_round must be >= 0" — routes_cdm.py
+- "No valid registration numbers provided" — routes_cdm.py
+- "No file uploaded" — routes_cdm.py
+- "Only .xlsx/.xls files accepted" — routes_cdm.py
+- "round_name is required" — routes_cdm.py
+- "Preset name is required." — routes_cdm.py
+- "At least one course is required." — routes_cdm.py
+- str(e) — routes_cdm.py
+- f"Status must be one of: {', '.join(valid_statuses)}" — routes_cdm.py
+- "Drive not found" — routes_cdm.py
+- "Invalid email format" — routes_cdm.py
+- "HR contact not found" — routes_cdm.py
+- "Company already exists." — routes_cdm.py
+- "Student not linked to drive" — routes_cdm.py
+- "Nothing to update" — routes_cdm.py
+- "target_round must be an integer" — routes_cdm.py
+- "Empty file" — routes_cdm.py
+- "Column 'Reg Number' not found in header" — routes_cdm.py
+- "No registration numbers found in file" — routes_cdm.py
+- "Round not found" — routes_cdm.py
+- "PDF export requires reportlab package." — routes_cdm.py
+
+### Toast/notification messages
+- "Select a drive type first" — templates/cdm.html
+- "Set" — templates/cdm.html
+- "Preset "" — templates/cdm.html
+- "Preset deleted" — templates/cdm.html
+- "Company "" — templates/cdm.html
+- "Failed to load drive data" — templates/cdm_company.html
+- "Student linked" — templates/cdm_company.html
+- "Link failed" — templates/cdm_company.html
+- "Status updated" — templates/cdm_company.html
+- "Round qualification updated" — templates/cdm_company.html
+- "Student removed" — templates/cdm_company.html
+- "Bulk import complete" — templates/cdm_company.html
+- "Import failed" — templates/cdm_company.html
+- "Round added" — templates/cdm_company.html
+- "Round deleted" — templates/cdm_company.html
+- "Student promoted" — templates/cdm_company.html
+- "Promotion failed" — templates/cdm_company.html
+- "Select students first" — templates/cdm_company.html
+- "Selected students moved" — templates/cdm_company.html
+- "Bulk move failed" — templates/cdm_company.html
+- "Drive updated" — templates/cdm_company.html
+- "Drive #" — templates/cdm_company.html
+- "Company name updated" — templates/cdm_company.html
+- "Save failed" — templates/cdm_company.html
+- "Delete failed" — templates/cdm_company.html
+- "Add failed" — templates/cdm_company.html
+- "HR updated" — templates/cdm_company.html
+- "HR contact deleted" — templates/cdm_company.html
+- "Saved:" — templates/student_profile.html
+- "Error:" — templates/student_profile.html
+
+## 7) TEMPLATE FILE NAMES
+
+- templates/cdm.html
+- templates/cdm_company.html
+- templates/cdm_upload.html
+- templates/dashboard.html
+- templates/data.html
+- templates/student_profile.html
+- templates/upload.html
+- templates/version_detail.html
+- templates/versions.html

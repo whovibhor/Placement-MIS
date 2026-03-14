@@ -1819,6 +1819,9 @@ def register_cdm_routes(app):
             """)
             rows = cursor.fetchall()
             normalize_rows(rows)
+            for row in rows:
+                process_date = row.get("process_date")
+                row["process_date_key"] = str(process_date)[:10] if process_date else None
             cursor.close()
             conn.close()
             return jsonify({"events": rows})

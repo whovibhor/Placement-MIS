@@ -492,14 +492,6 @@
                     </div>
                 </div>
 
-                <div class="cdm-alerts-panel">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                        <div class="small fw-semibold">SLA Alerts</div>
-                        <div class="small text-muted" id="cdmAlertsCount">0</div>
-                    </div>
-                    <div id="cdmAlertsList" class="text-muted small">No active alerts.</div>
-                </div>
-
                 <!-- Company Tile View (Primary) -->
                 <div class="mb-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -548,6 +540,13 @@
             <!-- ═══════════════ MINI STATS TAB ═══════════════ -->
             <div class="tab-pane fade" id="miniStatsPane" role="tabpanel">
                 <div class="cdm-mini-stats-grid" id="miniStatsCards"></div>
+                <div class="cdm-alerts-panel">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="small fw-semibold">SLA Alerts</div>
+                        <div class="small text-muted" id="cdmAlertsCount">0</div>
+                    </div>
+                    <div id="cdmAlertsList" class="text-muted small">No active alerts.</div>
+                </div>
                 <div class="dash-section mt-2">
                     <div class="dash-section-title">Companies Brought by Team</div>
                     <div class="table-responsive">
@@ -839,7 +838,6 @@
             updateStats();
 
             renderCompanyTiles('all');
-            loadSlaAlerts();
 
             /* ── Generate <th> headers ────────────────────────── */
             var $hr = $('#headerRow');
@@ -1011,6 +1009,27 @@
                 return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
             }
 
+            function normalizeDateKey(raw) {
+                if (!raw) return '';
+                if (typeof raw === 'string') {
+                    var trimmed = raw.trim();
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+                    var isoPrefix = trimmed.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+                    if (isoPrefix && isoPrefix[1]) return isoPrefix[1];
+                    var parsedFromString = new Date(trimmed);
+                    if (!isNaN(parsedFromString.getTime())) return dateKey(parsedFromString);
+                    return '';
+                }
+                var parsed = new Date(raw);
+                if (isNaN(parsed.getTime())) return '';
+                return dateKey(parsed);
+            }
+
+            function eventDateKey(ev) {
+                if (!ev) return '';
+                return ev.process_date_key || normalizeDateKey(ev.process_date);
+            }
+
             function startOfWeek(d) {
                 var x = new Date(d);
                 x.setDate(x.getDate() - x.getDay());
@@ -1036,7 +1055,7 @@
                 for (var d = 1; d <= daysInMonth; d++) {
                     var current = new Date(calCursor.getFullYear(), calCursor.getMonth(), d);
                     var k = dateKey(current);
-                    var events = calEvents.filter(function (ev) { return ev.process_date === k; });
+                    var events = calEvents.filter(function (ev) { return eventDateKey(ev) === k; });
                     html += '<div class="cdm-cal-day">';
                     html += '<div class="cdm-cal-day-num">' + d + '</div>';
                     events.slice(0, 3).forEach(function (ev) { html += renderEventChip(ev); });
@@ -1055,7 +1074,7 @@
                     var d = new Date(start);
                     d.setDate(start.getDate() + i);
                     var k = dateKey(d);
-                    var events = calEvents.filter(function (ev) { return ev.process_date === k; });
+                    var events = calEvents.filter(function (ev) { return eventDateKey(ev) === k; });
                     html += '<div class="cdm-cal-week-col">';
                     html += '<div class="cdm-cal-week-title">' + DAY_NAMES[d.getDay()] + ' · ' + d.getDate() + '</div>';
                     if (!events.length) html += '<div class="small text-muted">No drives</div>';
@@ -1071,7 +1090,7 @@
 
             function renderDayView() {
                 var k = dateKey(calCursor);
-                var events = calEvents.filter(function (ev) { return ev.process_date === k; });
+                var events = calEvents.filter(function (ev) { return eventDateKey(ev) === k; });
                 var html = '<div class="cdm-cal-day-list">';
                 if (!events.length) {
                     html += '<div class="small text-muted">No drives on this day.</div>';
@@ -1128,13 +1147,19 @@
                 if (calendarLoaded) return;
                 calendarLoaded = true;
                 $.getJSON('/api/cdm/calendar', function (data) {
-                    calEvents = data.events || [];
+                    calEvents = (data.events || []).map(function (ev) {
+                        ev.process_date_key = eventDateKey(ev);
+                        return ev;
+                    }).filter(function (ev) {
+                        return !!ev.process_date_key;
+                    });
                     renderCalendarView();
                 });
             });
 
             var miniStatsLoaded = false;
             $('#mini-stats-tab').on('shown.bs.tab', function () {
+                loadSlaAlerts();
                 if (miniStatsLoaded) return;
                 miniStatsLoaded = true;
                 $.getJSON('/api/cdm/analytics', function (data) {
