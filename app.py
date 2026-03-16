@@ -103,8 +103,19 @@ def upload():
         def fix_pct(v):
             if v is None:
                 return None
+            if isinstance(v, (int, float)):
+                if pd.isna(v):
+                    return None
+                num = float(v)
+                if 0 < num <= 1:
+                    num = round(num * 100, 1)
+                return str(int(num)) if num == int(num) else str(num)
+            s = str(v).strip()
+            if s.lower() in ("", "nan"):
+                return None
             # Strip GPA/CGPA prefix
-            cleaned = _re.sub(r'^(C?GPA)\s*', '', v, flags=_re.IGNORECASE).strip()
+            cleaned = _re.sub(r'^(C?GPA)\s*', '', s, flags=_re.IGNORECASE).strip()
+            cleaned = cleaned.rstrip('%').strip()
             # Convert garbage like '__' to None
             if cleaned in ('__', '_', ''):
                 return None
