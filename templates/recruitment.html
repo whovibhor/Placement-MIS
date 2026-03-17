@@ -413,20 +413,6 @@
                             d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                     </svg>Add Recruiter
                 </button>
-                <div class="dropdown d-inline-block">
-                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="cdmColToggleBtn"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        Columns
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-dark p-2" id="cdmColToggleMenu"
-                        style="min-width:220px;max-height:400px;overflow-y:auto;">
-                        <div class="d-flex gap-2 mb-2">
-                            <button class="btn btn-xs btn-outline-light flex-fill" id="cdmColShowAll">Show All</button>
-                            <button class="btn btn-xs btn-outline-light flex-fill" id="cdmColMinimal">Minimal</button>
-                        </div>
-                        <div id="cdmColCheckboxes"></div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -474,10 +460,10 @@
                         <span class="cdm-summary-item cdm-summary-filter cdm-summary-filter--active" data-filter="all"
                             style="display:none;"></span>
                         <span class="cdm-summary-item cdm-summary-filter" data-filter="upcoming"><span
-                            id="cnt-upcoming">0</span> Scheduled</span>
+                                id="cnt-upcoming">0</span> Scheduled</span>
                         <span class="cdm-summary-sep">|</span>
                         <span class="cdm-summary-item cdm-summary-filter" data-filter="ongoing"><span
-                            id="cnt-ongoing">0</span> Active</span>
+                                id="cnt-ongoing">0</span> Active</span>
                         <span class="cdm-summary-sep">|</span>
                         <span class="cdm-summary-item cdm-summary-filter" data-filter="completed"><span
                                 id="cnt-completed">0</span> Completed</span>
@@ -495,26 +481,27 @@
                 <!-- Recruiter Tile View (Primary) -->
                 <div class="mb-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="table-section-hint mb-0">Recruiters — latest process first</div>
-                        <button class="btn btn-xs btn-outline-light" id="toggleSheetView"
-                            title="Toggle sheet/table view">Table View</button>
+                        <div class="table-section-hint mb-0">Recruiters</div>
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="companyCourseFilter" class="form-select form-select-sm"
+                                style="min-width:220px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <option value="">All Courses</option>
+                            </select>
+                            <select id="companyCoordinatorFilter" class="form-select form-select-sm"
+                                style="min-width:220px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <option value="">All Coordinators</option>
+                            </select>
+                            <select id="companySortSelect" class="form-select form-select-sm"
+                                style="min-width:220px;background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                                <option value="process_newest">Newest Process Date</option>
+                                <option value="process_oldest">Oldest Process Date</option>
+                                <option value="alphabetical">Alphabetical (A–Z)</option>
+                            </select>
+                        </div>
                     </div>
+                    <div id="activeFilterChips" class="d-flex flex-wrap gap-2 mb-2"></div>
                     <div id="companyTilesGrid" class="cdm-tiles-grid"></div>
                     <div id="companyTilesEmpty" class="text-muted small d-none">No recruiters found for selected filter.
-                    </div>
-                </div>
-
-                <!-- Data Table (kept for compatibility, hidden by default) -->
-                <div class="table-section" id="sheetViewSection" style="display:none;">
-                    <div class="table-section-hint">Click a recruiter to open their workspace</div>
-                    <div class="table-responsive">
-                        <table id="cdmTable" class="table table-striped table-bordered table-hover" style="width:100%">
-                            <thead>
-                                <tr id="headerRow"></tr>
-                                <tr id="filterRow"></tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
                     </div>
                 </div>
             </div>
@@ -540,13 +527,6 @@
             <!-- ═══════════════ MINI STATS TAB ═══════════════ -->
             <div class="tab-pane fade" id="miniStatsPane" role="tabpanel">
                 <div class="cdm-mini-stats-grid" id="miniStatsCards"></div>
-                <div class="cdm-alerts-panel">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                        <div class="small fw-semibold">SLA Alerts</div>
-                        <div class="small text-muted" id="cdmAlertsCount">0</div>
-                    </div>
-                    <div id="cdmAlertsList" class="text-muted small">No active alerts.</div>
-                </div>
                 <div class="dash-section mt-2">
                     <div class="dash-section-title">Team Recruitment Activity</div>
                     <div class="table-responsive">
@@ -563,6 +543,17 @@
                             <tbody></tbody>
                         </table>
                     </div>
+                </div>
+                <div class="dash-section mt-2">
+                    <div class="dash-section-title">Placements by Recruiter</div>
+                    <div id="miniStatsPlacedByCompany" class="small text-muted">No placement data available.</div>
+                </div>
+                <div class="cdm-alerts-panel mt-2">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="small fw-semibold">SLA Alerts</div>
+                        <div class="small text-muted" id="cdmAlertsCount">0</div>
+                    </div>
+                    <div id="cdmAlertsList" class="text-muted small">No active alerts.</div>
                 </div>
             </div>
 
@@ -591,6 +582,12 @@
                             <label class="form-label small fw-bold">Coordinator</label>
                             <input type="text" id="newCompanyReceivedBy" class="form-control form-control-sm"
                                 placeholder="Coordinator name"
+                                style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Secondary Coordinator</label>
+                            <input type="text" id="newCompanySecondaryCoordinator" class="form-control form-control-sm"
+                                placeholder="Secondary coordinator name"
                                 style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
                         </div>
                         <div class="col-12">
@@ -625,7 +622,8 @@
                     <input type="text" id="newPresetName" class="form-control form-control-sm mb-2"
                         placeholder="Template name (e.g. Engineering, MBA Core)"
                         style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
-                    <div class="small mb-1 fw-bold" style="color:var(--text-secondary);">Select courses for this template:
+                    <div class="small mb-1 fw-bold" style="color:var(--text-secondary);">Select courses for this
+                        template:
                     </div>
                     <div id="presetCourseCheckboxes" class="d-flex flex-wrap gap-2 mb-2"
                         style="max-height:160px;overflow-y:auto;padding:6px;background:var(--bg-surface);border:1px solid var(--border-color);border-radius:6px;">
@@ -673,10 +671,89 @@
                 data_shared: 'Data Shared', notes: 'Notes'
             };
 
-            var MINIMAL_COLS = ['company_name', 'role', 'ctc_text', 'status', 'courses', 'process_date', 'location'];
-
             var RAW_DATA = JSON.parse(document.getElementById('cdm-json').textContent);
             var COMPANIES_DATA = JSON.parse(document.getElementById('companies-json').textContent);
+
+            function splitValues(raw) {
+                if (!raw) return [];
+                return String(raw).split(',').map(function (part) { return part.trim(); }).filter(Boolean);
+            }
+
+            function splitCoordinators(raw) {
+                if (!raw) return [];
+                return String(raw).split('/').map(function (part) { return part.trim(); }).filter(Boolean);
+            }
+
+            function uniqueNames(values) {
+                var seen = {};
+                var out = [];
+                values.forEach(function (v) {
+                    var key = String(v || '').trim();
+                    if (!key) return;
+                    var lower = key.toLowerCase();
+                    if (seen[lower]) return;
+                    seen[lower] = true;
+                    out.push(key);
+                });
+                return out;
+            }
+
+            function coordinatorsForRow(row) {
+                var all = [];
+                splitCoordinators(row.received_by || '').forEach(function (c) { all.push(c); });
+                splitCoordinators(row.secondary_coordinator || '').forEach(function (c) { all.push(c); });
+                return uniqueNames(all);
+            }
+
+            function coordinatorDisplay(primary, secondary) {
+                var all = [];
+                splitCoordinators(primary || '').forEach(function (c) { all.push(c); });
+                splitCoordinators(secondary || '').forEach(function (c) { all.push(c); });
+                var unique = uniqueNames(all);
+                return unique.length ? unique.join(' / ') : '—';
+            }
+
+            function populateTileFilters() {
+                var coursesSet = {};
+                var coordinatorsSet = {};
+
+                RAW_DATA.forEach(function (row) {
+                    splitValues(row.courses).forEach(function (course) { coursesSet[course] = true; });
+                    coordinatorsForRow(row).forEach(function (coordinator) { coordinatorsSet[coordinator] = true; });
+                });
+
+                var courses = Object.keys(coursesSet).sort(function (a, b) { return a.localeCompare(b); });
+                var coordinators = Object.keys(coordinatorsSet).sort(function (a, b) { return a.localeCompare(b); });
+
+                var $course = $('#companyCourseFilter').empty().append('<option value="">All Courses</option>');
+                courses.forEach(function (c) {
+                    $course.append('<option value="' + c.replace(/"/g, '&quot;') + '">' + c + '</option>');
+                });
+
+                var $coordinator = $('#companyCoordinatorFilter').empty().append('<option value="">All Coordinators</option>');
+                coordinators.forEach(function (c) {
+                    $coordinator.append('<option value="' + c.replace(/"/g, '&quot;') + '">' + c + '</option>');
+                });
+            }
+
+            function currentStatusLabel(activeFilter) {
+                if (activeFilter === 'upcoming') return 'Scheduled';
+                if (activeFilter === 'ongoing') return 'Active';
+                if (activeFilter === 'completed') return 'Completed';
+                if (activeFilter === 'cancelled') return 'Cancelled';
+                return 'All';
+            }
+
+            function renderActiveFilterChips(activeFilter) {
+                var chips = [];
+                chips.push('<span class="badge rounded-pill text-bg-secondary">Status: ' + currentStatusLabel(activeFilter) + '</span>');
+                var course = $('#companyCourseFilter').val() || '';
+                var coordinator = $('#companyCoordinatorFilter').val() || '';
+                if (course) chips.push('<span class="badge rounded-pill text-bg-info">Course: ' + course + '</span>');
+                if (coordinator) chips.push('<span class="badge rounded-pill text-bg-info">Coordinator: ' + coordinator + '</span>');
+                if (!course && !coordinator) chips.push('<span class="badge rounded-pill text-bg-dark">No additional filters</span>');
+                $('#activeFilterChips').html(chips.join(''));
+            }
 
             function renderSlaAlerts(alerts) {
                 var $list = $('#cdmAlertsList').empty();
@@ -709,9 +786,10 @@
 
             function formatDateForUi(v) {
                 if (!v) return '—';
+                if (window.formatUiDate) return window.formatUiDate(v);
                 var dt = new Date(v);
                 if (isNaN(dt.getTime())) return v;
-                return dt.toLocaleDateString('en-GB');
+                return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             }
 
             function getCompanyDriveMap(filterKey) {
@@ -733,6 +811,13 @@
             function renderCompanyTiles(filterKey) {
                 var companyIndex = {};
                 COMPANIES_DATA.forEach(function (c) { companyIndex[c.company_id] = c; });
+                var currentSort = $('#companySortSelect').val() || 'process_newest';
+                var selectedCourse = $('#companyCourseFilter').val() || '';
+                var selectedCoordinator = $('#companyCoordinatorFilter').val() || '';
+
+                function normText(v) {
+                    return String(v || '').trim().toLowerCase();
+                }
 
                 var driveMap = getCompanyDriveMap(filterKey || 'all');
                 var tiles = [];
@@ -742,6 +827,21 @@
 
                 candidateIds.forEach(function (companyId) {
                     var drives = driveMap[companyId] || [];
+
+                    if (selectedCourse) {
+                        drives = drives.filter(function (d) {
+                            var courseValues = splitValues(d.courses);
+                            return courseValues.indexOf(selectedCourse) !== -1;
+                        });
+                    }
+
+                    if (selectedCoordinator) {
+                        drives = drives.filter(function (d) {
+                            return coordinatorsForRow(d).indexOf(selectedCoordinator) !== -1;
+                        });
+                    }
+
+                    if (!drives.length) return;
 
                     drives.sort(function (a, b) {
                         var da = a.process_date ? new Date(a.process_date).getTime() : 0;
@@ -757,11 +857,20 @@
                         latest_process_date: latest.process_date || meta.latest_process_date || null,
                         participants_count: meta.participants_count || 0,
                         drives: drives,
-                        received_by: meta.received_by || latest.received_by || ''
+                        received_by: meta.received_by || latest.received_by || '',
+                        secondary_coordinator: meta.secondary_coordinator || latest.secondary_coordinator || ''
                     });
                 });
 
                 tiles.sort(function (a, b) {
+                    if (currentSort === 'alphabetical') {
+                        return normText(a.company_name).localeCompare(normText(b.company_name));
+                    }
+                    if (currentSort === 'process_oldest') {
+                        var doa = a.latest_process_date ? new Date(a.latest_process_date).getTime() : Number.MAX_SAFE_INTEGER;
+                        var dob = b.latest_process_date ? new Date(b.latest_process_date).getTime() : Number.MAX_SAFE_INTEGER;
+                        return doa - dob;
+                    }
                     var da = a.latest_process_date ? new Date(a.latest_process_date).getTime() : 0;
                     var db = b.latest_process_date ? new Date(b.latest_process_date).getTime() : 0;
                     return db - da;
@@ -780,6 +889,7 @@
                         if (role && positions.indexOf(role) === -1) positions.push(role);
                     });
                     var positionsText = positions.length ? positions.join(', ') : '—';
+                    var coordinatorText = coordinatorDisplay(tile.received_by, tile.secondary_coordinator);
 
                     $grid.append(
                         '<div class="cdm-company-card">' +
@@ -800,7 +910,7 @@
                         '</div>' +
                         '<div class="cdm-meta-field">' +
                         '<div class="cdm-meta-label">Coordinator</div>' +
-                        '<div class="cdm-meta-value">' + (tile.received_by || '—') + '</div>' +
+                        '<div class="cdm-meta-value">' + coordinatorText + '</div>' +
                         '</div>' +
                         '<div class="cdm-meta-field">' +
                         '<div class="cdm-meta-label">Participants</div>' +
@@ -821,6 +931,8 @@
                         '</div>'
                     );
                 });
+
+                renderActiveFilterChips(filterKey || 'all');
             }
 
             /* ── Stats ────────────────────────────────────────── */
@@ -837,38 +949,9 @@
                 $('#cnt-cancelled').text(statuses['Cancelled'] || 0);
             }
             updateStats();
+            populateTileFilters();
 
             renderCompanyTiles('all');
-
-            /* ── Generate <th> headers ────────────────────────── */
-            var $hr = $('#headerRow');
-            DATA_KEYS.forEach(function (k) {
-                $hr.append('<th>' + (HEADER_MAP[k] || k) + '</th>');
-            });
-
-            /* ── Init filter system ───────────────────────────── */
-            var filterApi = initFilterSystem({
-                tableSelector: '#cdmTable',
-                data: RAW_DATA,
-                keys: DATA_KEYS,
-                tableConfig: {
-                    language: {
-                        lengthMenu: "Show _MENU_ records",
-                        info: "Showing _START_ to _END_ of _TOTAL_ processes",
-                        emptyTable: "No processes found. Import a Recruitment Excel file first."
-                    },
-                    createdRow: function (row, data) {
-                        var statusIdx = DATA_KEYS.indexOf('status');
-                        var statusCell = $(row).find('td').eq(statusIdx);
-                        var st = (data.status || 'Upcoming').toLowerCase();
-                        var badgeCls = st === 'completed' ? 'bg-success' :
-                            st === 'ongoing' ? 'bg-warning text-dark' :
-                                st === 'cancelled' ? 'bg-danger' : 'bg-info';
-                        var uiStatus = (data.status === 'Upcoming') ? 'Scheduled' : (data.status === 'Ongoing' ? 'Active' : (data.status || 'Upcoming'));
-                        statusCell.html('<span class="badge ' + badgeCls + '">' + uiStatus + '</span>');
-                    }
-                }
-            });
 
             /* ── Filter Tiles ─────────────────────────────────── */
             var FILTER_FUNCTIONS = {
@@ -886,50 +969,19 @@
                 activeFilter = filterKey;
                 $('.cdm-summary-filter').removeClass('cdm-summary-filter--active');
                 $(this).addClass('cdm-summary-filter--active');
-                filterApi.setPreFilter(FILTER_FUNCTIONS[filterKey]);
                 renderCompanyTiles(filterKey);
             });
 
-            $('#toggleSheetView').on('click', function () {
-                var $sheet = $('#sheetViewSection');
-                var isVisible = $sheet.is(':visible');
-                $sheet.slideToggle(200);
-                $(this).text(isVisible ? 'Show Sheet View' : 'Hide Sheet View');
+            $('#companySortSelect').on('change', function () {
+                renderCompanyTiles(activeFilter);
             });
 
-            /* ── Column Visibility Toggle ─────────────────────── */
-            var table = filterApi.getTable();
-            var $colMenu = $('#cdmColCheckboxes');
-
-            DATA_KEYS.forEach(function (k, idx) {
-                var label = HEADER_MAP[k] || k;
-                $colMenu.append(
-                    '<div class="form-check mb-1">' +
-                    '<input class="form-check-input cdm-col-cb" type="checkbox" checked ' +
-                    'data-col="' + idx + '" id="cdmCol' + idx + '">' +
-                    '<label class="form-check-label small" for="cdmCol' + idx + '">' + label + '</label>' +
-                    '</div>'
-                );
+            $('#companyCourseFilter, #companyCoordinatorFilter').on('change', function () {
+                renderCompanyTiles(activeFilter);
             });
-
-            $(document).on('change', '.cdm-col-cb', function () {
-                var colIdx = parseInt($(this).data('col'));
-                table.column(colIdx).visible($(this).is(':checked'));
-            });
-
-            function applyCols(cols) {
-                DATA_KEYS.forEach(function (k, i) {
-                    var vis = cols.indexOf(k) !== -1;
-                    table.column(i).visible(vis);
-                    $('.cdm-col-cb[data-col="' + i + '"]').prop('checked', vis);
-                });
-            }
-
-            $('#cdmColShowAll').on('click', function () { applyCols(DATA_KEYS.slice()); });
-            $('#cdmColMinimal').on('click', function () { applyCols(MINIMAL_COLS); });
 
             /* ══════════════════════════════════════════════════════
-               COMPANY NAME CLICK → OPEN PROFILE
+               TOASTS
                ══════════════════════════════════════════════════════ */
             function showToast(msg, type) {
                 var $t = $('#editToast');
@@ -938,22 +990,9 @@
                 bootstrap.Toast.getOrCreateInstance($t[0], { delay: 2000 }).show();
             }
 
-            $(document).on('click', '#cdmTable tbody td', function (e) {
-                var tbl = $('#cdmTable').DataTable();
-                var cell = tbl.cell(this);
-                if (!cell || !cell.data) return;
-                var colIdx = cell.index().column;
-                var key = DATA_KEYS[colIdx];
-                if (key !== 'company_name') return;
-                var rowData = tbl.row(cell.index().row).data();
-                if (rowData && rowData.company_id) {
-                    window.open('/recruitment/recruiter/' + encodeURIComponent(rowData.company_id), '_blank');
-                }
-            });
-
-                /* ══════════════════════════════════════════════════════
-                    RECRUITMENT SEARCH
-                    ══════════════════════════════════════════════════════ */
+            /* ══════════════════════════════════════════════════════
+                RECRUITMENT SEARCH
+                ══════════════════════════════════════════════════════ */
             var searchTimer = null;
             var $searchInput = $('#globalSearch');
             var $searchResults = $('#globalSearchResults');
@@ -1088,7 +1127,7 @@
                 $('#calendarViewSurface').html(html);
                 var end = new Date(start);
                 end.setDate(start.getDate() + 6);
-                $('#calRangeLabel').text(start.toLocaleDateString('en-GB') + ' - ' + end.toLocaleDateString('en-GB'));
+                $('#calRangeLabel').text(formatDateForUi(start) + ' - ' + formatDateForUi(end));
             }
 
             function renderDayView() {
@@ -1110,7 +1149,7 @@
                 }
                 html += '</div>';
                 $('#calendarViewSurface').html(html);
-                $('#calRangeLabel').text(calCursor.toLocaleDateString('en-GB'));
+                $('#calRangeLabel').text(formatDateForUi(calCursor));
             }
 
             function renderCalendarView() {
@@ -1172,6 +1211,7 @@
                     cards += '<div class="cdm-mini-stat"><div class="label">Recruiters Onboarded</div><div class="value">' + (data.total_companies || 0) + '</div></div>';
                     cards += '<div class="cdm-mini-stat"><div class="label">Total Processes</div><div class="value">' + (data.total_drives || 0) + '</div></div>';
                     cards += '<div class="cdm-mini-stat"><div class="label">Students Placed</div><div class="value">' + (data.total_selected_students || 0) + '</div></div>';
+                    cards += '<div class="cdm-mini-stat"><div class="label">Unique Recruiters with Placements</div><div class="value">' + (data.unique_placed_companies || 0) + '</div></div>';
                     cards += '<div class="cdm-mini-stat"><div class="label">Participating Students</div><div class="value">' + (data.total_participating_students || 0) + '</div></div>';
                     cards += '<div class="cdm-mini-stat"><div class="label">Team Members Active</div><div class="value">' + ((data.team_performance || []).length || 0) + '</div></div>';
                     $('#miniStatsCards').html(cards);
@@ -1187,6 +1227,19 @@
                             '</tr>'
                         );
                     });
+
+                    var placedRows = data.placed_by_company || [];
+                    if (!placedRows.length) {
+                        $('#miniStatsPlacedByCompany').html('<div class="text-muted small">No placement data available.</div>');
+                    } else {
+                        var placedHtml = '<div class="table-responsive"><table class="table table-striped table-bordered table-hover" style="font-size:0.85rem;">' +
+                            '<thead><tr><th>Recruiter</th><th>Placed Students</th></tr></thead><tbody>';
+                        placedRows.forEach(function (row) {
+                            placedHtml += '<tr><td>' + (row.company_name || '—') + '</td><td>' + (row.placed_count || 0) + '</td></tr>';
+                        });
+                        placedHtml += '</tbody></table></div>';
+                        $('#miniStatsPlacedByCompany').html(placedHtml);
+                    }
                 });
             });
 
@@ -1388,6 +1441,7 @@
             $('#btnAddCompany').on('click', function () {
                 $('#newCompanyName').val('').removeClass('is-invalid');
                 $('#newCompanyReceivedBy').val('');
+                $('#newCompanySecondaryCoordinator').val('');
                 $('#newCompanyNotes').val('');
                 $('#addCompanyError').addClass('d-none');
                 new bootstrap.Modal('#addCompanyModal').show();
@@ -1409,6 +1463,7 @@
                     data: JSON.stringify({
                         company_name: name,
                         received_by: $('#newCompanyReceivedBy').val().trim() || null,
+                        secondary_coordinator: $('#newCompanySecondaryCoordinator').val().trim() || null,
                         notes: $('#newCompanyNotes').val().trim() || null
                     }),
                     success: function (res) {
@@ -1421,8 +1476,10 @@
                                 drive_count: 0,
                                 latest_process_date: null,
                                 participants_count: 0,
-                                received_by: res.received_by || ''
+                                received_by: res.received_by || '',
+                                secondary_coordinator: res.secondary_coordinator || ''
                             });
+                            populateTileFilters();
                             renderCompanyTiles(activeFilter);
                             window.open('/recruitment/recruiter/' + encodeURIComponent(res.company_id), '_blank');
                         } else {

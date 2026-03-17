@@ -226,7 +226,7 @@
                         <a href="{{ url_for('serve_upload', filename=f.stored_name) }}" target="_blank">
                             {{ f.original_name }}
                         </a>
-                        <small class="text-muted ms-2">{{ f.uploaded_at.strftime('%d %b %Y, %I:%M %p') if f.uploaded_at
+                        <small class="text-muted ms-2">{{ f.uploaded_at.strftime('%d %B %Y, %I:%M %p') if f.uploaded_at
                             else '' }}</small>
                     </div>
                     <form method="POST"

@@ -3,6 +3,50 @@
  * Requires jQuery. Include this script after jQuery on any page with the global search bar.
  */
 (function () {
+    function parseUiDateValue(value) {
+        if (value === null || value === undefined) return null;
+        var s = String(value).trim();
+        if (!s) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+            var parts = s.split('-');
+            var y = parseInt(parts[0], 10);
+            var m = parseInt(parts[1], 10) - 1;
+            var d = parseInt(parts[2], 10);
+            var dt = new Date(y, m, d);
+            return isNaN(dt.getTime()) ? null : dt;
+        }
+        var parsed = new Date(s);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    if (!window.formatUiDate) {
+        window.formatUiDate = function (value) {
+            var dt = parseUiDateValue(value);
+            if (!dt) return value || '—';
+            return dt.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        };
+    }
+
+    if (!window.formatUiDateTime) {
+        window.formatUiDateTime = function (value) {
+            var dt = parseUiDateValue(value);
+            if (!dt) return value || '—';
+            return dt.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }) + ', ' + dt.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        };
+    }
+
     var debounceTimer = null;
     var $input = $('#globalSearch');
     var $results = $('#globalSearchResults');

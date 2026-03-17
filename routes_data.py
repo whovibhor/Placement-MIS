@@ -346,7 +346,7 @@ def register_data_routes(app):
             rows = cursor.fetchall()
             for r in rows:
                 if r.get("changed_at"):
-                    r["changed_at"] = r["changed_at"].strftime("%d %b %Y, %I:%M %p")
+                    r["changed_at"] = r["changed_at"].strftime("%d %B %Y, %I:%M %p")
             cursor.close()
             conn.close()
 

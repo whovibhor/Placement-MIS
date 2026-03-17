@@ -138,6 +138,23 @@ def parse_ctc_value(ctc_text):
     return None
 
 
+def split_coordinators(raw_primary, raw_secondary=None):
+    names = []
+    for raw in [raw_primary, raw_secondary]:
+        if raw is None:
+            continue
+        parts = re.split(r"\s*/\s*", str(raw).strip())
+        for part in parts:
+            cleaned = part.strip()
+            if not cleaned or cleaned.lower() == "nan":
+                continue
+            if cleaned.lower() not in [n.lower() for n in names]:
+                names.append(cleaned)
+    primary = names[0] if names else None
+    secondary = names[1] if len(names) > 1 else None
+    return primary, secondary
+
+
 def get_request_actor():
     actor = (
         request.headers.get("X-Actor")
@@ -209,7 +226,7 @@ def register_cdm_routes(app):
                        d.jd_received_date, d.process_date, d.data_shared,
                        d.location, d.notes, d.status,
                       d.jd_briefing_done, d.jd_briefing_date, d.jd_briefing_conducted_by,
-                      c.received_by
+                      c.received_by, c.secondary_coordinator
                 FROM company_drives d
                 JOIN companies c ON d.company_id = c.company_id
                 ORDER BY d.drive_id DESC
@@ -235,14 +252,14 @@ def register_cdm_routes(app):
                 d["jd_briefing_done"] = "Yes" if d.get("jd_briefing_done") else "No"
 
             cursor.execute("""
-                SELECT c.company_id, c.company_name, c.received_by,
+                SELECT c.company_id, c.company_name, c.received_by, c.secondary_coordinator,
                        COUNT(DISTINCT d.drive_id) AS drive_count,
                        MAX(d.process_date) AS latest_process_date,
                        COUNT(DISTINCT ds.reg_no) AS participants_count
                 FROM companies c
                 LEFT JOIN company_drives d ON c.company_id = d.company_id
                 LEFT JOIN drive_students ds ON d.drive_id = ds.drive_id
-                GROUP BY c.company_id, c.company_name, c.received_by
+                GROUP BY c.company_id, c.company_name, c.received_by, c.secondary_coordinator
                 ORDER BY latest_process_date DESC, c.company_id DESC
             """)
             companies = cursor.fetchall()
@@ -271,7 +288,7 @@ def register_cdm_routes(app):
                        d.jd_received_date, d.process_date, d.data_shared,
                        d.location, d.notes, d.status,
                       d.jd_briefing_done, d.jd_briefing_date, d.jd_briefing_conducted_by,
-                      c.received_by
+                      c.received_by, c.secondary_coordinator
                 FROM company_drives d
                 JOIN companies c ON d.company_id = c.company_id
                 ORDER BY d.drive_id DESC
@@ -381,10 +398,14 @@ def register_cdm_routes(app):
                 received_by = str(row.get("received_by", "")).strip() if row.get("received_by") else None
                 if received_by and received_by.lower() == "nan":
                     received_by = None
-                if received_by:
+                primary_coord, secondary_coord = split_coordinators(received_by)
+                if primary_coord or secondary_coord:
                     cursor.execute(
-                        "UPDATE companies SET received_by = COALESCE(NULLIF(received_by, ''), %s) WHERE company_id=%s",
-                        (received_by, company_id),
+                        "UPDATE companies SET "
+                        "received_by = COALESCE(NULLIF(received_by, ''), %s), "
+                        "secondary_coordinator = COALESCE(NULLIF(secondary_coordinator, ''), %s) "
+                        "WHERE company_id=%s",
+                        (primary_coord, secondary_coord, company_id),
                     )
                 notes = str(row.get("notes", "")).strip() if row.get("notes") else None
                 if notes and notes.lower() == "nan":
@@ -729,7 +750,7 @@ def register_cdm_routes(app):
             rows = cursor.fetchall()
             for r in rows:
                 if r.get("changed_at"):
-                    r["changed_at"] = r["changed_at"].strftime("%d %b %Y, %I:%M %p")
+                    r["changed_at"] = r["changed_at"].strftime("%d %B %Y, %I:%M %p")
             cursor.close()
             conn.close()
 
@@ -853,6 +874,8 @@ def register_cdm_routes(app):
         if not name:
             return jsonify({"ok": False, "error": "Recruiter name is required."}), 400
         received_by = (data.get("received_by") or "").strip() or None
+        secondary_coordinator = (data.get("secondary_coordinator") or "").strip() or None
+        received_by, secondary_coordinator = split_coordinators(received_by, secondary_coordinator)
         notes = (data.get("notes") or "").strip() or None
         try:
             conn = get_connection()
@@ -867,9 +890,9 @@ def register_cdm_routes(app):
                 return jsonify({"ok": False, "error": "Recruiter already exists.", "company_id": existing["company_id"]}), 409
             cid = generate_company_id(name, cursor)
             cursor.execute(
-                "INSERT INTO companies (company_id, company_name, received_by, notes) "
-                "VALUES (%s, %s, %s, %s)",
-                (cid, name, received_by, notes),
+                "INSERT INTO companies (company_id, company_name, received_by, secondary_coordinator, notes) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (cid, name, received_by, secondary_coordinator, notes),
             )
             conn.commit()
             cursor.close()
@@ -877,6 +900,7 @@ def register_cdm_routes(app):
             return jsonify({
                 "ok": True, "company_id": cid, "company_name": name,
                 "received_by": received_by,
+                "secondary_coordinator": secondary_coordinator,
                 "notes": notes,
             })
         except Error as e:
@@ -890,7 +914,7 @@ def register_cdm_routes(app):
             conn = get_connection()
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT company_name, received_by, notes "
+                "SELECT company_name, received_by, secondary_coordinator, notes "
                 "FROM companies WHERE company_id=%s",
                 (company_id,),
             )
@@ -905,14 +929,19 @@ def register_cdm_routes(app):
                 received_by = (data.get("received_by") or "").strip() or None
             else:
                 received_by = existing.get("received_by")
+            if "secondary_coordinator" in data:
+                secondary_coordinator = (data.get("secondary_coordinator") or "").strip() or None
+            else:
+                secondary_coordinator = existing.get("secondary_coordinator")
+            received_by, secondary_coordinator = split_coordinators(received_by, secondary_coordinator)
             if "notes" in data:
                 notes = (data.get("notes") or "").strip() or None
             else:
                 notes = existing.get("notes")
             cursor.execute(
-                "UPDATE companies SET company_name=%s, received_by=%s, notes=%s "
+                "UPDATE companies SET company_name=%s, received_by=%s, secondary_coordinator=%s, notes=%s "
                 "WHERE company_id=%s",
-                (name, received_by, notes, company_id),
+                (name, received_by, secondary_coordinator, notes, company_id),
             )
             conn.commit()
             cursor.close()
@@ -1018,6 +1047,25 @@ def register_cdm_routes(app):
             top_placed_companies = cursor.fetchall()
 
             cursor.execute("""
+                SELECT c.company_name, COUNT(DISTINCT ds.reg_no) AS placed_count
+                FROM drive_students ds
+                JOIN company_drives d ON ds.drive_id = d.drive_id
+                JOIN companies c ON d.company_id = c.company_id
+                WHERE ds.status = 'Placed'
+                GROUP BY c.company_id, c.company_name
+                ORDER BY placed_count DESC, c.company_name ASC
+            """)
+            placed_by_company = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT COUNT(DISTINCT d.company_id) AS unique_placed_companies
+                FROM drive_students ds
+                JOIN company_drives d ON ds.drive_id = d.drive_id
+                WHERE ds.status = 'Placed'
+            """)
+            unique_placed_companies = cursor.fetchone()["unique_placed_companies"]
+
+            cursor.execute("""
                 SELECT c.company_name, d.ctc_text
                 FROM company_drives d
                 JOIN companies c ON d.company_id = c.company_id
@@ -1094,6 +1142,8 @@ def register_cdm_routes(app):
                 "total_companies": total_companies,
                 "total_participating_students": total_participating_students,
                 "total_selected_students": total_selected_students,
+                "unique_placed_companies": unique_placed_companies,
+                "placed_by_company": placed_by_company,
                 "status_dist": status_dist,
                 "ctc_stats": ctc_stats,
                 "top_placed_companies": top_placed_companies,

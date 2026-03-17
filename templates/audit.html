@@ -88,7 +88,7 @@
                             <tr>
                                 <td>{{ v.version_id }}</td>
                                 <td>{{ v.filename }}</td>
-                                <td>{{ v.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                                <td>{{ v.uploaded_at.strftime('%d %B %Y, %I:%M %p') }}</td>
                                 <td>{{ v.total_records }}</td>
                                 <td><span class="badge bg-success">{{ v.inserted }}</span></td>
                                 <td><span class="badge bg-warning text-dark">{{ v.updated }}</span></td>
@@ -253,9 +253,9 @@
             $('#slPrev').on('click', function () { if (slPage > 1) loadStudentLog(slPage - 1); });
             $('#slNext').on('click', function () { if (slPage < slTotal) loadStudentLog(slPage + 1); });
 
-                /* ══════════════════════════════════════════════════════
-                    RECRUITMENT CHANGE LOG
-                    ══════════════════════════════════════════════════════ */
+            /* ══════════════════════════════════════════════════════
+                RECRUITMENT CHANGE LOG
+                ══════════════════════════════════════════════════════ */
             var clData = [], clPage = 1, clTotal = 1, clCount = 0, clLoaded = false;
 
             function loadCdmLog(page) {

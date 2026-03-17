@@ -341,8 +341,10 @@
         </div>
 
         <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-            <div class="small text-muted">Recruiter Workspace</div>
+            <div class="small text-muted">Recruiter Workspace · Use “Edit Recruiter Info” for company details and “Edit
+                Selected Process” for drive details</div>
             <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-warning" id="btnEditCompanyInfo">Edit Recruiter Info</button>
                 <button class="btn btn-sm btn-danger" id="btnAddDrive">Add Process</button>
                 <button class="btn btn-sm btn-outline-light" id="btnAddHR">Add HR</button>
                 <button class="btn btn-sm btn-outline-info" id="btnEditSelectedDrive">Edit Selected Process</button>
@@ -384,8 +386,9 @@
                                 <div class="hero-metric-value" id="heroDriveId">—</div>
                             </div>
                             <div class="hero-metric-item">
-                                <div class="hero-metric-label">Coordinator</div>
-                                <div class="hero-metric-value">{{ company.received_by or '—' }}</div>
+                                <div class="hero-metric-label">Coordinator(s)</div>
+                                <div class="hero-metric-value" id="companyCoordinatorValue">{{ [company.received_by,
+                                    company.secondary_coordinator]|select|join(' / ') or '—' }}</div>
                             </div>
                         </div>
                     </div>
@@ -835,6 +838,50 @@
             </div>
         </div>
 
+        <div class="modal fade" id="editCompanyModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content"
+                    style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-primary);">
+                    <div class="modal-header border-0 pb-0">
+                        <h6 class="modal-title">Edit Recruiter Info</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label small text-muted">Recruiter Name *</label>
+                                <input type="text" id="editCompanyNameInput" class="form-control form-control-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Primary Coordinator</label>
+                                <input type="text" id="editCompanyPrimaryCoordinatorInput"
+                                    class="form-control form-control-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Secondary Coordinator</label>
+                                <input type="text" id="editCompanySecondaryCoordinatorInput"
+                                    class="form-control form-control-sm"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small text-muted">Notes</label>
+                                <textarea id="editCompanyNotesInput" class="form-control form-control-sm" rows="3"
+                                    style="background:var(--bg-surface);border-color:var(--border-color);color:var(--text-primary);"></textarea>
+                            </div>
+                        </div>
+                        <div id="editCompanyError" class="text-danger small d-none mt-2"></div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-danger" id="btnSaveCompanyInfo">Save
+                            Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- ── Toast ──────────────────────────── -->
         <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
             <div id="editToast" class="toast align-items-center text-bg-success border-0" role="alert">
@@ -852,12 +899,17 @@
         <script>
             $(function () {
                 var COMPANY_ID = '{{ company.company_id }}';
-                var COMPANY_RECEIVED_BY = '{{ company.received_by or '' }}';
-                var DRIVES = {{ drives| tojson if drives else '[]'
+                var COMPANY_NAME = {{ company.company_name| tojson
+            }};
+            var COMPANY_RECEIVED_BY = '{{ company.received_by or '' }}';
+            var COMPANY_SECONDARY_COORDINATOR = {{ (company.secondary_coordinator or '')| tojson }};
+            var COMPANY_NOTES = {{ (company.notes or '')| tojson }};
+            var DRIVES = {{ drives| tojson if drives else '[]'
             }};
             var selectedDriveId = DRIVES.length ? Number(DRIVES[0].drive_id) : null;
             var selectedStudent = null;
             var currentStudents = [];
+            var activeStudents = [];
             var currentRounds = [];
             var transitionLogs = [];
             var EDITING_DRIVE_ID = null;
@@ -905,6 +957,13 @@
                 bootstrap.Toast.getOrCreateInstance($t[0], { delay: 2000 }).show();
             }
 
+            function coordinatorDisplay(primary, secondary) {
+                var p = (primary || '').toString().trim();
+                var s = (secondary || '').toString().trim();
+                if (p && s) return p + ' / ' + s;
+                return p || s || '—';
+            }
+
             function getSelectedDrive() {
                 return DRIVES.find(function (d) { return Number(d.drive_id) === Number(selectedDriveId); }) || null;
             }
@@ -912,6 +971,23 @@
             function normalize(v) {
                 var value = (v === null || v === undefined) ? '' : String(v).trim();
                 return value || '—';
+            }
+
+            function formatDateUi(v) {
+                if (!v) return '—';
+                if (window.formatUiDate) return window.formatUiDate(v);
+                var dt = new Date(v);
+                if (isNaN(dt.getTime())) return normalize(v);
+                return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+
+            function formatDateTimeUi(v) {
+                if (!v) return '—';
+                if (window.formatUiDateTime) return window.formatUiDateTime(v);
+                var dt = new Date(v);
+                if (isNaN(dt.getTime())) return normalize(v);
+                return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' +
+                    dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true });
             }
 
             function statusBadgeClass(status) {
@@ -1013,7 +1089,7 @@
                     var st = d.status || 'Upcoming';
                     $wrap.append(
                         '<div class="drive-summary-item">' +
-                        '<div><div class="fw-semibold">#' + d.drive_id + ' · ' + (d.role || '—') + '</div><div class="text-muted">' + (d.process_date || '—') + ' · ' + (d.location || '—') + '</div></div>' +
+                        '<div><div class="fw-semibold">#' + d.drive_id + ' · ' + (d.role || '—') + '</div><div class="text-muted">' + formatDateUi(d.process_date) + ' · ' + (d.location || '—') + '</div></div>' +
                         '<div class="text-end"><div>' + (d.ctc_text || '—') + '</div><div class="text-muted">' + displayDriveStatus(st) + '</div></div>' +
                         '</div>'
                     );
@@ -1029,13 +1105,13 @@
                 $('#heroDriveId').text('#' + drive.drive_id);
                 $('#heroRole').text(normalize(drive.role));
                 $('#heroCtc').text(normalize(drive.ctc_text));
-                $('#heroProcessDate').text(normalize(drive.process_date));
+                $('#heroProcessDate').text(formatDateUi(drive.process_date));
                 $('#heroVenue').text(normalize(drive.location));
                 $('#heroCourses').text(normalize(drive.courses));
                 $('#heroDataShared').text(normalize(drive.data_shared));
-                $('#heroJdReceived').text(normalize(drive.jd_received_date));
+                $('#heroJdReceived').text(formatDateUi(drive.jd_received_date));
                 $('#heroJdBriefingDone').text(drive.jd_briefing_done ? 'Yes' : 'No');
-                $('#heroJdBriefingDate').text(normalize(drive.jd_briefing_date));
+                $('#heroJdBriefingDate').text(formatDateUi(drive.jd_briefing_date));
                 $('#heroJdConductedBy').text(normalize(drive.jd_briefing_conducted_by));
                 $('#heroNotes').text(normalize(drive.notes));
                 var status = drive.status || 'Upcoming';
@@ -1058,6 +1134,9 @@
                 if (!selectedDriveId) return $.Deferred().resolve([]);
                 return $.getJSON('/api/cdm/drive/' + selectedDriveId + '/students').then(function (res) {
                     currentStudents = res.students || [];
+                    activeStudents = currentStudents.filter(function (s) {
+                        return String(s.status || '').toLowerCase() !== 'placed';
+                    });
                     renderParticipants();
                     renderRoundBoard();
                     renderStats();
@@ -1100,7 +1179,6 @@
                         present: true
                     };
                 });
-                cols.push({ key: 'PLACED', label: 'Final · Placed', round_order: currentRounds.length || 0, present: true });
                 return cols;
             }
 
@@ -1115,7 +1193,7 @@
                 currentRounds.forEach(function (r) {
                     $wrap.append(
                         '<div class="round-row">' +
-                        '<div><div class="small fw-semibold">R' + r.round_order + ' · ' + (r.round_name || 'Round') + '</div><div class="small text-muted">' + (r.round_date || 'No date') + '</div></div>' +
+                        '<div><div class="small fw-semibold">R' + r.round_order + ' · ' + (r.round_name || 'Round') + '</div><div class="small text-muted">' + (r.round_date ? formatDateUi(r.round_date) : 'No date') + '</div></div>' +
                         '<button class="btn btn-xs btn-outline-danger delete-round" data-id="' + r.round_id + '">Delete</button>' +
                         '</div>'
                     );
@@ -1133,12 +1211,13 @@
 
             function renderParticipants() {
                 var $tbody = $('#participantsTableBody').empty();
-                $('#participantsCountLabel').text(currentStudents.length + ' student(s)');
-                if (!currentStudents.length) {
+                var lockedPlaced = currentStudents.length - activeStudents.length;
+                $('#participantsCountLabel').text(activeStudents.length + ' active participant(s)' + (lockedPlaced > 0 ? ' · ' + lockedPlaced + ' placed (locked)' : ''));
+                if (!activeStudents.length) {
                     $tbody.append('<tr><td colspan="10" class="text-center text-muted">No students linked</td></tr>');
                     return;
                 }
-                currentStudents.forEach(function (s) {
+                activeStudents.forEach(function (s) {
                     var statusOpts = ['Applied', 'Shortlisted', 'In Process', 'Selected', 'Placed', 'Rejected', 'On Hold'].map(function (o) {
                         return '<option value="' + o + '"' + (o === s.status ? ' selected' : '') + '>' + displayStudentStatus(o) + '</option>';
                     }).join('');
@@ -1162,29 +1241,21 @@
 
             function renderRoundBoard() {
                 var $wrap = $('#roundBoardWrap').empty();
-                if (!currentStudents.length) {
+                if (!activeStudents.length) {
                     $wrap.html('<div class="text-muted small">No students to display.</div>');
                     return;
                 }
                 var columns = boardRoundColumns();
                 columns.forEach(function (col) {
-                    var members = [];
-                    if (col.key === 'PLACED') {
-                        members = currentStudents.filter(function (s) {
-                            var st = (s.status || '').toLowerCase();
-                            return st === 'placed';
-                        });
-                    } else {
-                        members = currentStudents.filter(function (s) {
-                            return Number(s.current_round || 0) === col.round_order;
-                        });
-                    }
+                    var members = activeStudents.filter(function (s) {
+                        return Number(s.current_round || 0) === col.round_order;
+                    });
                     var html = '<div class="round-board-column"><div class="round-board-col-title"><span>' + col.label + '</span><span>' + members.length + '</span></div>';
                     if (!members.length) {
                         html += '<div class="text-muted small">No students</div>';
                     } else {
                         members.forEach(function (s) {
-                            var nextRound = col.key === 'PLACED' ? 0 : (col.round_order + 1);
+                            var nextRound = col.round_order + 1;
                             var hasNextRound = currentRounds.some(function (r) {
                                 return Number(r.round_order || 0) === nextRound;
                             });
@@ -1218,7 +1289,7 @@
                 }
                 var rows = transitionLogs.slice(0, 12).map(function (log) {
                     var actor = normalize(log.actor || 'system');
-                    var at = normalize(log.changed_at || '');
+                    var at = formatDateTimeUi(log.changed_at || '');
                     var fromRound = Number(log.from_round || 0);
                     var toRound = Number(log.to_round || 0);
                     var fromStatus = normalize(log.from_status || '');
@@ -1583,6 +1654,59 @@
 
             $('#btnEditSelectedDrive').on('click', openDriveEditModal);
 
+            $('#btnEditCompanyInfo').on('click', function () {
+                $('#editCompanyNameInput').val(COMPANY_NAME || '');
+                $('#editCompanyPrimaryCoordinatorInput').val(COMPANY_RECEIVED_BY || '');
+                $('#editCompanySecondaryCoordinatorInput').val(COMPANY_SECONDARY_COORDINATOR || '');
+                $('#editCompanyNotesInput').val(COMPANY_NOTES || '');
+                $('#editCompanyError').addClass('d-none').text('');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('editCompanyModal')).show();
+                setTimeout(function () { $('#editCompanyNameInput').focus(); }, 200);
+            });
+
+            $('#btnSaveCompanyInfo').on('click', function () {
+                var payload = {
+                    company_name: $('#editCompanyNameInput').val().trim(),
+                    received_by: $('#editCompanyPrimaryCoordinatorInput').val().trim() || null,
+                    secondary_coordinator: $('#editCompanySecondaryCoordinatorInput').val().trim() || null,
+                    notes: $('#editCompanyNotesInput').val().trim() || null
+                };
+
+                if (!payload.company_name) {
+                    $('#editCompanyError').removeClass('d-none').text('Recruiter name is required.');
+                    $('#editCompanyNameInput').focus();
+                    return;
+                }
+
+                $.ajax({
+                    url: '/api/cdm/company/' + encodeURIComponent(COMPANY_ID),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (res) {
+                        if (!res.ok) {
+                            $('#editCompanyError').removeClass('d-none').text(res.error || 'Failed to update recruiter info.');
+                            return;
+                        }
+                        COMPANY_NAME = payload.company_name;
+                        COMPANY_RECEIVED_BY = payload.received_by || '';
+                        COMPANY_SECONDARY_COORDINATOR = payload.secondary_coordinator || '';
+                        COMPANY_NOTES = payload.notes || '';
+
+                        $('.editable-company-name').text(COMPANY_NAME);
+                        $('#companyCoordinatorValue').text(coordinatorDisplay(COMPANY_RECEIVED_BY, COMPANY_SECONDARY_COORDINATOR));
+                        document.title = COMPANY_NAME + ' — Recruitment';
+                        bootstrap.Modal.getInstance(document.getElementById('editCompanyModal')).hide();
+                        showToast('Recruiter info updated', 'success');
+                    },
+                    error: function (xhr) {
+                        var msg = 'Failed to update recruiter info.';
+                        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
+                        $('#editCompanyError').removeClass('d-none').text(msg);
+                    }
+                });
+            });
+
             $('#btnSaveDriveEdit').on('click', function () {
                 if (!EDITING_DRIVE_ID || !EDITING_DRIVE_ORIGINAL) return;
                 var updates = {
@@ -1737,6 +1861,7 @@
                     data: JSON.stringify({ company_name: name }),
                     success: function (res) {
                         if (res.ok) {
+                            COMPANY_NAME = res.company_name;
                             $h.text(res.company_name);
                             document.title = res.company_name + ' — Recruitment';
                             showToast('Recruiter name updated', 'success');

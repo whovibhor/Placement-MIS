@@ -382,6 +382,7 @@ def init_db():
             company_id   VARCHAR(10) PRIMARY KEY,
             company_name VARCHAR(200) NOT NULL,
             received_by VARCHAR(200) NULL,
+            secondary_coordinator VARCHAR(200) NULL,
             notes TEXT NULL
         )
     """)
@@ -494,7 +495,24 @@ def init_db():
     except Error:
         pass
     try:
+        cursor.execute("ALTER TABLE companies ADD COLUMN secondary_coordinator VARCHAR(200) NULL")
+    except Error:
+        pass
+    try:
         cursor.execute("ALTER TABLE companies ADD COLUMN notes TEXT NULL")
+    except Error:
+        pass
+
+    # ── Split legacy slash-separated coordinators (idempotent) ─────
+    try:
+        cursor.execute(
+            "UPDATE companies "
+            "SET secondary_coordinator = TRIM(SUBSTRING_INDEX(received_by, '/', -1)), "
+            "received_by = TRIM(SUBSTRING_INDEX(received_by, '/', 1)) "
+            "WHERE (secondary_coordinator IS NULL OR TRIM(secondary_coordinator) = '') "
+            "AND received_by IS NOT NULL "
+            "AND received_by LIKE '%/%'"
+        )
     except Error:
         pass
 
